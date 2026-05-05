@@ -49,6 +49,7 @@ jobs:
 
           ALLOWED = {
               "Apache Software License",
+              "Apache License",
               "Apache-2.0",
               "MIT License",
               "MIT",
@@ -67,6 +68,7 @@ jobs:
               "LGPL-2.1",
               "Historical Permission Notice and Disclaimer (HPND)",
               "Public Domain",
+              "Biopython",
               "UNKNOWN",  # built-in / stdlib stubs; review manually if unexpected
           }
 

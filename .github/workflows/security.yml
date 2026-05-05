@@ -131,11 +131,11 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --requirement requirements.lock \
+          pip-audit \
             --format json \
             --output pip-audit-report.json \
             --strict || true
-          pip-audit --requirement requirements.lock --format columns
+          pip-audit --format columns
 
       - name: Upload pip-audit report
         if: always()
