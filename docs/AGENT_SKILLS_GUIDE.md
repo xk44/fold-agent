@@ -32,7 +32,7 @@ Each framework directory contains the same 9 skills:
 
 | Skill                                     | Purpose                                               |
 | ----------------------------------------- | ----------------------------------------------------- |
-| `run_full_foldagent_case_review`             | End-to-end case review orchestration                  |
+| `run_full_foldagent_case_review`          | End-to-end case review orchestration                  |
 | `run_bioinformatics_pipeline`             | Launch, inspect, and summarize pipeline runs          |
 | `get_alphafold_structures`                | Backend diagnostics, dry-runs, structure jobs         |
 | `generate_candidate_review_report`        | Generate and export candidate review reports          |
@@ -80,6 +80,26 @@ All skills must comply with `skills/shared/safety_policy.md`. The 10 canonical r
 10. No self-modification into dangerous outputs — skills must not modify themselves to bypass safety gates
 
 These rules apply equally across Claude Code, OpenClaw, and Hermes. Framework differences are in invocation syntax only.
+
+---
+
+## Research Modes
+
+Skills operate within a research mode context. The active mode restricts which backends are allowed and what safety attestations are required. Available modes are discoverable via `GET /modes`; mode-specific safety checks run via `POST /modes/{mode}/check`.
+
+| Mode                    | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| `neoantigen`            | Neoantigen vaccine pipeline (default)       |
+| `variant_pathogenicity` | Variant pathogenicity assessment            |
+| `drug_discovery`        | Small molecule and drug target discovery    |
+| `vaccine_design`        | Broader vaccine antigen design              |
+| `antibody_design`       | Antibody and nanobody design                |
+| `gene_therapy`          | Gene therapy target and vector analysis     |
+| `ppi_mapping`           | Protein-protein interaction mapping         |
+| `enzyme_engineering`    | Enzyme function and engineering analysis    |
+| `protein_misfolding`    | Protein misfolding and aggregation research |
+
+Skills must surface the active mode in their context seed and must not proceed if the mode check returns a blocked status.
 
 ---
 

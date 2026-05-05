@@ -61,10 +61,26 @@ binding affinities."
 
 ## Prerequisites
 
-- FoldAgent API running at `http://localhost:8000` (or configured `FOLDAGENT_API_URL`)
+- FoldAgent API running at `http://localhost:8010` (or configured `FOLDAGENT_API_URL`)
 - Case must be created before running pipeline
 - Safety preflight must pass before pipeline execution on non-demo data
 - Licensed professional must be named as `supervising_professional` on each case
+
+## Research Modes
+
+FoldAgent supports 9 research modes, selectable via `GET /modes` and `POST /modes/{mode}/check`:
+
+| Mode                    | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| `neoantigen`            | Neoantigen vaccine pipeline (default)       |
+| `variant_pathogenicity` | Variant pathogenicity assessment            |
+| `drug_discovery`        | Small molecule and drug target discovery    |
+| `vaccine_design`        | Broader vaccine antigen design              |
+| `antibody_design`       | Antibody and nanobody design                |
+| `gene_therapy`          | Gene therapy target and vector analysis     |
+| `ppi_mapping`           | Protein-protein interaction mapping         |
+| `enzyme_engineering`    | Enzyme function and engineering analysis    |
+| `protein_misfolding`    | Protein misfolding and aggregation research |
 
 ## Shared Utilities
 

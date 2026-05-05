@@ -36,6 +36,22 @@ calls and real-time streaming via WebSocket (`ws://…/agent/events/ws`).
 | `candidate_review` | `tasks/candidate_review.yaml` | Review and annotate neoantigen candidates |
 | `safety_check`     | `tasks/safety_check.yaml`     | Run safety preflight and risk assessment  |
 
+## Research Modes
+
+FoldAgent supports 9 research modes (`GET /modes`, `POST /modes/{mode}/check`):
+
+| Mode                    | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| `neoantigen`            | Neoantigen vaccine pipeline (default)       |
+| `variant_pathogenicity` | Variant pathogenicity assessment            |
+| `drug_discovery`        | Small molecule and drug target discovery    |
+| `vaccine_design`        | Broader vaccine antigen design              |
+| `antibody_design`       | Antibody and nanobody design                |
+| `gene_therapy`          | Gene therapy target and vector analysis     |
+| `ppi_mapping`           | Protein-protein interaction mapping         |
+| `enzyme_engineering`    | Enzyme function and engineering analysis    |
+| `protein_misfolding`    | Protein misfolding and aggregation research |
+
 ## Shared Resources
 
 - `skills/shared/foldagent_client.py` — API client with auth and retry

@@ -36,7 +36,7 @@ species mode, safety posture) is preserved across steps.
 | Skill directory                            | Purpose                              |
 | ------------------------------------------ | ------------------------------------ |
 | `run_bioinformatics_pipeline/`             | Execute BWA, Mutect2, VEP, NetMHCpan |
-| `run_full_foldagent_case_review/`             | End-to-end case review orchestrator  |
+| `run_full_foldagent_case_review/`          | End-to-end case review orchestrator  |
 | `organize_case_data/`                      | Case, subject, and sample setup      |
 | `generate_candidate_review_report/`        | Candidate report generation          |
 | `get_alphafold_structures/`                | AlphaFold structure prediction       |
@@ -44,6 +44,22 @@ species mode, safety posture) is preserved across steps.
 | `coordinate_licensed_lab_outreach/`        | Lab contact and outreach             |
 | `monitor_case_progress/`                   | Case and job status monitoring       |
 | `autoresearch_optimize_software_pipeline/` | Pipeline adapter optimization        |
+
+## Research Modes
+
+FoldAgent supports 9 research modes (`GET /modes`, `POST /modes/{mode}/check`):
+
+| Mode                    | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| `neoantigen`            | Neoantigen vaccine pipeline (default)       |
+| `variant_pathogenicity` | Variant pathogenicity assessment            |
+| `drug_discovery`        | Small molecule and drug target discovery    |
+| `vaccine_design`        | Broader vaccine antigen design              |
+| `antibody_design`       | Antibody and nanobody design                |
+| `gene_therapy`          | Gene therapy target and vector analysis     |
+| `ppi_mapping`           | Protein-protein interaction mapping         |
+| `enzyme_engineering`    | Enzyme function and engineering analysis    |
+| `protein_misfolding`    | Protein misfolding and aggregation research |
 
 ## Key API Endpoints Used Across Skills
 
