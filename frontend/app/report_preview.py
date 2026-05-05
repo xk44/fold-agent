@@ -15,6 +15,8 @@ def summarize_alphafold_diagnostics(backends_payload: dict) -> dict:
     available_count = 0
 
     for backend_name, backend_payload in sorted(payload.items()):
+        if not isinstance(backend_payload, dict):
+            continue
         available = bool(backend_payload.get("available"))
         if available:
             available_count += 1
@@ -81,6 +83,8 @@ def extract_backend_capability_table(backends_payload: dict) -> list[dict]:
         "notes",
     ]
     for backend_name, backend_payload in sorted(payload.items()):
+        if not isinstance(backend_payload, dict):
+            continue
         for key in ordered_keys:
             rows.append(
                 {
@@ -95,7 +99,7 @@ def extract_backend_capability_table(backends_payload: dict) -> list[dict]:
 
 
 def choose_default_alphafold_backend(backends_payload: dict) -> str | None:
-    payload = backends_payload or {}
+    payload = {k: v for k, v in (backends_payload or {}).items() if isinstance(v, dict)}
     if not payload:
         return None
 
@@ -169,6 +173,8 @@ def build_alphafold_backend_capability_chips(backend_name: str, backend_payload:
 def format_alphafold_troubleshooting_summary(backends_payload: dict) -> str:
     sections = ["AlphaFold validation troubleshooting"]
     for backend_name, payload in sorted((backends_payload or {}).items()):
+        if not isinstance(payload, dict):
+            continue
         if payload.get("validation_ok", True):
             continue
         diagnostics = payload.get("diagnostics") or {}
@@ -354,6 +360,8 @@ def build_alphafold_run_payload_preview(
 def format_alphafold_diagnostics_preview(backends_payload: dict) -> str:
     backend_sections = []
     for backend_name, payload in sorted((backends_payload or {}).items()):
+        if not isinstance(payload, dict):
+            continue
         diagnostics = payload.get("diagnostics") or {}
         diagnostic_lines = [f"- {key}={value}" for key, value in diagnostics.items()] or ["- none"]
         backend_sections.append(
@@ -471,6 +479,177 @@ def format_candidate_review_operator_summary(summary: dict) -> str:
         attention.append(f"{summary['safety_label_count']} safety warnings")
     if attention:
         lines.append(f"Attention: {'; '.join(attention)}")
+    return "\n".join(lines)
+
+
+def summarize_candidate_review_operator_state(
+    report_payload: dict, case_detail: dict | None = None
+) -> dict:
+    case_detail = case_detail or {}
+    content = report_payload.get("content_json") or {}
+    report_type = report_payload.get("report_type") or "report"
+    structure_status = content.get("structure_status") or None
+    structure_backend = content.get("structure_backend") or None
+    review_status = content.get("review_status") or "unknown"
+    report_species = content.get("species") or "n/a"
+    case_species = case_detail.get("species") or "n/a"
+    has_structure = bool(structure_status and structure_status not in ("", "n/a"))
+    needs_structure = not has_structure
+    needs_review = review_status in ("unreviewed", "unknown", "pending")
+    return {
+        "report_type": report_type,
+        "candidate_count": content.get("candidate_count") or 0,
+        "top_candidate_gene": content.get("top_candidate_gene") or "n/a",
+        "review_status": review_status,
+        "structure_status": structure_status or "n/a",
+        "structure_backend": structure_backend or "n/a",
+        "safety_label_count": len(content.get("safety_labels") or []),
+        "missing_data_count": len(content.get("missing_data_checklist") or []),
+        "has_structure_evidence": has_structure,
+        "needs_structure_attention": needs_structure,
+        "needs_review_attention": needs_review,
+        "species_matches_case": report_species == case_species,
+        "report_species": report_species,
+        "case_species": case_species,
+        "ranking_score": content.get("ranking_score"),
+        "ptm": content.get("ptm"),
+        "iptm": content.get("iptm"),
+    }
+
+
+def summarize_ethics_package_operator_state(
+    report_payload: dict, case_detail: dict | None = None
+) -> dict:
+    case_detail = case_detail or {}
+    content = report_payload.get("content_json") or {}
+    rbs = content.get("risk_benefit_summary") or {}
+    consent_status = case_detail.get("consent_status") or "unknown"
+    review_status = case_detail.get("review_status") or "unknown"
+    report_species = content.get("species") or "n/a"
+    case_species = case_detail.get("species") or "n/a"
+    consent_templates = content.get("consent_templates") or {}
+    privacy_notices = content.get("privacy_notices") or []
+    risks = rbs.get("risks") or []
+    benefits = rbs.get("benefits") or []
+    oversight = content.get("professional_oversight_checklist") or []
+    needs_consent = consent_status not in ("received", "approved")
+    needs_review = review_status in ("unreviewed", "unknown", "pending")
+    return {
+        "report_type": report_payload.get("report_type") or "ethics_package",
+        "report_species": report_species,
+        "case_species": case_species,
+        "species_matches_case": report_species == case_species,
+        "consent_status": consent_status,
+        "review_status": review_status,
+        "consent_template_count": len(consent_templates),
+        "privacy_notice_count": len(privacy_notices),
+        "risk_count": len(risks),
+        "benefit_count": len(benefits),
+        "oversight_item_count": len(oversight),
+        "needs_consent_attention": needs_consent,
+        "needs_review_attention": needs_review,
+        "jurisdiction_warning": content.get("jurisdiction_warning") or "n/a",
+    }
+
+
+def format_ethics_package_operator_summary(summary: dict) -> str:
+    report_species = summary.get("report_species") or "n/a"
+    case_species = summary.get("case_species") or "n/a"
+    lines = ["## Ethics Package Operator Summary"]
+    lines.append(
+        f"species={report_species} | "
+        f"consent_status={summary.get('consent_status', 'unknown')} | "
+        f"review_status={summary.get('review_status', 'unknown')}"
+    )
+    lines.append(
+        f"consent_templates={summary.get('consent_template_count', 0)} | "
+        f"privacy_notices={summary.get('privacy_notice_count', 0)} | "
+        f"risks={summary.get('risk_count', 0)} | "
+        f"benefits={summary.get('benefit_count', 0)} | "
+        f"oversight_items={summary.get('oversight_item_count', 0)}"
+    )
+    jw = summary.get("jurisdiction_warning") or "n/a"
+    lines.append(f"Jurisdiction: {jw}")
+    if not summary.get("species_matches_case", True):
+        lines.append(
+            f"Warning: report species ({report_species}) does not match case species ({case_species})"
+        )
+    if summary.get("needs_consent_attention"):
+        lines.append("Consent status needs attention")
+    if summary.get("needs_review_attention"):
+        lines.append("Review status needs attention")
+    return "\n".join(lines)
+
+
+def summarize_agent_skill_inventory(payload: list) -> dict:
+    framework_counts: dict[str, int] = {}
+    skills_with_boundaries = 0
+    for skill in payload:
+        fw = skill.get("framework") or "unknown"
+        framework_counts[fw] = framework_counts.get(fw, 0) + 1
+        if skill.get("safety_boundaries"):
+            skills_with_boundaries += 1
+    return {
+        "total_skills": len(payload),
+        "framework_counts": framework_counts,
+        "skills_with_safety_boundaries": skills_with_boundaries,
+    }
+
+
+def format_agent_skill_inventory_preview(payload: list) -> str:
+    summary = summarize_agent_skill_inventory(payload)
+    lines = [
+        f"## Agent skill inventory",
+        f"total_skills={summary['total_skills']} | skills_with_safety_boundaries={summary['skills_with_safety_boundaries']}",
+    ]
+    for fw, count in summary["framework_counts"].items():
+        lines.append(f"  framework={fw}: {count}")
+    for skill in payload:
+        name = skill.get("skill_name") or "unknown"
+        desc = skill.get("description") or "n/a"
+        path = skill.get("skill_path") or "n/a"
+        endpoints = skill.get("required_api_endpoints") or []
+        boundaries = skill.get("safety_boundaries") or []
+        lines.append(f"\n### {name}")
+        lines.append(f"  framework={skill.get('framework') or 'unknown'} | path={path}")
+        lines.append(f"  description: {desc}")
+        if endpoints:
+            lines.append(f"  endpoints: {', '.join(endpoints)}")
+        if boundaries:
+            lines.append(f"  safety_boundaries: {', '.join(boundaries)}")
+    return "\n".join(lines)
+
+
+def summarize_agent_event_stream(payload: dict) -> dict:
+    events = payload.get("events") or []
+    family_counts: dict[str, int] = {}
+    for ev in events:
+        event_name = ev.get("event") or ""
+        family = event_name.split(".")[0] if "." in event_name else event_name
+        family_counts[family] = family_counts.get(family, 0) + 1
+    return {
+        "total_events": len(events),
+        "event_family_counts": family_counts,
+    }
+
+
+def format_agent_event_stream_preview(payload: dict) -> str:
+    summary = summarize_agent_event_stream(payload)
+    events = payload.get("events") or []
+    lines = [
+        "## Agent event stream",
+        f"total_events={summary['total_events']}",
+    ]
+    for family, count in summary["event_family_counts"].items():
+        lines.append(f"  family={family}: {count}")
+    if events:
+        lines.append("\nRecent events:")
+        for ev in events[-10:]:
+            event_name = ev.get("event") or "unknown"
+            data = ev.get("data") or {}
+            action = data.get("action") or event_name
+            case_id = data.get("case_id") or "n/a"
+            lines.append(f"  - {event_name} | case={case_id} | action={action}")
     return "\n".join(lines)
 
 

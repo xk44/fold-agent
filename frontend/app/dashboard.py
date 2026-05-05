@@ -5,6 +5,7 @@ Live Streamlit UI for the current FastAPI case/safety/sample endpoints.
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,7 +42,7 @@ from frontend.app.structure_viewer import (
 from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_API_URL = "http://localhost:8000"
+DEFAULT_API_URL = os.environ.get("FOLDAGENT_API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="FoldAgent", layout="wide")
 
@@ -266,7 +267,16 @@ def render_provenance_summary(
         report_col3.metric("Report structure scores", " · ".join(part for part in report_score_parts if part) or "n/a")
 
 
-health, health_error = safe_call(client.health)
+def fetch_health(c: FoldAgentClient):
+    """Fetch health, accepting 503 degraded responses without raising."""
+    try:
+        response = c.client.get("/health", headers=c._headers(), timeout=10.0)
+        return response.json(), None
+    except Exception as exc:
+        return None, str(exc)
+
+
+health, health_error = fetch_health(client)
 version, version_error = safe_call(client.version)
 cases, cases_error = safe_call(client.list_cases)
 if cases_error:
@@ -286,6 +296,9 @@ with status_left:
     if health_error:
         st.error(health_error)
     else:
+        if isinstance(health, dict) and health.get("status") == "degraded":
+            missing = health.get("missing_tables") or []
+            st.warning(f"API degraded — missing: {', '.join(missing) if missing else 'tables'}")
         st.json(health)
 with status_right:
     st.subheader("API version")
@@ -552,7 +565,7 @@ else:
             format_func=lambda item: f"{item['run_kind']} · {item['name']} · {item['status']}",
             key=f"unified-run-{pipeline_case_id}",
         )
-        if selected_run.get("artifacts"):
+        if selected_run and selected_run.get("artifacts"):
             st.caption("Run-linked artifacts")
             st.dataframe(selected_run["artifacts"], use_container_width=True)
 
@@ -771,6 +784,9 @@ with inspect_col:
         st.markdown("### Candidate review table")
         variants, variants_error = safe_call(client.list_variants, selected_case_id)
         candidates, candidates_error = safe_call(client.list_candidates, selected_case_id)
+        # Pre-fetch structure jobs and reports so focus buttons can reference them
+        structure_jobs, structure_jobs_error = safe_call(client.list_structure_jobs, selected_case_id)
+        reports, reports_error = safe_call(client.list_reports, selected_case_id)
         if not variants_error and not candidates_error:
             render_provenance_summary(
                 variants or [],
@@ -778,6 +794,48 @@ with inspect_col:
                 execution_select_key=f"execution-viewer-{pipeline_case_id}",
                 execution_history=execution_history or [],
             )
+
+        # --- Variant filter/sort controls ---
+        if not variants_error and variants:
+            variant_filter_col1, variant_filter_col2, variant_filter_col3 = st.columns(3)
+            with variant_filter_col1:
+                variant_filter_status = st.selectbox(
+                    "Variant filter status",
+                    options=["all", "unreviewed", "needs_data", "expert_rejected", "expert_accepted_for_further_research"],
+                    key=f"variant-filter-status-{selected_case_id}",
+                )
+            with variant_filter_col2:
+                variant_sort = st.selectbox(
+                    "Variant sort",
+                    options=["gene", "protein_change", "vaf_desc", "vaf_asc"],
+                    key=f"variant-sort-{selected_case_id}",
+                )
+            with variant_filter_col3:
+                variant_columns = st.selectbox(
+                    "Variant columns",
+                    options=["default", "minimal", "full"],
+                    key=f"variant-columns-{selected_case_id}",
+                )
+            vaf_col1, vaf_col2 = st.columns(2)
+            with vaf_col1:
+                variant_vaf_min = st.number_input(
+                    "Variant VAF min",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=0.0,
+                    step=0.01,
+                    key=f"variant-vaf-min-{selected_case_id}",
+                )
+            with vaf_col2:
+                variant_vaf_max = st.number_input(
+                    "Variant VAF max",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=1.0,
+                    step=0.01,
+                    key=f"variant-vaf-max-{selected_case_id}",
+                )
+
         if variants_error:
             st.error(variants_error)
         elif variants:
@@ -795,6 +853,46 @@ with inspect_col:
                 ),
                 key=f"variant-review-{selected_case_id}",
             )
+
+            # Focus buttons for variant → related objects
+            variant_focus_col1, variant_focus_col2, variant_focus_col3 = st.columns(3)
+            with variant_focus_col1:
+                if st.button("Focus related candidate", key=f"focus-related-candidate-{selected_case_id}", use_container_width=True):
+                    # Find the first candidate linked to the selected variant
+                    related = next(
+                        (c for c in (candidates or []) if c.get("variant_id") == selected_variant_id),
+                        None,
+                    )
+                    if related:
+                        st.session_state[f"candidate-review-{selected_case_id}"] = related["id"]
+                        st.session_state[f"candidate-mhc-filter-{selected_case_id}"] = "all"
+                        st.rerun()
+            with variant_focus_col2:
+                if st.button("Focus related structure job", key=f"focus-related-structure-{selected_case_id}", use_container_width=True):
+                    # Find structure job for the first candidate linked to the selected variant
+                    related_candidate = next(
+                        (c for c in (candidates or []) if c.get("variant_id") == selected_variant_id),
+                        None,
+                    )
+                    if related_candidate:
+                        related_job = next(
+                            (j for j in (structure_jobs or []) if j.get("candidate_id") == related_candidate["id"]),
+                            None,
+                        )
+                        if related_job:
+                            st.session_state[f"structure-job-{selected_case_id}"] = related_job["id"]
+                            st.rerun()
+            with variant_focus_col3:
+                if st.button("Focus related report", key=f"focus-related-report-{selected_case_id}", use_container_width=True):
+                    # Focus the candidate_review report (first one found)
+                    related_report = next(
+                        (r for r in (reports or []) if r.get("report_type") == "candidate_review"),
+                        None,
+                    )
+                    if related_report:
+                        st.session_state[f"report-detail-{selected_case_id}"] = related_report["id"]
+                        st.rerun()
+
             with st.form(f"variant-review-form-{selected_case_id}"):
                 variant_status = st.selectbox(
                     "Variant review status",
@@ -821,6 +919,54 @@ with inspect_col:
                     st.success(f"Updated variant {variant_result['id']}")
                     st.rerun()
 
+        # --- Candidate filter/sort controls ---
+        if not candidates_error and candidates:
+            mhc_options = ["all"] + sorted({c.get("mhc_context") for c in candidates if c.get("mhc_context")})
+            candidate_filter_col1, candidate_filter_col2, candidate_filter_col3, candidate_filter_col4 = st.columns(4)
+            with candidate_filter_col1:
+                candidate_filter_status = st.selectbox(
+                    "Candidate filter status",
+                    options=["all", "unreviewed", "needs_data", "expert_rejected", "expert_accepted_for_further_research"],
+                    key=f"candidate-filter-status-{selected_case_id}",
+                )
+            with candidate_filter_col2:
+                candidate_mhc_filter = st.selectbox(
+                    "Candidate MHC filter",
+                    options=mhc_options,
+                    key=f"candidate-mhc-filter-{selected_case_id}",
+                )
+            with candidate_filter_col3:
+                candidate_sort = st.selectbox(
+                    "Candidate sort",
+                    options=["binding_rank_asc", "binding_rank_desc", "immunogenicity_desc", "ranking_score_desc"],
+                    key=f"candidate-sort-{selected_case_id}",
+                )
+            with candidate_filter_col4:
+                candidate_columns = st.selectbox(
+                    "Candidate columns",
+                    options=["default", "minimal", "full"],
+                    key=f"candidate-columns-{selected_case_id}",
+                )
+            cand_num_col1, cand_num_col2 = st.columns(2)
+            with cand_num_col1:
+                candidate_ranking_min = st.number_input(
+                    "Candidate ranking min",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=0.0,
+                    step=0.01,
+                    key=f"candidate-ranking-min-{selected_case_id}",
+                )
+            with cand_num_col2:
+                candidate_binding_max = st.number_input(
+                    "Candidate binding max",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=1.0,
+                    step=0.01,
+                    key=f"candidate-binding-max-{selected_case_id}",
+                )
+
         if candidates_error:
             st.error(candidates_error)
         elif candidates:
@@ -839,6 +985,45 @@ with inspect_col:
                 ),
                 key=f"candidate-review-{selected_case_id}",
             )
+
+            # Focus buttons for candidate → related objects
+            cand_focus_col1, cand_focus_col2, cand_focus_col3 = st.columns(3)
+            with cand_focus_col1:
+                if st.button("Focus structure job", key=f"focus-structure-job-{selected_case_id}", use_container_width=True):
+                    related_job = next(
+                        (j for j in (structure_jobs or []) if j.get("candidate_id") == selected_candidate_id),
+                        None,
+                    )
+                    if related_job:
+                        st.session_state[f"structure-job-{selected_case_id}"] = related_job["id"]
+                        st.rerun()
+            with cand_focus_col2:
+                if st.button("Focus candidate review report", key=f"focus-candidate-report-{selected_case_id}", use_container_width=True):
+                    related_report = next(
+                        (r for r in (reports or []) if r.get("report_type") == "candidate_review"),
+                        None,
+                    )
+                    if related_report:
+                        st.session_state[f"report-detail-{selected_case_id}"] = related_report["id"]
+                        st.rerun()
+            with cand_focus_col3:
+                if st.button("Focus candidate artifact", key=f"focus-candidate-artifact-{selected_case_id}", use_container_width=True):
+                    # Find artifact linked to this candidate's structure job
+                    related_job = next(
+                        (j for j in (structure_jobs or []) if j.get("candidate_id") == selected_candidate_id),
+                        None,
+                    )
+                    artifacts_for_focus, _aff_err = safe_call(client.list_case_artifacts, selected_case_id)
+                    if artifacts_for_focus:
+                        # Find first report artifact (candidate_review type)
+                        related_artifact = next(
+                            (a for a in artifacts_for_focus if a.get("artifact_type") == "report"),
+                            artifacts_for_focus[0] if artifacts_for_focus else None,
+                        )
+                        if related_artifact:
+                            st.session_state[f"artifact-download-{selected_case_id}"] = related_artifact
+                            st.rerun()
+
             with st.form(f"candidate-review-form-{selected_case_id}"):
                 candidate_status = st.selectbox(
                     "Candidate review status",
@@ -866,7 +1051,6 @@ with inspect_col:
                     st.rerun()
 
         st.markdown("### Structure job explorer")
-        structure_jobs, structure_jobs_error = safe_call(client.list_structure_jobs, selected_case_id)
         if structure_jobs_error:
             st.error(structure_jobs_error)
         elif not structure_jobs:
@@ -1011,7 +1195,6 @@ with inspect_col:
                     st.caption("Linked execution artifacts")
                     st.dataframe(related_execution["artifacts"], use_container_width=True)
 
-        reports, reports_error = safe_call(client.list_reports, selected_case_id)
         if reports_error:
             st.error(reports_error)
         elif not reports:
@@ -1030,6 +1213,7 @@ with inspect_col:
                     ),
                     report_id,
                 ),
+                key=f"report-detail-{selected_case_id}",
             )
             report_payload, report_payload_error = safe_call(client.get_report, selected_report_id)
             if report_payload_error:
