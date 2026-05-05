@@ -1,9 +1,9 @@
-# NeoVax-Agent Safety Policy
+# FoldAgent Safety Policy
 
 ## Scope
 
 This policy governs all outputs, API responses, agent skill actions, reports,
-exports, and user-facing text produced by NeoVax-Agent.
+exports, and user-facing text produced by FoldAgent.
 
 ## Hard Boundaries
 
@@ -36,6 +36,7 @@ Every write action, export, and agent task passes through the safety preflight
 system before execution.
 
 The preflight system checks:
+
 - Whether the action is in the prohibited outputs list
 - Whether the action requires expert mode
 - Whether the action requires professional attestation
@@ -43,6 +44,7 @@ The preflight system checks:
 - Whether the output matches unsafe text patterns
 
 If the preflight system blocks an action:
+
 - The action is NOT executed
 - The attempt is logged in the audit trail
 - The user is informed of the policy violation and which rule applied
@@ -50,12 +52,14 @@ If the preflight system blocks an action:
 ## Mode Restrictions
 
 ### Demo Mode
+
 - Synthetic data only
 - No real patient/pet data
 - No treatment claims
 - "Demo -- for pipeline demonstration only" on all outputs
 
 ### Dog / Veterinary Mode
+
 - Requires assigned vet-oncologist
 - DLA/MHC limitations surfaced on every relevant output
 - Owner consent documentation required
@@ -63,6 +67,7 @@ If the preflight system blocks an action:
 - No dosing or formulation instructions
 
 ### Human / Clinical Mode
+
 - Most restrictive mode
 - Requires assigned physician/oncologist
 - Requires IRB/ethics approval path before any downstream discussion
@@ -73,6 +78,7 @@ If the preflight system blocks an action:
 ## Audit Requirements
 
 Every action must log:
+
 - case_id
 - actor (user, agent, system)
 - action type
@@ -88,6 +94,7 @@ Audit logs are append-only.
 There is NO direct mRNA sequence design feature in the MVP.
 
 Future expert-only sequence-level exports require:
+
 - Explicit expert mode activation
 - Case owner attestation
 - Local-only processing
@@ -100,6 +107,7 @@ Future expert-only sequence-level exports require:
 
 AlphaFold structure predictions are theoretical computational models only.
 They do NOT validate clinical efficacy. Every structure output must display:
+
 - "Structure prediction only -- not clinical validation"
 - Confidence metrics (pLDDT, pAE)
 - Model version
@@ -109,6 +117,7 @@ They do NOT validate clinical efficacy. Every structure output must display:
 ## Agent Skill Safety
 
 All agent skills (Claude Code, OpenClaw, Hermes) must:
+
 - Include a safety boundaries section in their SKILL.md
 - Never produce prohibited outputs
 - Include a "when NOT to use" section
@@ -120,6 +129,7 @@ All agent skills (Claude Code, OpenClaw, Hermes) must:
 ## Unsafe Text Scanner
 
 An automated pattern scanner checks all generated text before export for:
+
 - Dosing language patterns
 - Injection/administration instructions
 - Formulation recipes

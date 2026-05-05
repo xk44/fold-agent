@@ -1,6 +1,6 @@
 ---
 name: create_case
-description: Create a new NeoVax case with subject and sample registration.
+description: Create a new FoldAgent case with subject and sample registration.
 action_type: write
 primary_endpoint: POST /cases
 framework: Claude Code
@@ -11,9 +11,9 @@ safety_gate: required
 
 ## Purpose
 
-Create a new NeoVax case record, register subjects, and upload initial sample
+Create a new FoldAgent case record, register subjects, and upload initial sample
 metadata before any pipeline execution. This is the required first step for all
-NeoVax workflows.
+FoldAgent workflows.
 
 ## Safety Disclaimer
 

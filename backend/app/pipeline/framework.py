@@ -1,7 +1,7 @@
 """Phase 5 Pipeline Step Framework.
 
 Provides abstract base, concrete step stubs, runner, error handling, and retry
-utilities for the NeoVax bioinformatics pipeline.
+utilities for the FoldAgent bioinformatics pipeline.
 """
 
 from __future__ import annotations

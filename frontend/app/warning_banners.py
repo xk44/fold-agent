@@ -1,4 +1,4 @@
-"""Persistent warning banners for NeoVax-Agent dashboard.
+"""Persistent warning banners for FoldAgent dashboard.
 
 Renders research-use and privacy disclaimers, plus case-specific
 evidence and attestation warnings.

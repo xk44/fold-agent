@@ -1,21 +1,21 @@
 ---
-name: neovax-openclaw
-description: OpenClaw skill pack for the NeoVax neoantigen vaccine pipeline. Provides structured tasks for pipeline execution, candidate review, and safety assessment with real-time WebSocket event streaming.
+name: foldagent-openclaw
+description: OpenClaw skill pack for the FoldAgent neoantigen vaccine pipeline. Provides structured tasks for pipeline execution, candidate review, and safety assessment with real-time WebSocket event streaming.
 version: 1.0.0
 license: Apache-2.0
 framework: OpenClaw
-install_path: ~/.openclaw/skills/neovax-openclaw/
+install_path: ~/.openclaw/skills/foldagent-openclaw/
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - oncology-research
   - pipeline
   - neoantigen
   - safety-gated
 ---
 
-# NeoVax OpenClaw Skill Pack
+# FoldAgent OpenClaw Skill Pack
 
 > **Safety Disclaimer**: This skill pack coordinates research workflow only.
 > It does NOT provide medical advice, treatment recommendations, dosing
@@ -24,7 +24,7 @@ tags:
 
 ## Overview
 
-The `neovax-openclaw` skill pack exposes the NeoVax pipeline to OpenClaw
+The `foldagent-openclaw` skill pack exposes the FoldAgent pipeline to OpenClaw
 agents as structured YAML task definitions. Tasks support synchronous REST
 calls and real-time streaming via WebSocket (`ws://…/agent/events/ws`).
 
@@ -38,7 +38,7 @@ calls and real-time streaming via WebSocket (`ws://…/agent/events/ws`).
 
 ## Shared Resources
 
-- `skills/shared/neovax_client.py` — API client with auth and retry
+- `skills/shared/foldagent_client.py` — API client with auth and retry
 - `skills/shared/event_stream_client.py` — SSE/WebSocket event streaming
 - `skills/shared/safety_policy.md` — Full safety policy reference
 - `examples/websocket_usage.md` — Real-time streaming usage examples
@@ -61,7 +61,7 @@ See `CLAWHUB_CHECKLIST.md` for publication checklist before sharing to ClawHub.
 ## Audit Trail
 
 All task executions emit audit events readable via `GET /audit/{case_id}`.
-Do not bypass the NeoVax audit trail.
+Do not bypass the FoldAgent audit trail.
 
 ## No Medical Advice Warning
 

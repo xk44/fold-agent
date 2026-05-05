@@ -38,7 +38,7 @@ def test_build_sample_registration_payload_includes_primary_path_and_custody_met
     payload = build_sample_registration_payload(
         sample_type="rna",
         staged_upload={
-            "path": "/tmp/neovax/case-123/rna/demo.fastq.gz",
+            "path": "/tmp/foldagent/case-123/rna/demo.fastq.gz",
             "filename": "demo.fastq.gz",
             "checksum": "abc123",
             "size_bytes": 42,
@@ -50,7 +50,7 @@ def test_build_sample_registration_payload_includes_primary_path_and_custody_met
     assert payload == {
         "sample_type": "rna",
         "subject_id": None,
-        "file_paths": {"primary": "/tmp/neovax/case-123/rna/demo.fastq.gz"},
+        "file_paths": {"primary": "/tmp/foldagent/case-123/rna/demo.fastq.gz"},
         "checksum": "abc123",
         "source_lab": "Local Sequencing Core",
         "custody_metadata": {

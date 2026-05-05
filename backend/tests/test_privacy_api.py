@@ -82,7 +82,7 @@ class TestAuditExport:
         _create_case(client)
         resp = client.get("/audit/export?format=markdown")
         assert resp.status_code == 200
-        assert "# NeoVax-Agent Audit Log Export" in resp.text
+        assert "# FoldAgent Audit Log Export" in resp.text
 
     def test_export_filtered_by_case(self, client: TestClient) -> None:
         case_id = _create_case(client)

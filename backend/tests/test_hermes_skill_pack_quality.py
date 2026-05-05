@@ -22,7 +22,7 @@ def test_all_hermes_skills_have_steps_and_guardrails() -> None:
 def test_all_hermes_skills_have_rich_endpoint_and_artifact_sections() -> None:
     for path in _skill_paths():
         text = path.read_text(encoding="utf-8")
-        assert "## Required NeoVax API Endpoints" in text
+        assert "## Required FoldAgent API Endpoints" in text
         assert " — " in text, f"{path} endpoints should include purpose annotations"
         assert "## Expected Output Artifact" in text
         assert text.count("- ") >= 8, f"{path} should have multiple bullet details after enrichment"

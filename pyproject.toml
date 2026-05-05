@@ -1,5 +1,5 @@
 [project]
-name = "neovax-agent"
+name = "foldagent"
 version = "0.1.0-alpha"
 description = "Local-first, safety-gated research coordination platform for personalized cancer-vaccine exploration under licensed professional supervision"
 requires-python = ">=3.11"

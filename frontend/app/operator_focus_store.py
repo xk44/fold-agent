@@ -2,7 +2,7 @@
 
 This module provides a lightweight, file-based mechanism for saving and
 restoring the operator's focus selections across Streamlit sessions and
-reruns.  It uses a single JSON file (default: ``~/.neovax/operator_focus.json``)
+reruns.  It uses a single JSON file (default: ``~/.foldagent/operator_focus.json``)
 and is deliberately backend-free.
 
 The heavy lifting (which keys to persist, how to merge with existing
@@ -45,14 +45,14 @@ from typing import Any
 # Configuration
 # ---------------------------------------------------------------------------
 
-_DEFAULT_DIR = Path(os.path.expanduser("~/.neovax"))
+_DEFAULT_DIR = Path(os.path.expanduser("~/.foldagent"))
 _DEFAULT_FILENAME = "operator_focus.json"
 
 
 def default_focus_path() -> Path:
     """Return the default path for the operator focus file.
 
-    The path is ``~/.neovax/operator_focus.json``.  The directory is
+    The path is ``~/.foldagent/operator_focus.json``.  The directory is
     created on demand by :func:`save_operator_focus`.
     """
     return _DEFAULT_DIR / _DEFAULT_FILENAME

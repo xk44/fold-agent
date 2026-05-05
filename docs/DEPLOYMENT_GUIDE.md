@@ -1,12 +1,12 @@
 # Deployment Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-NeoVax-Agent ships with a multi-stage `Dockerfile` and a `docker-compose.yml` covering four services:
+FoldAgent ships with a multi-stage `Dockerfile` and a `docker-compose.yml` covering four services:
 
 | Service     | Default        | Profile  | Port |
 | ----------- | -------------- | -------- | ---- |
@@ -32,7 +32,7 @@ make docker-build-clean
 The Dockerfile uses a two-stage build:
 
 1. **Builder** — installs all dependencies into `/install` using `pip install --prefix`
-2. **Runtime** — copies from builder, creates a non-root `neovax` user (uid/gid 1000), exposes ports 8010 and 8502
+2. **Runtime** — copies from builder, creates a non-root `foldagent` user (uid/gid 1000), exposes ports 8010 and 8502
 
 ---
 
@@ -111,80 +111,80 @@ Set via a `.env` file in the project root (loaded by `docker compose` via `env_f
 ### Core
 
 ```bash
-NEOVAX_API_PORT=8010
-NEOVAX_DASHBOARD_PORT=8502
-NEOVAX_DATABASE_URL=sqlite:///./data/neovax.db
-NEOVAX_DB_INIT_MODE=validate          # use validate or alembic in production
-NEOVAX_SPECIES_MODE=demo              # demo | dog | human
-NEOVAX_SECRET_KEY=changeme            # CHANGE THIS in production
-NEOVAX_LOG_LEVEL=INFO
-NEOVAX_STRUCTURED_LOGS=true
-NEOVAX_AUDIT_LOG_PATH=/app/audit_logs
-NEOVAX_ARTIFACT_ROOT=/app/artifacts
+FOLDAGENT_API_PORT=8010
+FOLDAGENT_DASHBOARD_PORT=8502
+FOLDAGENT_DATABASE_URL=sqlite:///./data/foldagent.db
+FOLDAGENT_DB_INIT_MODE=validate          # use validate or alembic in production
+FOLDAGENT_SPECIES_MODE=demo              # demo | dog | human
+FOLDAGENT_SECRET_KEY=changeme            # CHANGE THIS in production
+FOLDAGENT_LOG_LEVEL=INFO
+FOLDAGENT_STRUCTURED_LOGS=true
+FOLDAGENT_AUDIT_LOG_PATH=/app/audit_logs
+FOLDAGENT_ARTIFACT_ROOT=/app/artifacts
 ```
 
 ### Safety
 
 ```bash
-NEOVAX_SAFETY_PREFLIGHT_ENABLED=true
-NEOVAX_UNSAFE_TEXT_SCANNER_ENABLED=true
-NEOVAX_REQUIRE_PROFESSIONAL_OVERSIGHT=true
+FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=true
+FOLDAGENT_UNSAFE_TEXT_SCANNER_ENABLED=true
+FOLDAGENT_REQUIRE_PROFESSIONAL_OVERSIGHT=true
 ```
 
 ### AlphaFold
 
 ```bash
-NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock
-NEOVAX_ALPHAFOLD_ALLOWED_BACKENDS=mock,colabfold,local_colabfold,alphafold2_local,alphafold3_local,alphafold_server,alphafold_db
-NEOVAX_ALPHAFOLD_CACHE_OUTPUTS=true
+FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock
+FOLDAGENT_ALPHAFOLD_ALLOWED_BACKENDS=mock,colabfold,local_colabfold,alphafold2_local,alphafold3_local,alphafold_server,alphafold_db
+FOLDAGENT_ALPHAFOLD_CACHE_OUTPUTS=true
 ```
 
 ### Pipeline
 
 ```bash
-NEOVAX_PIPELINE_MODE=mock             # mock | real
-NEOVAX_PIPELINE_DEFAULT_THREADS=4
-NEOVAX_PIPELINE_DEFAULT_MEMORY_GB=8
-NEOVAX_PIPELINE_BWA_REFERENCE=/data/reference/hg38.fa
-NEOVAX_PIPELINE_GATK_REFERENCE=/data/reference/hg38.fa
-NEOVAX_PIPELINE_VEP_CACHE_DIR=/data/vep_cache
-NEOVAX_PIPELINE_VEP_ASSEMBLY=GRCh38
+FOLDAGENT_PIPELINE_MODE=mock             # mock | real
+FOLDAGENT_PIPELINE_DEFAULT_THREADS=4
+FOLDAGENT_PIPELINE_DEFAULT_MEMORY_GB=8
+FOLDAGENT_PIPELINE_BWA_REFERENCE=/data/reference/hg38.fa
+FOLDAGENT_PIPELINE_GATK_REFERENCE=/data/reference/hg38.fa
+FOLDAGENT_PIPELINE_VEP_CACHE_DIR=/data/vep_cache
+FOLDAGENT_PIPELINE_VEP_ASSEMBLY=GRCh38
 ```
 
 ### Worker (Celery)
 
 ```bash
-NEOVAX_REDIS_URL=redis://redis:6379/0
-NEOVAX_CELERY_BROKER_URL=redis://redis:6379/0
-NEOVAX_CELERY_RESULT_BACKEND=redis://redis:6379/1
-NEOVAX_BACKGROUND_JOB_BACKEND=auto   # auto | threadpool | celery
+FOLDAGENT_REDIS_URL=redis://redis:6379/0
+FOLDAGENT_CELERY_BROKER_URL=redis://redis:6379/0
+FOLDAGENT_CELERY_RESULT_BACKEND=redis://redis:6379/1
+FOLDAGENT_BACKGROUND_JOB_BACKEND=auto   # auto | threadpool | celery
 ```
 
-When `NEOVAX_CELERY_BROKER_URL` is set, background jobs are dispatched through Celery. Without it, the app falls back to a threadpool executor.
+When `FOLDAGENT_CELERY_BROKER_URL` is set, background jobs are dispatched through Celery. Without it, the app falls back to a threadpool executor.
 
 ### Privacy
 
 ```bash
-NEOVAX_CLOUD_UPLOAD_ENABLED=false
-NEOVAX_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true
-NEOVAX_ENCRYPTION_AT_REST_ENABLED=false
-NEOVAX_ENCRYPTION_KEY=               # required if encryption enabled
+FOLDAGENT_CLOUD_UPLOAD_ENABLED=false
+FOLDAGENT_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true
+FOLDAGENT_ENCRYPTION_AT_REST_ENABLED=false
+FOLDAGENT_ENCRYPTION_KEY=               # required if encryption enabled
 ```
 
 ---
 
 ## Production Configuration Checklist
 
-- [ ] Set `NEOVAX_SECRET_KEY` to a strong random value
-- [ ] Set `NEOVAX_DB_INIT_MODE=validate` (or `alembic`) — never use `create_all` in production
+- [ ] Set `FOLDAGENT_SECRET_KEY` to a strong random value
+- [ ] Set `FOLDAGENT_DB_INIT_MODE=validate` (or `alembic`) — never use `create_all` in production
 - [ ] Run `make migrate` before first start to apply all Alembic migrations
-- [ ] Set `NEOVAX_SPECIES_MODE` to the appropriate value for your research context
-- [ ] Keep `NEOVAX_CLOUD_UPLOAD_ENABLED=false` unless you have reviewed the privacy implications
-- [ ] Keep `NEOVAX_SAFETY_PREFLIGHT_ENABLED=true` — never disable in production
+- [ ] Set `FOLDAGENT_SPECIES_MODE` to the appropriate value for your research context
+- [ ] Keep `FOLDAGENT_CLOUD_UPLOAD_ENABLED=false` unless you have reviewed the privacy implications
+- [ ] Keep `FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=true` — never disable in production
 - [ ] Bind ports to `127.0.0.1` (already default in docker-compose.yml)
 - [ ] Place a reverse proxy (nginx, Caddy) in front if external access is needed
 - [ ] Set up log rotation for `audit_logs/` — these grow indefinitely
-- [ ] Back up `data/neovax.db` and `artifacts/` regularly
+- [ ] Back up `data/foldagent.db` and `artifacts/` regularly
 
 ---
 
@@ -196,7 +196,7 @@ make migrate
 # Equivalent: alembic upgrade head
 ```
 
-Or set `NEOVAX_DB_INIT_MODE=alembic` to run migrations automatically at startup.
+Or set `FOLDAGENT_DB_INIT_MODE=alembic` to run migrations automatically at startup.
 
 ---
 

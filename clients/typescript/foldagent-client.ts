@@ -1,5 +1,5 @@
 /**
- * NeoVax-Agent TypeScript API Client
+ * FoldAgent TypeScript API Client
  *
  * Research coordination tool only — not medical or veterinary advice.
  * All outputs require review by a licensed physician or veterinary oncologist.
@@ -120,7 +120,7 @@ export interface DryRunResult {
   [key: string]: unknown;
 }
 
-export interface NeoVaxError {
+export interface FoldAgentError {
   status: number;
   detail: string;
 }
@@ -134,7 +134,7 @@ class ApiError extends Error {
     public status: number,
     public detail: string,
   ) {
-    super(`NeoVax API error ${status}: ${detail}`);
+    super(`FoldAgent API error ${status}: ${detail}`);
     this.name = "ApiError";
   }
 }
@@ -156,11 +156,11 @@ async function checkResponse(res: Response): Promise<void> {
 // Client
 // ---------------------------------------------------------------------------
 
-export class NeoVaxClient {
+export class FoldAgentClient {
   private readonly base: string;
 
   /**
-   * @param baseUrl  Base URL of the NeoVax-Agent FastAPI server,
+   * @param baseUrl  Base URL of the FoldAgent FastAPI server,
    *                 e.g. "http://localhost:8000". Trailing slash is stripped.
    */
   constructor(baseUrl: string) {

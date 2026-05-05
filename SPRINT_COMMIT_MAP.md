@@ -1,4 +1,4 @@
-# NeoVax-Agent: First Sprint Commit Map
+# FoldAgent: First Sprint Commit Map
 
 This file lists all files created in the initial sprint scaffold, organized
 by the week-1 execution plan phases.
@@ -44,9 +44,9 @@ by the week-1 execution plan phases.
 
 ## Phase 5 — Agent Skills (shared client + skill packs)
 
-- skills/shared/neovax_client.py
+- skills/shared/foldagent_client.py
 - skills/shared/safety_policy.md
-- skills/claude-code/run_full_neovax_case_review/SKILL.md
+- skills/claude-code/run_full_foldagent_case_review/SKILL.md
 
 ## Execution Plan
 

@@ -1,13 +1,13 @@
 # Hermes Skills Install Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical
+> **FoldAgent is a research coordination tool only. It does not provide medical
 > advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-The `neovax-hermes` skill pack exposes the NeoVax pipeline to Hermes agents as
+The `foldagent-hermes` skill pack exposes the FoldAgent pipeline to Hermes agents as
 memory-seeded, audit-integrated skills. Hermes maintains a case memory seed
 between skill invocations so context (case ID, species mode, safety posture)
 is preserved across steps without re-prompting.
@@ -17,7 +17,7 @@ is preserved across steps without re-prompting.
 ## Prerequisites
 
 - Hermes agent runtime installed and configured
-- NeoVax API running (`make dev`, default: `http://127.0.0.1:8010`)
+- FoldAgent API running (`make dev`, default: `http://127.0.0.1:8010`)
 - Python 3.11+ with `httpx` and `pydantic` (`pip install httpx pydantic`)
 
 ---
@@ -27,38 +27,38 @@ is preserved across steps without re-prompting.
 ### Option A — Copy from project source
 
 ```bash
-cp -r /path/to/neovax/skills/hermes ~/.hermes/skills/neovax-hermes
-mkdir -p ~/.hermes/skills/neovax-hermes/shared
-cp /path/to/neovax/skills/shared/neovax_client.py \
-   /path/to/neovax/skills/shared/event_stream_client.py \
-   /path/to/neovax/skills/shared/safety_policy.md \
-   ~/.hermes/skills/neovax-hermes/shared/
+cp -r /path/to/foldagent/skills/hermes ~/.hermes/skills/foldagent-hermes
+mkdir -p ~/.hermes/skills/foldagent-hermes/shared
+cp /path/to/foldagent/skills/shared/foldagent_client.py \
+   /path/to/foldagent/skills/shared/event_stream_client.py \
+   /path/to/foldagent/skills/shared/safety_policy.md \
+   ~/.hermes/skills/foldagent-hermes/shared/
 ```
 
 ### Option B — Symlink for active development
 
 ```bash
-ln -s "$(pwd)/skills/hermes" ~/.hermes/skills/neovax-hermes
-ln -s "$(pwd)/skills/shared" ~/.hermes/skills/neovax-hermes/shared
+ln -s "$(pwd)/skills/hermes" ~/.hermes/skills/foldagent-hermes
+ln -s "$(pwd)/skills/shared" ~/.hermes/skills/foldagent-hermes/shared
 ```
 
 ### Verify discovery
 
 ```bash
-hermes skills list | grep neovax
+hermes skills list | grep foldagent
 ```
 
 Expected: all 9 skill names listed (e.g. `run_bioinformatics_pipeline`,
-`run_full_neovax_case_review`, etc.).
+`run_full_foldagent_case_review`, etc.).
 
 ---
 
 ## Environment
 
 ```bash
-export NEOVAX_API_URL="http://127.0.0.1:8010"
+export FOLDAGENT_API_URL="http://127.0.0.1:8010"
 # For auth-protected deployments:
-# export NEOVAX_API_TOKEN="<token>"
+# export FOLDAGENT_API_TOKEN="<token>"
 ```
 
 ---
@@ -67,7 +67,7 @@ export NEOVAX_API_URL="http://127.0.0.1:8010"
 
 | Skill directory                            | Purpose                                    |
 | ------------------------------------------ | ------------------------------------------ |
-| `run_full_neovax_case_review/`             | End-to-end case review orchestrator        |
+| `run_full_foldagent_case_review/`             | End-to-end case review orchestrator        |
 | `run_bioinformatics_pipeline/`             | Execute BWA, Mutect2, VEP, NetMHCpan       |
 | `organize_case_data/`                      | Case, subject, and sample setup            |
 | `generate_candidate_review_report/`        | Candidate report generation                |
@@ -126,14 +126,14 @@ any modifications to skill files.
 
 ```bash
 # Update (Option A installs)
-rm -rf ~/.hermes/skills/neovax-hermes
+rm -rf ~/.hermes/skills/foldagent-hermes
 # Then repeat Option A steps
 
 # Uninstall
-rm -rf ~/.hermes/skills/neovax-hermes
+rm -rf ~/.hermes/skills/foldagent-hermes
 ```
 
-Uninstalling does not affect the NeoVax database, audit logs, or case data.
+Uninstalling does not affect the FoldAgent database, audit logs, or case data.
 
 ---
 

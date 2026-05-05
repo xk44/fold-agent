@@ -2,7 +2,7 @@
 
 > **Status**: Gap audit + enrichment template  
 > **Scope**: All 9 Hermes skills under `skills/hermes/*/SKILL.md`  
-> **Canonical reference**: `skills/claude-code/run_full_neovax_case_review/SKILL.md` (110 lines, 4476 bytes)  
+> **Canonical reference**: `skills/claude-code/run_full_foldagent_case_review/SKILL.md` (110 lines, 4476 bytes)  
 > **Date**: 2026-04-21
 
 ---
@@ -38,7 +38,7 @@ Hermes versions use a single sentence like "Structured case-data inventory summa
 
 Hermes versions use one sentence (e.g., "Create or normalize case, subject, and sample metadata; inspect data inventory completeness; do not perform treatment analysis.") The canonical version provides a 3-line paragraph with specific triggers and scope boundaries.
 
-#### HIGH: `## Required NeoVax API Endpoints` — Bare URLs vs. Annotated
+#### HIGH: `## Required FoldAgent API Endpoints` — Bare URLs vs. Annotated
 
 Hermes versions list endpoints as bare paths. The canonical version adds purpose annotations (e.g., "`GET /cases/{case_id}/samples` — Get data inventory"). Agents need endpoint purposes to select the right call.
 
@@ -54,7 +54,7 @@ The canonical version provides 4 skill-specific scenarios (API unreachable → c
 
 #### MEDIUM: `## Logging Requirements` — Generic vs. Skill-Specific
 
-All 9 Hermes skills share identical 3-line logging. The canonical version specifies: log timestamps and case_id, log all safety preflight checks and results, log report generation with output hash, all logs must be sent to NeoVax audit trail.
+All 9 Hermes skills share identical 3-line logging. The canonical version specifies: log timestamps and case_id, log all safety preflight checks and results, log report generation with output hash, all logs must be sent to FoldAgent audit trail.
 
 #### LOW: `## No Medical Advice Warning` — Abbreviated vs. Full Paragraph
 
@@ -62,7 +62,7 @@ All Hermes skills use one sentence: "This skill coordinates research workflow on
 
 #### LOW: `tags` in frontmatter — Missing
 
-The canonical version includes tags (`neovax-agent`, `oncology-research`, `case-review`, `safety-gated`). No Hermes skill has tags. This affects discoverability and filtering.
+The canonical version includes tags (`foldagent`, `oncology-research`, `case-review`, `safety-gated`). No Hermes skill has tags. This affects discoverability and filtering.
 
 ### 1.3 Boilerplate Sections (Acceptable as-is)
 
@@ -90,14 +90,14 @@ framework: Hermes                       # [BOILERPLATE] Hermes-specific
 memory_seed_template: default           # [BOILERPLATE] Hermes-specific
 audit_log_integration: required         # [BOILERPLATE] Hermes-specific
 tags:                                   # [MANDATORY] NEW — add skill-specific tags
-  - neovax-agent
+  - foldagent
   - <domain-tag>
   - <operation-tag>
   - safety-gated
 ---
 ```
 
-**Tag guidance**: Always include `neovax-agent` and `safety-gated`. Add 1-3 domain/operation tags specific to the skill (e.g., `bioinformatics`, `alphafold`, `ethics-review`, `case-management`).
+**Tag guidance**: Always include `foldagent` and `safety-gated`. Add 1-3 domain/operation tags specific to the skill (e.g., `bioinformatics`, `alphafold`, `ethics-review`, `case-management`).
 
 ### 2.2 Title [MANDATORY]
 
@@ -134,7 +134,7 @@ Keep as-is. These 3 lines are universal and correct:
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 ```
 
@@ -152,7 +152,7 @@ Each skill already has 2-6 skill-specific boundaries. Keep these. Optionally add
 See also: [shared safety policy](../shared/safety_policy.md)
 ```
 
-### 2.6 Required NeoVax API Endpoints [MANDATORY — ENRICH]
+### 2.6 Required FoldAgent API Endpoints [MANDATORY — ENRICH]
 
 Add a brief purpose annotation (em-dash + short description) after each endpoint.
 
@@ -217,18 +217,18 @@ Replace generic 3-line boilerplate with skill-specific logging requirements.
 **Current (abbreviated — identical across all 9 skills)**:
 ```
 - Log all API calls with case context where available.
-- Preserve NeoVax safety/audit trail for any action taken.
+- Preserve FoldAgent safety/audit trail for any action taken.
 - Stop and report the exact safety reason if blocked.
 ```
 
-**Enriched pattern** (example for `run_full_neovax_case_review`):
+**Enriched pattern** (example for `run_full_foldagent_case_review`):
 ```markdown
 ## Logging Requirements
 
 - Log all API calls with timestamps and case_id.
 - Log all safety preflight checks and their results.
 - Log report generation with output content hash.
-- All logs must be sent to the NeoVax audit trail via the API.
+- All logs must be sent to the FoldAgent audit trail via the API.
 ```
 
 For simpler skills, add 1-2 skill-specific lines to the base 3-line template:
@@ -238,7 +238,7 @@ For simpler skills, add 1-2 skill-specific lines to the base 3-line template:
 
 - Log all API calls with timestamps and case_id where available.
 - Log safety preflight results and any blocking decisions.
-- All actions must be recorded in the NeoVax audit trail via `POST /audit/{case_id}`.
+- All actions must be recorded in the FoldAgent audit trail via `POST /audit/{case_id}`.
 ```
 
 ### 2.11 Failure Handling [MANDATORY — ENRICH]
@@ -259,13 +259,13 @@ Replace generic 3-line boilerplate with skill-specific failure scenarios.
 - If safety preflight blocks the action: inform user of the specific policy violation and do NOT proceed.
 - If the case does not exist: inform user and suggest verifying the case ID or creating a case first.
 - If the pipeline has already failed: suggest checking pipeline history/logs and retry options.
-- If the API is unreachable: inform user and suggest checking NeoVax-Agent service status.
+- If the API is unreachable: inform user and suggest checking FoldAgent service status.
 - If backend validation fails: surface the structured validation payload to the user.
 ```
 
 ### 2.12 No Medical Advice Warning [BOILERPLATE — optional enrichment for keystone skill]
 
-Keep the current one-liner as the default. For the keystone/orchestrator skill (`run_full_neovax_case_review`) only, expand to the canonical multi-sentence form:
+Keep the current one-liner as the default. For the keystone/orchestrator skill (`run_full_foldagent_case_review`) only, expand to the canonical multi-sentence form:
 
 ```markdown
 ## No Medical Advice Warning
@@ -286,7 +286,7 @@ Priority reflects impact of enrichment on agent correctness and safety.
 
 | Skill | Steps | Output Artifact | When to Use | Endpoints | Failure | Logging | Priority |
 |-------|-------|----------------|-------------|-----------|---------|---------|----------|
-| run_full_neovax_case_review | MISSING | 1-line→bullets | 1-line→para | bare→annotated | generic→specific | generic→specific | **P0** |
+| run_full_foldagent_case_review | MISSING | 1-line→bullets | 1-line→para | bare→annotated | generic→specific | generic→specific | **P0** |
 | run_bioinformatics_pipeline | MISSING | 1-line→bullets | 1-line→para | bare→annotated | generic→specific | generic→specific | **P0** |
 | get_alphafold_structures | MISSING | 1-line→bullets | 1-line→para | bare→annotated | generic→specific | generic→specific | **P1** |
 | organize_case_data | MISSING | 1-line→bullets | 1-line→para | bare→annotated | generic→specific | generic→specific | **P1** |
@@ -300,33 +300,33 @@ Priority reflects impact of enrichment on agent correctness and safety.
 
 ## 4. Recommended Best Enrichment Slice
 
-**Start with `run_full_neovax_case_review`** (P0, keystone orchestrator skill).
+**Start with `run_full_foldagent_case_review`** (P0, keystone orchestrator skill).
 
 This is the right first slice because:
 1. It is the most complex skill — the orchestrator that calls all other skills.
-2. It is the only skill where the canonical reference (`skills/claude-code/run_full_neovax_case_review/SKILL.md`) already has full `## Steps`, detailed output, and specific failure handling, providing a proven template.
+2. It is the only skill where the canonical reference (`skills/claude-code/run_full_foldagent_case_review/SKILL.md`) already has full `## Steps`, detailed output, and specific failure handling, providing a proven template.
 3. Enriching it first establishes the enriched pattern that all other skills can follow.
 4. It has the most API endpoints (7), the most user confirmation points (4), and the most complex failure surface — making detailed steps the most safety-critical gap.
 
-After completing `run_full_neovax_case_review`, the next most impactful candidate is `run_bioinformatics_pipeline` (also P0, high-risk pipeline execution).
+After completing `run_full_foldagent_case_review`, the next most impactful candidate is `run_bioinformatics_pipeline` (also P0, high-risk pipeline execution).
 
 ---
 
-## 5. Enriched Example: run_full_neovax_case_review
+## 5. Enriched Example: run_full_foldagent_case_review
 
 Below is the fully enriched version of the keystone skill, ready for review. This demonstrates all mandatory enrichment sections in practice.
 
 ```markdown
 ---
-name: run_full_neovax_case_review
-description: Runs the safe NeoVax-Agent case-review workflow and produces an expert-review packet. Use only for research coordination under professional oversight. Never provide treatment, dosing, manufacturing, or administration instructions.
+name: run_full_foldagent_case_review
+description: Runs the safe FoldAgent case-review workflow and produces an expert-review packet. Use only for research coordination under professional oversight. Never provide treatment, dosing, manufacturing, or administration instructions.
 version: 0.2.0
 license: Apache-2.0
 framework: Hermes
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - oncology-research
   - case-review
   - safety-gated
@@ -336,12 +336,12 @@ tags:
 
 ## When to Use
 
-Use this skill when you need to run the complete end-to-end case review workflow for a NeoVax-Agent research case. It coordinates preflight safety checks, data inventory, pipeline status review, candidate review, and export of an expert-review packet. This skill does NOT run pipeline executions, make structure predictions, or provide clinical decisions.
+Use this skill when you need to run the complete end-to-end case review workflow for a FoldAgent research case. It coordinates preflight safety checks, data inventory, pipeline status review, candidate review, and export of an expert-review packet. This skill does NOT run pipeline executions, make structure predictions, or provide clinical decisions.
 
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -355,7 +355,7 @@ Use this skill when you need to run the complete end-to-end case review workflow
 
 See also: [shared safety policy](../shared/safety_policy.md)
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Safety gate; must pass before proceeding
 - `GET /cases/{case_id}` — Retrieve case details and mode
@@ -408,11 +408,11 @@ A structured expert-review packet containing:
 - Log all API calls with timestamps and case_id.
 - Log all safety preflight checks and their results.
 - Log report generation with output content hash.
-- All logs must be sent to the NeoVax audit trail via `POST /audit/{case_id}`.
+- All logs must be sent to the FoldAgent audit trail via `POST /audit/{case_id}`.
 
 ## Failure Handling
 
-- If the API is unreachable: inform user and suggest checking NeoVax-Agent status.
+- If the API is unreachable: inform user and suggest checking FoldAgent status.
 - If the case does not exist: inform user and suggest verifying the case ID or creating a case first.
 - If safety preflight blocks an action: inform user of the specific policy violation and do NOT proceed.
 - If the pipeline has failed: suggest checking pipeline history/logs and retry options.
@@ -429,12 +429,12 @@ This skill coordinates research workflow. It does NOT provide medical advice, tr
 
 For each Hermes `SKILL.md`, verify:
 
-- [ ] `tags` added to frontmatter (include `neovax-agent`, `safety-gated`, plus 1-3 domain tags)
+- [ ] `tags` added to frontmatter (include `foldagent`, `safety-gated`, plus 1-3 domain tags)
 - [ ] `version` bumped to `0.2.0`
 - [ ] `## When to Use` expanded to 2-4 sentences with trigger, scope, and boundary
 - [ ] `## When NOT to Use` — confirmed unchanged (boilerplate)
 - [ ] `## Safety Boundaries` — skill-specific items confirmed; added `See also` link
-- [ ] `## Required NeoVax API Endpoints` — every endpoint annotated with purpose
+- [ ] `## Required FoldAgent API Endpoints` — every endpoint annotated with purpose
 - [ ] `## Required User Confirmation Points` — confirmed unchanged (already skill-specific)
 - [ ] `## Expected Output Artifact` — expanded to structured bullet list
 - [ ] `## Steps` — NEW section added with numbered procedural workflow

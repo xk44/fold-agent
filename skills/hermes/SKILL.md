@@ -1,21 +1,21 @@
 ---
-name: neovax-hermes
-description: Hermes agent skill pack for the NeoVax neoantigen vaccine pipeline. Provides memory-seeded, audit-integrated skills for pipeline execution, candidate review, report generation, and safety assessment under mandatory expert oversight.
+name: foldagent-hermes
+description: Hermes agent skill pack for the FoldAgent neoantigen vaccine pipeline. Provides memory-seeded, audit-integrated skills for pipeline execution, candidate review, report generation, and safety assessment under mandatory expert oversight.
 version: 1.0.0
 license: Apache-2.0
 framework: Hermes
-install_path: ~/.hermes/skills/neovax-hermes/
+install_path: ~/.hermes/skills/foldagent-hermes/
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - oncology-research
   - pipeline
   - neoantigen
   - safety-gated
 ---
 
-# NeoVax Hermes Skill Pack
+# FoldAgent Hermes Skill Pack
 
 > **Safety Disclaimer**: This skill pack coordinates research workflow only.
 > It does NOT provide medical advice, treatment recommendations, dosing
@@ -26,7 +26,7 @@ tags:
 
 ## Overview
 
-The `neovax-hermes` skill pack exposes the NeoVax neoantigen pipeline to
+The `foldagent-hermes` skill pack exposes the FoldAgent neoantigen pipeline to
 Hermes agents as memory-seeded, audit-integrated skills. Hermes agents
 maintain a case memory seed between skill invocations so context (case ID,
 species mode, safety posture) is preserved across steps.
@@ -36,7 +36,7 @@ species mode, safety posture) is preserved across steps.
 | Skill directory                            | Purpose                              |
 | ------------------------------------------ | ------------------------------------ |
 | `run_bioinformatics_pipeline/`             | Execute BWA, Mutect2, VEP, NetMHCpan |
-| `run_full_neovax_case_review/`             | End-to-end case review orchestrator  |
+| `run_full_foldagent_case_review/`             | End-to-end case review orchestrator  |
 | `organize_case_data/`                      | Case, subject, and sample setup      |
 | `generate_candidate_review_report/`        | Candidate report generation          |
 | `get_alphafold_structures/`                | AlphaFold structure prediction       |
@@ -76,7 +76,7 @@ open_blockers: []
 
 All skills emit structured audit events via `log_action`. The audit trail
 is readable at `GET /audit/{case_id}` and exportable via `GET /audit/export`.
-Skills treat the NeoVax audit trail as the authoritative record — no
+Skills treat the FoldAgent audit trail as the authoritative record — no
 side-channel logging replaces it.
 
 ## Installation

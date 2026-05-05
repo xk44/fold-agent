@@ -1,4 +1,4 @@
-"""Modular event-stream backend abstraction for NeoVax.
+"""Modular event-stream backend abstraction for FoldAgent.
 
 Public API (unchanged):
     publish_event(event_name, payload) -> None

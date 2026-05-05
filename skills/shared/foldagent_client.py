@@ -1,6 +1,6 @@
-"""NeoVax-Agent Shared API Client
+"""FoldAgent Shared API Client
 
-Python client for interacting with the NeoVax-Agent API.
+Python client for interacting with the FoldAgent API.
 All agent skills (Claude Code, OpenClaw, Hermes) share this client.
 """
 
@@ -16,10 +16,13 @@ class AlphaFoldValidationError(Exception):
         super().__init__(payload.get("detail") or "AlphaFold backend validation failed")
 
 
-class NeoVaxClient:
-    """Client for the NeoVax-Agent API with built-in safety checks."""
+DEFAULT_BASE_URL = "http://localhost:8000"
 
-    def __init__(self, base_url: str = "http://localhost:8000", api_key: Optional[str] = None):
+
+class FoldAgentClient:
+    """Client for the FoldAgent API with built-in safety checks."""
+
+    def __init__(self, base_url: str = DEFAULT_BASE_URL, api_key: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.client = httpx.Client(base_url=self.base_url, timeout=30.0)

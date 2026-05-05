@@ -25,7 +25,7 @@ def test_build_sample_registration_payload_can_link_subject_and_preserve_notes()
     payload = build_sample_registration_payload(
         sample_type="tumor",
         staged_upload={
-            "path": "/tmp/neovax/case-123/tumor/demo.fastq.gz",
+            "path": "/tmp/foldagent/case-123/tumor/demo.fastq.gz",
             "filename": "demo.fastq.gz",
             "checksum": "abc123",
             "size_bytes": 42,

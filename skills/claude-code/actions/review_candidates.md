@@ -11,7 +11,7 @@ safety_gate: required
 
 ## Purpose
 
-Retrieve, rank, and annotate neoantigen candidates produced by the NeoVax
+Retrieve, rank, and annotate neoantigen candidates produced by the FoldAgent
 pipeline. Supports reviewing binding affinity scores, variant annotations,
 false-positive risk, clinical evidence, and per-candidate expert review flags.
 

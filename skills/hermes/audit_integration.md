@@ -1,26 +1,26 @@
 ---
-title: Audit Log Integration — neovax-hermes
+title: Audit Log Integration — foldagent-hermes
 framework: Hermes
-skill: neovax-hermes
+skill: foldagent-hermes
 version: 1.0.0
 ---
 
 # Audit Log Integration
 
-This document describes how Hermes skills integrate with the NeoVax audit
+This document describes how Hermes skills integrate with the FoldAgent audit
 trail and what `log_action` patterns each skill emits.
 
 ## Overview
 
 Every write operation, safety check, and pipeline action performed by a
-Hermes skill emits a structured audit event via the NeoVax `log_action`
+Hermes skill emits a structured audit event via the FoldAgent `log_action`
 function (`backend/app/safety/audit.py`). These events are stored in the
 `audit_logs` table and are accessible via:
 
 - `GET /audit/{case_id}` — Events for a specific case
 - `GET /audit/export` — Full audit log export (access-controlled)
 
-Hermes agents treat the NeoVax audit trail as the authoritative record of
+Hermes agents treat the FoldAgent audit trail as the authoritative record of
 all actions taken. No side-channel logging (e.g., local files, agent memory
 only) replaces the audit trail.
 
@@ -33,7 +33,7 @@ below maps skill names to their primary audit action patterns.
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `organize_case_data`                      | `case.created`, `subject.created`, `sample.registered`                                                                  |
 | `run_bioinformatics_pipeline`             | `pipeline.run.started`, `pipeline.run.completed`, `pipeline.run.failed`, `job.dispatched`, `job.retry`, `job.cancelled` |
-| `run_full_neovax_case_review`             | `review.started`, `review.completed`, `report.generated`                                                                |
+| `run_full_foldagent_case_review`             | `review.started`, `review.completed`, `report.generated`                                                                |
 | `generate_candidate_review_report`        | `report.generated`, `report.saved`, `bundle.exported`, `attestation.submitted`                                          |
 | `get_alphafold_structures`                | `structure_job.created`, `structure_job.completed`                                                                      |
 | `create_ethics_review_package`            | `ethics_package.generated`, `ethics_package.saved`                                                                      |

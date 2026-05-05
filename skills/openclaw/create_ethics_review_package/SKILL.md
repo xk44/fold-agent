@@ -1,6 +1,6 @@
 ---
 name: create_ethics_review_package
-description: Generate and export NeoVax ethics-package materials for licensed professional review under safety gating.
+description: Generate and export FoldAgent ethics-package materials for licensed professional review under safety gating.
 version: 0.2.0
 license: Apache-2.0
 framework: OpenClaw
@@ -8,7 +8,7 @@ install_path: ~/.openclaw/skills/<skill_name>
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - ethics-review
   - reporting
   - safety-gated
@@ -23,7 +23,7 @@ Use this skill when a case needs an ethics-review package covering consent, priv
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -34,7 +34,7 @@ Use this skill when a case needs an ethics-review package covering consent, priv
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Gate ethics-package generation and export
 - `GET /cases/{case_id}` — Verify case context
@@ -86,7 +86,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 

@@ -15,17 +15,17 @@ from frontend.app.consent_tracker import (
     build_consent_timeline,
     summarize_consent_state,
 )
-from skills.shared.neovax_client import NeoVaxClient
+from skills.shared.foldagent_client import FoldAgentClient
 
-DEFAULT_API_URL = os.environ.get("NEOVAX_API_URL", "http://127.0.0.1:8010")
+DEFAULT_API_URL = os.environ.get("FOLDAGENT_API_URL", "http://127.0.0.1:8010")
 
-st.set_page_config(page_title="Consent Tracker — NeoVax", layout="wide")
+st.set_page_config(page_title="Consent Tracker — FoldAgent", layout="wide")
 
 st.title("Consent Status Tracker")
 st.caption("Timeline view of consent status across all research cases")
 
 api_url = st.sidebar.text_input("API URL", value=DEFAULT_API_URL)
-client = NeoVaxClient(base_url=api_url)
+client = FoldAgentClient(base_url=api_url)
 
 
 def safe_call(fn, *args, **kwargs):

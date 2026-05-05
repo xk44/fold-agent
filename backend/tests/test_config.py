@@ -32,7 +32,7 @@ def test_settings_default_dashboard_port() -> None:
 
 def test_settings_default_database_url() -> None:
     s = Settings()
-    assert s.database_url == "sqlite:///./neovax.db"
+    assert s.database_url == "sqlite:///./foldagent.db"
 
 
 def test_settings_default_db_init_mode() -> None:
@@ -114,42 +114,42 @@ def test_settings_default_pipeline_pvactools_alleles() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_env_prefix_is_neovax() -> None:
-    assert Settings.model_config["env_prefix"] == "NEOVAX_"
+def test_env_prefix_is_foldagent() -> None:
+    assert Settings.model_config["env_prefix"] == "FOLDAGENT_"
 
 
 def test_settings_override_api_port_via_env() -> None:
-    with patch.dict(os.environ, {"NEOVAX_API_PORT": "9999"}):
+    with patch.dict(os.environ, {"FOLDAGENT_API_PORT": "9999"}):
         s = Settings()
     assert s.api_port == 9999
 
 
 def test_settings_override_species_mode_via_env() -> None:
-    with patch.dict(os.environ, {"NEOVAX_SPECIES_MODE": "human"}):
+    with patch.dict(os.environ, {"FOLDAGENT_SPECIES_MODE": "human"}):
         s = Settings()
     assert s.species_mode == SpeciesMode.HUMAN
 
 
 def test_settings_override_pipeline_mode_via_env() -> None:
-    with patch.dict(os.environ, {"NEOVAX_PIPELINE_MODE": "real"}):
+    with patch.dict(os.environ, {"FOLDAGENT_PIPELINE_MODE": "real"}):
         s = Settings()
     assert s.pipeline_mode == "real"
 
 
 def test_settings_override_database_url_via_env() -> None:
-    with patch.dict(os.environ, {"NEOVAX_DATABASE_URL": "sqlite:///./test.db"}):
+    with patch.dict(os.environ, {"FOLDAGENT_DATABASE_URL": "sqlite:///./test.db"}):
         s = Settings()
     assert s.database_url == "sqlite:///./test.db"
 
 
 def test_settings_override_alphafold_backend_via_env() -> None:
-    with patch.dict(os.environ, {"NEOVAX_ALPHAFOLD_DEFAULT_BACKEND": "colabfold"}):
+    with patch.dict(os.environ, {"FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND": "colabfold"}):
         s = Settings()
     assert s.alphafold_default_backend == AlphaFoldBackendName.COLABFOLD
 
 
-def test_settings_non_neovax_prefix_ignored() -> None:
-    """Environment variables without NEOVAX_ prefix must not affect settings."""
+def test_settings_non_foldagent_prefix_ignored() -> None:
+    """Environment variables without FOLDAGENT_ prefix must not affect settings."""
     with patch.dict(os.environ, {"API_PORT": "1234"}):
         s = Settings()
     assert s.api_port == 8010

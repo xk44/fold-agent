@@ -1,4 +1,4 @@
-"""Celery task definitions for NeoVax-Agent.
+"""Celery task definitions for FoldAgent.
 
 Each task enforces safety preflight before execution.
 Discoverable by the Celery app via autodiscover_tasks.

@@ -1,10 +1,10 @@
-# NeoVax-Agent: Known Limitations
+# FoldAgent: Known Limitations
 
 **Status:** Pre-clinical research prototype — MVP phase  
 **Last updated:** 2026-04-27  
 **Applies to:** All versions prior to production release
 
-> This document is an honest accounting of what NeoVax-Agent currently cannot do.
+> This document is an honest accounting of what FoldAgent currently cannot do.
 > No omissions. Every limitation listed here is intentional or in-scope for future work.
 
 ---
@@ -28,7 +28,7 @@ See `docs/BIOINFORMATICS_ADAPTER_GUIDE.md` for installation instructions.
 
 ## 2. No Real Clinical Validation
 
-NeoVax-Agent has not been validated in any clinical or pre-clinical trial setting.
+FoldAgent has not been validated in any clinical or pre-clinical trial setting.
 All outputs — including candidate antigen rankings, evidence levels, and report summaries —
 are based on mock scores and synthetic data. They have no established clinical validity,
 sensitivity, or specificity.
@@ -83,7 +83,7 @@ interpreted as real predictions.
 
 ## 7. Not FDA/EMA Approved — Not for Clinical Use
 
-NeoVax-Agent is a **research coordination tool only**. It is:
+FoldAgent is a **research coordination tool only**. It is:
 
 - Not a medical device
 - Not approved by the FDA, EMA, or any other regulatory body

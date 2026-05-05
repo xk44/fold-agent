@@ -84,7 +84,7 @@ SHELL_BACKEND_SPECS = {
         "command": "run_alphafold",
         "notes": "AlphaFold2 local shell stub.",
         "probe_args": ["--help"],
-        "env_paths": [("NEOVAX_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")],
+        "env_paths": [("FOLDAGENT_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")],
         "builtin": False,
         "remote_descriptor": False,
     },
@@ -93,8 +93,8 @@ SHELL_BACKEND_SPECS = {
         "notes": "AlphaFold3 local shell stub.",
         "probe_args": ["--help"],
         "env_paths": [
-            ("NEOVAX_ALPHAFOLD3_MODEL_DIR", "alphafold3_model_dir"),
-            ("NEOVAX_ALPHAFOLD3_DB_DIR", "alphafold3_db_dir"),
+            ("FOLDAGENT_ALPHAFOLD3_MODEL_DIR", "alphafold3_model_dir"),
+            ("FOLDAGENT_ALPHAFOLD3_DB_DIR", "alphafold3_db_dir"),
         ],
         "builtin": False,
         "remote_descriptor": False,
@@ -508,9 +508,9 @@ def get_shell_backend_status(name: str) -> AlphaFoldShellStatus:
 
 
 _ENV_SUMMARY_VARS = [
-    "NEOVAX_ALPHAFOLD2_DATA_DIR",
-    "NEOVAX_ALPHAFOLD3_MODEL_DIR",
-    "NEOVAX_ALPHAFOLD3_DB_DIR",
+    "FOLDAGENT_ALPHAFOLD2_DATA_DIR",
+    "FOLDAGENT_ALPHAFOLD3_MODEL_DIR",
+    "FOLDAGENT_ALPHAFOLD3_DB_DIR",
 ]
 
 

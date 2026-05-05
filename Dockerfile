@@ -1,4 +1,4 @@
-# NeoVax-Agent Dockerfile
+# FoldAgent Dockerfile
 # Multi-stage build: builder installs deps, runtime copies them.
 FROM python:3.11-slim AS builder
 
@@ -15,13 +15,13 @@ RUN pip install --no-cache-dir --prefix=/install -e ".[dev,frontend,worker]"
 FROM python:3.11-slim AS runtime
 
 # Labels for introspection
-LABEL org.opencontainers.image.title="neovax-agent" \
+LABEL org.opencontainers.image.title="foldagent" \
       org.opencontainers.image.description="Local-first, safety-gated research coordination platform" \
       org.opencontainers.image.version="0.1.0-alpha"
 
 # Create non-root user for security
-RUN groupadd --gid 1000 neovax && \
-    useradd --uid 1000 --gid neovax --shell /bin/bash --create-home neovax
+RUN groupadd --gid 1000 foldagent && \
+    useradd --uid 1000 --gid foldagent --shell /bin/bash --create-home foldagent
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr
@@ -29,27 +29,27 @@ COPY --from=builder /install /usr
 # Create application and data directories
 WORKDIR /app
 RUN mkdir -p /app/data /app/audit_logs /app/artifacts && \
-    chown -R neovax:neovax /app
+    chown -R foldagent:foldagent /app
 
 # Copy application source
-COPY --chown=neovax:neovax backend/ backend/
-COPY --chown=neovax:neovax frontend/ frontend/
-COPY --chown=neovax:neovax pyproject.toml ./
+COPY --chown=foldagent:foldagent backend/ backend/
+COPY --chown=foldagent:foldagent frontend/ frontend/
+COPY --chown=foldagent:foldagent pyproject.toml ./
 
 # Install the package in runtime stage so entry points are available
 RUN pip install --no-cache-dir -e ".[dev,frontend,worker]"
 
 # Default environment (overridable at runtime)
-ENV NEOVAX_DATABASE_URL="sqlite:///./data/neovax.db" \
-    NEOVAX_SPECIES_MODE="demo" \
-    NEOVAX_SAFETY_PREFLIGHT_ENABLED="true" \
-    NEOVAX_LOG_LEVEL="INFO" \
-    NEOVAX_STRUCTURED_LOGS="true" \
-    NEOVAX_AUDIT_LOG_PATH="/app/audit_logs" \
-    NEOVAX_ALPHAFOLD_DEFAULT_BACKEND="mock" \
-    NEOVAX_PIPELINE_MODE="mock"
+ENV FOLDAGENT_DATABASE_URL="sqlite:///./data/foldagent.db" \
+    FOLDAGENT_SPECIES_MODE="demo" \
+    FOLDAGENT_SAFETY_PREFLIGHT_ENABLED="true" \
+    FOLDAGENT_LOG_LEVEL="INFO" \
+    FOLDAGENT_STRUCTURED_LOGS="true" \
+    FOLDAGENT_AUDIT_LOG_PATH="/app/audit_logs" \
+    FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND="mock" \
+    FOLDAGENT_PIPELINE_MODE="mock"
 
-USER neovax
+USER foldagent
 
 EXPOSE 8010 8502
 

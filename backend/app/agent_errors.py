@@ -1,4 +1,4 @@
-"""Agent-safe error messages for NeoVax API.
+"""Agent-safe error messages for FoldAgent API.
 
 Provides structured error types that help autonomous agents understand
 what went wrong, whether retrying is safe, and how to fix the issue.
@@ -59,7 +59,7 @@ AGENT_ERROR_CATALOG: dict[str, AgentError] = {
     # 403 — safety blocked
     "403_safety_blocked": AgentError(
         code="SAFETY_BLOCKED",
-        message="The action was blocked by the NeoVax safety preflight system.",
+        message="The action was blocked by the FoldAgent safety preflight system.",
         suggestion=(
             "Review the blocked_patterns in the response. "
             "Obtain professional attestation or switch to demo/dog mode for non-human cases."

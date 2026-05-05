@@ -1,4 +1,4 @@
-# Prompt Injection Threat Model — NeoVax-Agent
+# Prompt Injection Threat Model — FoldAgent
 
 **Classification:** Internal — Research Use Only
 **Phase:** 19 (Security Hardening)
@@ -9,7 +9,7 @@
 
 ## Scope
 
-This document details prompt injection risks specific to NeoVax-Agent: a local-first LLM-assisted
+This document details prompt injection risks specific to FoldAgent: a local-first LLM-assisted
 research coordination platform. Attack vectors, mitigations, and residual risk are assessed for
 each input channel that touches LLM inference or skill execution logic.
 
@@ -142,7 +142,7 @@ external-fetch responses.
 
 - Social engineering attacks on platform operators.
 - LLM model-level jailbreaks (mitigated by model provider, not application layer).
-- Adversarial inputs to the wet-lab processes consuming NeoVax outputs.
+- Adversarial inputs to the wet-lab processes consuming FoldAgent outputs.
 
 ---
 

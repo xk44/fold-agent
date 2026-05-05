@@ -1,4 +1,4 @@
-"""NeoVax-Agent Data Loading and Validation Module (Phase 4)
+"""FoldAgent Data Loading and Validation Module (Phase 4)
 
 File type validation, sample role detection, missing-data checklists,
 format-specific metadata registration, and data inventory helpers.

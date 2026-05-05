@@ -1,6 +1,6 @@
 ---
 name: autoresearch_optimize
-description: Run autoresearch software pipeline optimization experiments via the NeoVax autoresearch module.
+description: Run autoresearch software pipeline optimization experiments via the FoldAgent autoresearch module.
 action_type: write
 primary_endpoint: POST /autoresearch/experiment/propose
 framework: Claude Code

@@ -1,20 +1,20 @@
 ---
-title: OPSEC Checklist — OpenClaw NeoVax Deployment
+title: OPSEC Checklist — OpenClaw FoldAgent Deployment
 framework: OpenClaw
-skill: neovax-openclaw
+skill: foldagent-openclaw
 version: 1.0.0
 ---
 
-# OPSEC Checklist: OpenClaw NeoVax Deployment
+# OPSEC Checklist: OpenClaw FoldAgent Deployment
 
-Complete this checklist before deploying the `neovax-openclaw` skill pack to
+Complete this checklist before deploying the `foldagent-openclaw` skill pack to
 any environment other than a local development machine.
 
 ## 1. Secrets and Credentials
 
 - [ ] No API keys, passwords, or tokens are hardcoded in any YAML task file
 - [ ] No secrets are committed to version control (`.env`, `secrets.yaml`, etc.)
-- [ ] `NEOVAX_API_URL` and auth tokens are injected via environment variables
+- [ ] `FOLDAGENT_API_URL` and auth tokens are injected via environment variables
       or a secrets manager, not stored in skill files
 - [ ] OpenClaw agent config files are excluded from any public repository
 - [ ] Service account credentials for AlphaFold or external APIs are rotated
@@ -22,12 +22,12 @@ any environment other than a local development machine.
 
 ## 2. Network Exposure
 
-- [ ] The NeoVax API (`/agent/events/ws`, `/cases/*`, `/safety/*`) is NOT
+- [ ] The FoldAgent API (`/agent/events/ws`, `/cases/*`, `/safety/*`) is NOT
       exposed to untrusted networks without authentication
 - [ ] WebSocket endpoint `/agent/events/ws` is behind a reverse proxy with
       token-based auth enforced in production
 - [ ] TLS is enforced for all API connections (no plaintext `http://` in
-      production `NEOVAX_API_URL`)
+      production `FOLDAGENT_API_URL`)
 - [ ] SSE endpoint `GET /agent/events` has rate limiting configured
 
 ## 3. Data Privacy
@@ -50,7 +50,7 @@ any environment other than a local development machine.
 
 ## 5. Audit Trail
 
-- [ ] The NeoVax audit trail (`GET /audit/{case_id}`, `GET /audit/export`) is
+- [ ] The FoldAgent audit trail (`GET /audit/{case_id}`, `GET /audit/export`) is
       accessible to the supervising professional
 - [ ] Audit logs are retained for the minimum required period per institutional
       policy
@@ -71,14 +71,14 @@ any environment other than a local development machine.
 - [ ] All Python dependencies in `skills/shared/` are pinned to specific
       versions
 - [ ] No unreviewed third-party packages are imported in skill helper files
-- [ ] `skills/shared/neovax_client.py` and `event_stream_client.py` have been
+- [ ] `skills/shared/foldagent_client.py` and `event_stream_client.py` have been
       reviewed for insecure deserialization or SSRF risk
 
 ## 8. Incident Response
 
 - [ ] A contact is designated for security incidents involving this deployment
 - [ ] Procedure exists to revoke API credentials if a breach is suspected
-- [ ] The NeoVax audit log is preserved and backed up before any credential
+- [ ] The FoldAgent audit log is preserved and backed up before any credential
       rotation
 
 ---

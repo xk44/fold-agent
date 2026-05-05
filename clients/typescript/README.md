@@ -1,6 +1,6 @@
-# NeoVax TypeScript Client
+# FoldAgent TypeScript Client
 
-Hand-written TypeScript client for the NeoVax-Agent FastAPI backend.
+Hand-written TypeScript client for the FoldAgent FastAPI backend.
 Uses the native `fetch` API — no runtime dependencies.
 
 > **Research coordination tool only. Not medical or veterinary advice.**
@@ -12,7 +12,7 @@ Uses the native `fetch` API — no runtime dependencies.
 
 ## Install
 
-Copy `neovax-client.ts` into your project or build it first:
+Copy `foldagent-client.ts` into your project or build it first:
 
 ```bash
 npm install          # installs typescript dev dep
@@ -23,18 +23,18 @@ Then import:
 
 ```typescript
 // from source (e.g. with ts-node / Bun / Deno)
-import { NeoVaxClient } from "./neovax-client";
+import { FoldAgentClient } from "./foldagent-client";
 
 // from compiled dist
-import { NeoVaxClient } from "./dist/neovax-client";
+import { FoldAgentClient } from "./dist/foldagent-client";
 ```
 
 ## Quick start
 
 ```typescript
-import { NeoVaxClient } from "./neovax-client";
+import { FoldAgentClient } from "./foldagent-client";
 
-const client = new NeoVaxClient("http://localhost:8000");
+const client = new FoldAgentClient("http://localhost:8000");
 
 // Health check
 const health = await client.health();
@@ -110,7 +110,7 @@ try {
   const c = await client.getCase("nonexistent-id");
 } catch (err) {
   if (err instanceof Error && err.name === "ApiError") {
-    // err.message: "NeoVax API error 404: Case not found"
+    // err.message: "FoldAgent API error 404: Case not found"
   }
 }
 ```

@@ -1,1 +1,1 @@
-"""NeoVax-Agent Backend"""
+"""FoldAgent Backend"""

@@ -1,4 +1,4 @@
-"""Redis pub/sub backend for NeoVax event stream.
+"""Redis pub/sub backend for FoldAgent event stream.
 
 Requires the ``redis`` Python package (included in the ``worker`` extra).
 Connects to a Redis server (via ``Settings.redis_url`` or
@@ -8,7 +8,7 @@ across processes.
 Channel layout
 ~~~~~~~~~~~~~~
 All events are published to a single Redis channel (default
-``neovax:events``).  Each message is a JSON envelope::
+``foldagent:events``).  Each message is a JSON envelope::
 
     {"event": "<event_name>", "payload": {...}, "_src_pid": <int>}
 
@@ -36,7 +36,7 @@ from backend.app.event_stream import EventBackend
 
 logger = logging.getLogger(__name__)
 
-CHANNEL_DEFAULT = "neovax:events"
+CHANNEL_DEFAULT = "foldagent:events"
 
 
 class _Subscriber:
@@ -72,7 +72,7 @@ class RedisEventBackend(EventBackend):
         ``Settings.redis_url``; if that is also unset,
         ``redis://localhost:6379`` is used.
     channel:
-        Redis pub/sub channel name.  Default: ``neovax:events``.
+        Redis pub/sub channel name.  Default: ``foldagent:events``.
     """
 
     def __init__(
@@ -189,7 +189,7 @@ class RedisEventBackend(EventBackend):
         self._listener_started.clear()
         thread = threading.Thread(
             target=self._listener_loop,
-            name="neovax-redis-event-listener",
+            name="foldagent-redis-event-listener",
             daemon=True,
         )
         self._listener_thread = thread

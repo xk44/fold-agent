@@ -1,6 +1,6 @@
 ---
 name: check_safety
-description: Run safety preflight checks and evidence-based risk assessment for a NeoVax case.
+description: Run safety preflight checks and evidence-based risk assessment for a FoldAgent case.
 action_type: read
 primary_endpoint: POST /safety/preflight
 framework: Claude Code
@@ -12,7 +12,7 @@ safety_gate: self
 ## Purpose
 
 Run safety preflight checks, mRNA safety gate validation, false-positive risk
-assessment, and evidence review for a NeoVax case before any pipeline,
+assessment, and evidence review for a FoldAgent case before any pipeline,
 report, or data export action. This action is self-gating — it never requires
 a prior preflight call, but all other actions require it.
 

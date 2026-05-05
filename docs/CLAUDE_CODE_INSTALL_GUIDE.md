@@ -1,14 +1,14 @@
 # Claude Code Skills Install Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical
+> **FoldAgent is a research coordination tool only. It does not provide medical
 > advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-The `neovax-pipeline` Claude Code skill gives Claude Code agents structured,
-safety-gated access to the NeoVax API. It wraps the full pipeline
+The `foldagent-pipeline` Claude Code skill gives Claude Code agents structured,
+safety-gated access to the FoldAgent API. It wraps the full pipeline
 (BWA → Mutect2 → VEP → NetMHCpan) and AlphaFold backends behind audited API
 calls with mandatory confirmation points.
 
@@ -17,7 +17,7 @@ calls with mandatory confirmation points.
 ## Prerequisites
 
 - Claude Code installed and authenticated
-- NeoVax API running (`make dev`, default: `http://127.0.0.1:8010`)
+- FoldAgent API running (`make dev`, default: `http://127.0.0.1:8010`)
 - Python 3.11+ with `httpx` and `pydantic` (`pip install httpx pydantic`)
 
 ---
@@ -27,31 +27,31 @@ calls with mandatory confirmation points.
 ### Option A — Copy to user skills directory
 
 ```bash
-cp -r /path/to/neovax/skills/claude-code ~/.claude/skills/neovax-pipeline
-mkdir -p ~/.claude/skills/neovax-pipeline/shared
-cp /path/to/neovax/skills/shared/neovax_client.py \
-   /path/to/neovax/skills/shared/event_stream_client.py \
-   /path/to/neovax/skills/shared/safety_policy.md \
-   ~/.claude/skills/neovax-pipeline/shared/
+cp -r /path/to/foldagent/skills/claude-code ~/.claude/skills/foldagent-pipeline
+mkdir -p ~/.claude/skills/foldagent-pipeline/shared
+cp /path/to/foldagent/skills/shared/foldagent_client.py \
+   /path/to/foldagent/skills/shared/event_stream_client.py \
+   /path/to/foldagent/skills/shared/safety_policy.md \
+   ~/.claude/skills/foldagent-pipeline/shared/
 ```
 
 ### Option B — Copy to project `.claude/skills/`
 
 ```bash
 mkdir -p .claude/skills
-cp -r skills/claude-code .claude/skills/neovax-pipeline
-mkdir -p .claude/skills/neovax-pipeline/shared
-cp skills/shared/neovax_client.py \
+cp -r skills/claude-code .claude/skills/foldagent-pipeline
+mkdir -p .claude/skills/foldagent-pipeline/shared
+cp skills/shared/foldagent_client.py \
    skills/shared/event_stream_client.py \
    skills/shared/safety_policy.md \
-   .claude/skills/neovax-pipeline/shared/
+   .claude/skills/foldagent-pipeline/shared/
 ```
 
 ### Option C — Symlink for active development
 
 ```bash
-ln -s "$(pwd)/skills/claude-code" ~/.claude/skills/neovax-pipeline
-ln -s "$(pwd)/skills/shared" ~/.claude/skills/neovax-pipeline/shared
+ln -s "$(pwd)/skills/claude-code" ~/.claude/skills/foldagent-pipeline
+ln -s "$(pwd)/skills/shared" ~/.claude/skills/foldagent-pipeline/shared
 ```
 
 ---
@@ -59,9 +59,9 @@ ln -s "$(pwd)/skills/shared" ~/.claude/skills/neovax-pipeline/shared
 ## Environment
 
 ```bash
-export NEOVAX_API_URL="http://127.0.0.1:8010"
+export FOLDAGENT_API_URL="http://127.0.0.1:8010"
 # For auth-protected deployments:
-# export NEOVAX_API_TOKEN="<token>"
+# export FOLDAGENT_API_TOKEN="<token>"
 ```
 
 ---
@@ -85,7 +85,7 @@ See [docs/AGENT_SKILLS_GUIDE.md](AGENT_SKILLS_GUIDE.md) for the complete list.
 
 ```
 # Create a canine osteosarcoma case
-"Create a new NeoVax case for a canine patient with osteosarcoma.
+"Create a new FoldAgent case for a canine patient with osteosarcoma.
 Supervising vet is Dr. Smith."
 
 # Run the pipeline
@@ -103,7 +103,7 @@ ready for Dr. Smith."
 "Run a safety preflight check before exporting case abc-123 results."
 
 # Full end-to-end review
-"Run a full NeoVax case review for case abc-123 in dog mode."
+"Run a full FoldAgent case review for case abc-123 in dog mode."
 ```
 
 ---
@@ -114,7 +114,7 @@ ready for Dr. Smith."
   override the preflight system — a blocked action returns an error regardless.
 - The skill requires **explicit user confirmation** before pipeline runs,
   report generation, and exports.
-- Every action is logged to the NeoVax audit trail (`GET /audit/{case_id}`).
+- Every action is logged to the FoldAgent audit trail (`GET /audit/{case_id}`).
 - Skills must **not** be modified to widen medical-output scope. The
   self-improvement guardrails in each `SKILL.md` are mandatory.
 - Do not install on an agent configured for auto-execution without human

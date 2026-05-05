@@ -1,4 +1,4 @@
-"""Tests for Hermes NeoVax skill pack.
+"""Tests for Hermes FoldAgent skill pack.
 
 Validates skill files exist and are non-empty, install.md references correct
 paths, and audit_integration.md references valid log_action patterns.
@@ -61,11 +61,11 @@ def test_install_md_references_hermes_path() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 3: install.md references the neovax-hermes skill directory name
+# Test 3: install.md references the foldagent-hermes skill directory name
 # ---------------------------------------------------------------------------
 def test_install_md_references_skill_name() -> None:
     text = (SKILL_ROOT / "install.md").read_text()
-    assert "neovax-hermes" in text, "install.md does not reference skill name 'neovax-hermes'"
+    assert "foldagent-hermes" in text, "install.md does not reference skill name 'foldagent-hermes'"
 
 
 # ---------------------------------------------------------------------------

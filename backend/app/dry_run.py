@@ -1,4 +1,4 @@
-"""Dry-run mode for NeoVax agent actions.
+"""Dry-run mode for FoldAgent agent actions.
 
 Simulates actions and returns what WOULD happen without executing them.
 """

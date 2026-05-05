@@ -1,4 +1,4 @@
-"""NeoVax-Agent Container Image Scanning — Infrastructure Stubs
+"""FoldAgent Container Image Scanning — Infrastructure Stubs
 
 CLI command builders and output parsers for trivy/grype.
 """

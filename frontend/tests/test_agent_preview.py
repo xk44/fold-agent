@@ -15,7 +15,7 @@ def test_summarize_agent_skill_inventory_counts_frameworks_and_boundaries() -> N
     payload = [
         {
             "framework": "claude_code",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "description": "research coordination under professional oversight",
             "safety_boundaries": ["Research candidate only — not administerable"],
             "required_api_endpoints": ["POST /safety/preflight"],
@@ -42,8 +42,8 @@ def test_format_agent_skill_inventory_preview_renders_sections() -> None:
         [
             {
                 "framework": "claude_code",
-                "skill_name": "run_full_neovax_case_review",
-                "skill_path": "skills/claude-code/run_full_neovax_case_review/SKILL.md",
+                "skill_name": "run_full_foldagent_case_review",
+                "skill_path": "skills/claude-code/run_full_foldagent_case_review/SKILL.md",
                 "description": "research coordination under professional oversight",
                 "safety_boundaries": ["Research candidate only — not administerable"],
                 "required_api_endpoints": ["POST /safety/preflight"],
@@ -53,7 +53,7 @@ def test_format_agent_skill_inventory_preview_renders_sections() -> None:
 
     assert "Agent skill inventory" in preview
     assert "total_skills=1" in preview
-    assert "run_full_neovax_case_review" in preview
+    assert "run_full_foldagent_case_review" in preview
     assert "POST /safety/preflight" in preview
 
 

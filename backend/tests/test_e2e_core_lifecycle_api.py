@@ -49,7 +49,7 @@ def test_e2e_case_lifecycle_covers_subject_sample_reviews_reports_bundle_and_aud
             "sample_type": "tumor",
             "file_paths": {"vcf": "/tmp/e2e-demo.vcf"},
             "checksum": "e2e123",
-            "source_lab": "NeoVax Demo Lab",
+            "source_lab": "FoldAgent Demo Lab",
         },
     )
     assert sample.status_code == 201

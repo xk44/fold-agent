@@ -1,4 +1,4 @@
-"""NeoVax-Agent AlphaFold Module"""
+"""FoldAgent AlphaFold Module"""
 
 from backend.app.alphafold.base import (
     AlphaFoldBackend,

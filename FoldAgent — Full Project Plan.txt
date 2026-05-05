@@ -1,4 +1,4 @@
-# NeoVax-Agent — Full Project Plan + Todo List
+# FoldAgent — Full Project Plan + Todo List
 ## Open-source, local-first research coordination platform inspired by Paul Conyngham’s Rosie workflow
 
 Date: 2026-04-16
@@ -10,7 +10,7 @@ Hard rule: This project must NOT provide DIY vaccine manufacturing, dosing, inje
 
 # 1. Project Overview
 
-NeoVax-Agent is an open-source, local-first software platform for organizing the workflow around personalized cancer-vaccine research cases for dogs or humans.
+FoldAgent is an open-source, local-first software platform for organizing the workflow around personalized cancer-vaccine research cases for dogs or humans.
 
 The project is inspired by Paul Conyngham’s public story about using AI, sequencing, AlphaFold, and university scientific collaborators to help design an experimental personalized mRNA cancer treatment approach for his dog Rosie.
 
@@ -48,7 +48,7 @@ Paul public GitHub repo:
 https://github.com/PaulConyngham/AutologousCancerVaccineWithQuantumParticles
 
 Important note:
-Paul’s GitHub repo is direct public material from Paul, but it appears to be an autologous tumor-lysate vaccine protocol, not the exact mRNA neoantigen Rosie pipeline. NeoVax-Agent should link to it as source/context, but should NOT copy operational manufacturing, formulation, dosing, or administration details into the app.
+Paul’s GitHub repo is direct public material from Paul, but it appears to be an autologous tumor-lysate vaccine protocol, not the exact mRNA neoantigen Rosie pipeline. FoldAgent should link to it as source/context, but should NOT copy operational manufacturing, formulation, dosing, or administration details into the app.
 
 ## 2.2 Reporting and context links
 
@@ -162,11 +162,11 @@ Use only for software/research-pipeline optimization experiments, not for autono
 
 # 3. Core Product Definition
 
-NeoVax-Agent should be framed as:
+FoldAgent should be framed as:
 
 A privacy-first research case manager and computational biology workflow orchestrator for personalized cancer-vaccine exploration under licensed professional supervision.
 
-NeoVax-Agent should NOT be framed as:
+FoldAgent should NOT be framed as:
 
 - A cure generator.
 - A direct-to-consumer treatment app.
@@ -221,7 +221,7 @@ Requirements:
 
 # 5. Safety Boundaries
 
-NeoVax-Agent may generate:
+FoldAgent may generate:
 
 - Case organization summaries.
 - Sequencing inventory.
@@ -238,7 +238,7 @@ NeoVax-Agent may generate:
 - Agent task plans.
 - Expert-review packets.
 
-NeoVax-Agent must NOT generate:
+FoldAgent must NOT generate:
 
 - DIY vaccine manufacturing protocols.
 - Injection instructions.
@@ -266,7 +266,7 @@ Any module that touches mRNA sequence design must be locked behind:
 # 6. High-Level Architecture
 
 Repository name:
-open-vax/neovax-agent
+open-vax/foldagent-agent
 
 Suggested license:
 Apache-2.0 or AGPL-3.0 for platform code.
@@ -634,7 +634,7 @@ Each skill is a folder containing SKILL.md plus optional scripts/resources.
 
 Skill pack names:
 
-1. run_full_neovax_case_review
+1. run_full_foldagent_case_review
 Purpose:
 Run the safe end-to-end case-review workflow:
 - preflight
@@ -691,12 +691,12 @@ Not allowed:
 
 Skill folder layout:
 
-/skills/shared/neovax_client.py
+/skills/shared/foldagent_client.py
 /skills/shared/openapi.json
 /skills/shared/safety_policy.md
 /skills/shared/report_templates/
 
-/skills/claude-code/run_full_neovax_case_review/SKILL.md
+/skills/claude-code/run_full_foldagent_case_review/SKILL.md
 /skills/claude-code/organize_case_data/SKILL.md
 /skills/claude-code/run_bioinformatics_pipeline/SKILL.md
 /skills/claude-code/get_alphafold_structures/SKILL.md
@@ -715,7 +715,7 @@ Each SKILL.md should include:
 - when to use
 - when not to use
 - safety boundaries
-- required NeoVax API endpoint
+- required FoldAgent API endpoint
 - required user confirmation points
 - expected output artifact
 - logging requirements
@@ -725,12 +725,12 @@ Each SKILL.md should include:
 Example SKILL.md frontmatter pattern:
 
 ---
-name: run_full_neovax_case_review
-description: Runs the safe NeoVax-Agent case-review workflow and produces an expert-review packet. Use only for research coordination under professional oversight. Never provide treatment, dosing, manufacturing, or administration instructions.
+name: run_full_foldagent_case_review
+description: Runs the safe FoldAgent case-review workflow and produces an expert-review packet. Use only for research coordination under professional oversight. Never provide treatment, dosing, manufacturing, or administration instructions.
 version: 0.1.0
 license: Apache-2.0
 tags:
-  - neovax-agent
+  - foldagent-agent
   - oncology-research
   - case-review
   - safety-gated
@@ -817,7 +817,7 @@ Limit autoresearch to software improvements and measurable non-clinical metrics.
 
 ## Phase 0 — Governance, Safety, and Source Registry
 
-- [x] Create repo: open-vax/neovax-agent
+- [x] Create repo: open-vax/foldagent-agent
 - [x] Pick license: Apache-2.0 or AGPL-3.0
 - [x] Add README.md
 - [x] Add ETHICS.md
@@ -1040,10 +1040,10 @@ Limit autoresearch to software improvements and measurable non-clinical metrics.
 ## Phase 12 — Claude Code Skill Creation
 
 - [x] Create /skills/claude-code directory
-- [x] Create shared NeoVax API client script
+- [x] Create shared FoldAgent API client script
 - [x] Create shared safety policy file
 - [x] Create shared output templates
-- [x] Create run_full_neovax_case_review/SKILL.md
+- [x] Create run_full_foldagent_case_review/SKILL.md
 - [x] Create organize_case_data/SKILL.md
 - [x] Create run_bioinformatics_pipeline/SKILL.md
 - [x] Create get_alphafold_structures/SKILL.md
@@ -1248,9 +1248,9 @@ MVP v0.1.0 is complete when:
 - The system generates a safe expert-review report.
 - The system generates a safe ethics/veterinary review packet.
 - The system blocks unsafe treatment/manufacturing outputs.
-- Claude Code skills can call the NeoVax API.
-- OpenClaw skills can call the NeoVax API.
-- Hermes skills can call the NeoVax API.
+- Claude Code skills can call the FoldAgent API.
+- OpenClaw skills can call the FoldAgent API.
+- Hermes skills can call the FoldAgent API.
 - Every agent action is logged.
 - Every report has safety labels.
 - No report contains dosing, injection, formulation, or manufacturing instructions.
@@ -1491,7 +1491,7 @@ Risk:
 Paul’s direct GitHub protocol is misused.
 
 Mitigation:
-Link as source/context only. Do not copy operational lab protocol steps into NeoVax-Agent.
+Link as source/context only. Do not copy operational lab protocol steps into FoldAgent.
 
 Risk:
 Regulatory constraints are underestimated.
@@ -1522,7 +1522,7 @@ Build in this order:
 9. Dashboard MVP.
 10. Candidate-review report.
 11. Ethics package generator.
-12. Shared NeoVax API client.
+12. Shared FoldAgent API client.
 13. Skills for Claude Code, Hermes, OpenClaw
 14. ColabFold backend.
 15. Bioinformatics wrappers.
@@ -1534,4 +1534,4 @@ Build in this order:
 
 # 18. Single-Sentence Product Summary
 
-NeoVax-Agent is a local-first, safety-gated research coordination platform that turns the Paul Conyngham / Rosie story into an auditable, expert-supervised software workflow with AlphaFold support, bioinformatics adapters, ethics documentation, and plug-and-play Claude Code / OpenClaw / Hermes skills — without providing DIY vaccine manufacturing or treatment instructions.
+FoldAgent is a local-first, safety-gated research coordination platform that turns the Paul Conyngham / Rosie story into an auditable, expert-supervised software workflow with AlphaFold support, bioinformatics adapters, ethics documentation, and plug-and-play Claude Code / OpenClaw / Hermes skills — without providing DIY vaccine manufacturing or treatment instructions.

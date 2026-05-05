@@ -1,4 +1,4 @@
-"""Seed NeoVax demo data into the configured database."""
+"""Seed FoldAgent demo data into the configured database."""
 
 from __future__ import annotations
 
@@ -176,7 +176,7 @@ def seed_demo_database(database_url: str | None = None, *, reset: bool = False) 
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Seed NeoVax synthetic demo data")
+    parser = argparse.ArgumentParser(description="Seed FoldAgent synthetic demo data")
     parser.add_argument("--database-url", default=None, help="Override database URL for seeding")
     parser.add_argument("--reset", action="store_true", help="Drop and recreate all tables before seeding")
     return parser.parse_args()
@@ -185,7 +185,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     summary = seed_demo_database(args.database_url, reset=args.reset)
-    print("NeoVax demo seed complete")
+    print("FoldAgent demo seed complete")
     for key, value in summary.items():
         print(f"{key}: {value}")
 

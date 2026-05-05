@@ -229,10 +229,10 @@ def test_compassionate_use_checklist_has_attestations(client: TestClient) -> Non
         assert "attestation" in att
 
 
-def test_compassionate_use_checklist_critical_warning_mentions_neovax(client: TestClient) -> None:
+def test_compassionate_use_checklist_critical_warning_mentions_foldagent(client: TestClient) -> None:
     data = client.get("/ethics/compassionate-use-checklist?species=dog").json()
 
-    assert "neovax" in data["critical_warning"].lower() or "cannot bypass" in data["critical_warning"].lower()
+    assert "foldagent" in data["critical_warning"].lower() or "cannot bypass" in data["critical_warning"].lower()
 
 
 def test_compassionate_use_checklist_contains_disclaimer(client: TestClient) -> None:

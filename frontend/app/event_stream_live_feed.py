@@ -20,7 +20,7 @@ from skills.shared.event_stream_client import (
     SSEEvent,
     WebSocketEventClient,
 )
-from skills.shared.neovax_client import DEFAULT_BASE_URL
+from skills.shared.foldagent_client import DEFAULT_BASE_URL
 
 from frontend.app.event_stream_auto_refresh import (
     AutoRefreshConfig,
@@ -53,8 +53,8 @@ class LiveEventFeed:
     - ``"sse"`` — SSE snapshot polling only (original behaviour)
     """
 
-    SESSION_KEY = "neovax_live_events"
-    SESSION_META_KEY = "neovax_live_events_meta"
+    SESSION_KEY = "foldagent_live_events"
+    SESSION_META_KEY = "foldagent_live_events_meta"
 
     def __init__(
         self,

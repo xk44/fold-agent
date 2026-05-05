@@ -1,6 +1,6 @@
-# NeoVax Operator Verification Walkthrough
+# FoldAgent Operator Verification Walkthrough
 
-Step-by-step runbook to verify a local NeoVax stack is healthy and functional.
+Step-by-step runbook to verify a local FoldAgent stack is healthy and functional.
 
 ## Port defaults
 
@@ -16,13 +16,13 @@ make dev API_PORT=18010
 make dashboard API_PORT=18010 DASHBOARD_PORT=18501
 ```
 
-The dashboard reads `NEOVAX_API_URL` (defaults to `http://127.0.0.1:$(API_PORT)`)
+The dashboard reads `FOLDAGENT_API_URL` (defaults to `http://127.0.0.1:$(API_PORT)`)
 to find the API.
 
 ## Prerequisites
 
 ```bash
-cd ~/projects/neovax
+cd ~/projects/foldagent
 cp .env.example .env          # first time only
 make install                   # pip install -e ".[dev,frontend]"
 ```
@@ -36,13 +36,13 @@ make dev
 
 ## 2. Verify API health
 
-Do not use `curl -f` here: NeoVax now returns a structured JSON body even when
+Do not use `curl -f` here: FoldAgent now returns a structured JSON body even when
 `/health` is degraded (`HTTP 503`). Capture both the HTTP status and the JSON
 payload.
 
 ```bash
-curl -sS -o /tmp/neovax-health.json -w '%{http_code}\n' http://127.0.0.1:8010/health
-python3 -m json.tool /tmp/neovax-health.json
+curl -sS -o /tmp/foldagent-health.json -w '%{http_code}\n' http://127.0.0.1:8010/health
+python3 -m json.tool /tmp/foldagent-health.json
 ```
 
 Healthy example (`HTTP 200`):
@@ -53,7 +53,7 @@ Healthy example (`HTTP 200`):
     "version": "0.1.0-alpha",
     "mode": "demo",
     "db_status": "ok",
-    "database_url": "sqlite:///./neovax.db",
+    "database_url": "sqlite:///./foldagent.db",
     "db_init_mode": "create_all",
     "tables_present": 14,
     "tables_expected": 14,
@@ -71,7 +71,7 @@ Degraded example (`HTTP 503`):
     "version": "0.1.0-alpha",
     "mode": "demo",
     "db_status": "degraded",
-    "database_url": "sqlite:///./neovax.db",
+    "database_url": "sqlite:///./foldagent.db",
     "db_init_mode": "create_all",
     "tables_present": 0,
     "tables_expected": 14,
@@ -152,7 +152,7 @@ Open the dashboard in a browser:
 http://127.0.0.1:8502
 ```
 
-You should see the NeoVax dashboard with demo case data, AlphaFold diagnostics,
+You should see the FoldAgent dashboard with demo case data, AlphaFold diagnostics,
 report previews, and structure-job/artifact panels.
 
 ## 8. Verify structure viewer flow
@@ -236,8 +236,8 @@ docker compose --profile worker down
 |---|---|---|
 | `/health` Connection refused | API not running | `make dev` |
 | `/health` returns `503` with `status: degraded` | Database schema drift or wrong DB path | Read `missing_tables`, `db_init_mode`, and `database_url` from the JSON body, then migrate/fix the DB and restart the API |
-| Dashboard shows connection error | `NEOVAX_API_URL` wrong | Check `API_PORT` or set `NEOVAX_API_URL` explicitly |
-| `make seed-demo` fails | Database not initialised | Delete `neovax.db`, restart API, re-run `seed-demo` |
+| Dashboard shows connection error | `FOLDAGENT_API_URL` wrong | Check `API_PORT` or set `FOLDAGENT_API_URL` explicitly |
+| `make seed-demo` fails | Database not initialised | Delete `foldagent.db`, restart API, re-run `seed-demo` |
 | `/alphafold/backends` shows all unavailable | Expected in demo mode with no local AF2/AF3/ColabFold | `mock` backend is used by default; only `alphafold_server` and `alphafold_db` may show available |
 | Worker won't start | Redis not reachable | Start Redis first: `docker compose --profile worker up redis -d` |
 | Port already in use | Another process on 8010 or 8502 | Override: `make dev API_PORT=18010` |

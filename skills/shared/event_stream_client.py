@@ -1,4 +1,4 @@
-"""SSE Event Stream Client for NeoVax-Agent.
+"""SSE Event Stream Client for FoldAgent.
 
 Provides SSE wire-format parsing, a thread-safe event buffer, and
 HTTP/WebSocket streaming clients that connect to event endpoints
@@ -22,7 +22,7 @@ from urllib.parse import urlencode
 
 import httpx
 
-from skills.shared.neovax_client import DEFAULT_BASE_URL
+from skills.shared.foldagent_client import DEFAULT_BASE_URL
 
 try:
     from websockets.sync.client import connect as ws_connect
@@ -280,7 +280,7 @@ class EventStreamClient:
 # ---------------------------------------------------------------------------
 
 class WebSocketEventClient:
-    """WebSocket client that connects to a NeoVax event endpoint and
+    """WebSocket client that connects to a FoldAgent event endpoint and
     yields parsed :class:`SSEEvent` objects.
 
     The server sends JSON messages of the form::

@@ -1,4 +1,4 @@
-"""Lab Coordination panels for the NeoVax-Agent Streamlit dashboard.
+"""Lab Coordination panels for the FoldAgent Streamlit dashboard.
 
 Renders contact log, cost tracker, timeline, document requests,
 outreach templates, and checklists.

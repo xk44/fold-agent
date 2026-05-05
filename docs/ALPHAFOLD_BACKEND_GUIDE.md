@@ -1,14 +1,14 @@
 # AlphaFold Backend Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-NeoVax-Agent supports seven AlphaFold backends behind a common `AlphaFoldBackend` abstract interface (`backend/app/alphafold/base.py`). All backends share the same `run_structure_prediction()` / `validate_environment()` / `collect_outputs()` contract. Structure predictions carry the safety label: **"Structure prediction only — not clinical validation"**.
+FoldAgent supports seven AlphaFold backends behind a common `AlphaFoldBackend` abstract interface (`backend/app/alphafold/base.py`). All backends share the same `run_structure_prediction()` / `validate_environment()` / `collect_outputs()` contract. Structure predictions carry the safety label: **"Structure prediction only — not clinical validation"**.
 
-Backends are registered at startup in `base.py`. The active default is controlled by `NEOVAX_ALPHAFOLD_DEFAULT_BACKEND` (default: `mock`).
+Backends are registered at startup in `base.py`. The active default is controlled by `FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND` (default: `mock`).
 
 ---
 
@@ -144,11 +144,11 @@ Always run a dry-run first when testing a new backend configuration. The dry-run
 ## Environment Variable
 
 ```bash
-NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock        # safe default
-NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=local_colabfold  # local GPU setup
-NEOVAX_ALPHAFOLD_ALLOWED_BACKENDS=mock,local_colabfold,alphafold3_local
-NEOVAX_ALPHAFOLD_CACHE_OUTPUTS=true
-NEOVAX_ALPHAFOLD_STORE_CONFIDENCE_METRICS=true
+FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock        # safe default
+FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=local_colabfold  # local GPU setup
+FOLDAGENT_ALPHAFOLD_ALLOWED_BACKENDS=mock,local_colabfold,alphafold3_local
+FOLDAGENT_ALPHAFOLD_CACHE_OUTPUTS=true
+FOLDAGENT_ALPHAFOLD_STORE_CONFIDENCE_METRICS=true
 ```
 
 ---

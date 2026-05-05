@@ -50,14 +50,14 @@ def test_synthetic_demo_flow_covers_seed_pipeline_reports_safety_audit_and_agent
 
     agent_skills = client.get("/agent/skills")
     assert agent_skills.status_code == 200
-    assert any(item["skill_name"] == "run_full_neovax_case_review" for item in agent_skills.json())
+    assert any(item["skill_name"] == "run_full_foldagent_case_review" for item in agent_skills.json())
 
     agent_dry_run = client.post(
         "/agent/tasks/dry-run",
         json={
             "case_id": case_id,
             "framework": "claude_code",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "status": "pending",
         },
     )

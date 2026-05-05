@@ -1,13 +1,13 @@
 # OpenClaw Skills Install Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical
+> **FoldAgent is a research coordination tool only. It does not provide medical
 > advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-The `neovax-openclaw` skill pack exposes the NeoVax pipeline to OpenClaw agents
+The `foldagent-openclaw` skill pack exposes the FoldAgent pipeline to OpenClaw agents
 as structured YAML task definitions. Tasks support synchronous REST calls and
 real-time event streaming via WebSocket (`ws://…/agent/events/ws`).
 
@@ -16,7 +16,7 @@ real-time event streaming via WebSocket (`ws://…/agent/events/ws`).
 ## Prerequisites
 
 - OpenClaw runtime installed and configured
-- NeoVax API running (`make dev`, default: `http://127.0.0.1:8010`)
+- FoldAgent API running (`make dev`, default: `http://127.0.0.1:8010`)
 - Python 3.11+ with `httpx` and `pydantic` (`pip install httpx pydantic`)
 - TLS reverse proxy if deploying beyond localhost (see OPSEC checklist)
 
@@ -27,26 +27,26 @@ real-time event streaming via WebSocket (`ws://…/agent/events/ws`).
 ### Option A — Copy to OpenClaw skills directory
 
 ```bash
-cp -r /path/to/neovax/skills/openclaw ~/.openclaw/skills/neovax-openclaw
-mkdir -p ~/.openclaw/skills/neovax-openclaw/shared
-cp /path/to/neovax/skills/shared/neovax_client.py \
-   /path/to/neovax/skills/shared/event_stream_client.py \
-   /path/to/neovax/skills/shared/safety_policy.md \
-   ~/.openclaw/skills/neovax-openclaw/shared/
+cp -r /path/to/foldagent/skills/openclaw ~/.openclaw/skills/foldagent-openclaw
+mkdir -p ~/.openclaw/skills/foldagent-openclaw/shared
+cp /path/to/foldagent/skills/shared/foldagent_client.py \
+   /path/to/foldagent/skills/shared/event_stream_client.py \
+   /path/to/foldagent/skills/shared/safety_policy.md \
+   ~/.openclaw/skills/foldagent-openclaw/shared/
 ```
 
 ### Option B — Symlink for active development
 
 ```bash
-ln -s "$(pwd)/skills/openclaw" ~/.openclaw/skills/neovax-openclaw
-ln -s "$(pwd)/skills/shared" ~/.openclaw/skills/neovax-openclaw/shared
+ln -s "$(pwd)/skills/openclaw" ~/.openclaw/skills/foldagent-openclaw
+ln -s "$(pwd)/skills/shared" ~/.openclaw/skills/foldagent-openclaw/shared
 ```
 
 ### Load the skill pack
 
 ```bash
-openclaw skills load ~/.openclaw/skills/neovax-openclaw
-openclaw skills list | grep neovax
+openclaw skills load ~/.openclaw/skills/foldagent-openclaw
+openclaw skills list | grep foldagent
 ```
 
 ---
@@ -56,10 +56,10 @@ openclaw skills list | grep neovax
 In your OpenClaw agent config, set:
 
 ```yaml
-neovax_api_url: "http://127.0.0.1:8010"
-neovax_ws_url: "ws://127.0.0.1:8010/agent/events/ws"
+foldagent_api_url: "http://127.0.0.1:8010"
+foldagent_ws_url: "ws://127.0.0.1:8010/agent/events/ws"
 # For auth-protected deployments:
-# neovax_api_token: "${NEOVAX_API_TOKEN}"
+# foldagent_api_token: "${FOLDAGENT_API_TOKEN}"
 ```
 
 Never hardcode tokens in YAML files. Inject via environment variable or
@@ -100,8 +100,8 @@ Before deploying beyond a local dev machine, complete
 `skills/openclaw/OPSEC_CHECKLIST.md`. Key items:
 
 - No API keys or tokens hardcoded in task YAML files
-- `NEOVAX_API_URL` and auth injected via environment variables
-- NeoVax API not exposed to untrusted networks without auth
+- `FOLDAGENT_API_URL` and auth injected via environment variables
+- FoldAgent API not exposed to untrusted networks without auth
 - WebSocket endpoint behind reverse proxy with token auth in production
 - TLS enforced for all production API connections
 - `POST /safety/preflight` confirmed present in all deployed task files

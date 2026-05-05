@@ -1,11 +1,12 @@
-# NeoVax-Agent Shared Safety Policy
+# FoldAgent Shared Safety Policy
 
 This document defines the canonical safety rules that ALL agent skills must follow,
 regardless of framework (Claude Code, OpenClaw, Hermes).
 
 ## Declaration
 
-NeoVax-Agent is a research coordination platform. It does NOT provide:
+FoldAgent is a research coordination platform. It does NOT provide:
+
 - Medical advice
 - Vaccine manufacturing instructions
 - Injection or dosing instructions
@@ -25,13 +26,13 @@ NeoVax-Agent is a research coordination platform. It does NOT provide:
    action, call `POST /safety/preflight` and respect its result.
 
 4. **Always log actions**: All actions must be logged to the audit trail via
-   the NeoVax API.
+   the FoldAgent API.
 
 5. **Always request user confirmation**: Before executing potentially dangerous
    actions (running pipelines, generating reports, exporting data), pause and
    ask the user for explicit confirmation.
 
-6. **Never bypass the API**: Always go through the NeoVax-Agent API for data
+6. **Never bypass the API**: Always go through the FoldAgent API for data
    operations. Never modify data directly.
 
 7. **Respect mode restrictions**:

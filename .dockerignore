@@ -1,4 +1,4 @@
-# NeoVax-Agent Dockerignore
+# FoldAgent Dockerignore
 # Exclude large/unnecessary paths from Docker build context.
 
 # Virtual environments (installed fresh inside container)
@@ -37,7 +37,7 @@ htmlcov/
 
 # Database files (created at runtime inside data/ volume)
 *.db
-neovax.db
+foldagent.db
 
 # Logs
 audit_logs/

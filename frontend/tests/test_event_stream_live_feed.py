@@ -72,7 +72,7 @@ class _FakeWSClient:
 # ---------------------------------------------------------------------------
 
 class TestBuildParams:
-    def test_default_api_url_matches_neovax_local_api_port(self) -> None:
+    def test_default_api_url_matches_foldagent_local_api_port(self) -> None:
         feed = LiveEventFeed()
 
         assert feed.api_url == "http://localhost:8010"

@@ -1,6 +1,6 @@
-"""Tests for NeoVaxClient — health endpoint 503 parity.
+"""Tests for FoldAgentClient — health endpoint 503 parity.
 
-Verifies that ``NeoVaxClient.health()`` preserves the degraded 503 payload
+Verifies that ``FoldAgentClient.health()`` preserves the degraded 503 payload
 instead of flattening it into a generic ``httpx.HTTPStatusError``.
 """
 
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from skills.shared.neovax_client import NeoVaxClient
+from skills.shared.foldagent_client import FoldAgentClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -38,7 +38,7 @@ def _mock_response(status_code: int, json_body: dict) -> MagicMock:
 
 class TestHealthOk:
     def test_healthy_returns_payload(self) -> None:
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         payload = {
             "status": "ok",
             "version": "0.1.0-alpha",
@@ -69,7 +69,7 @@ class TestHealthOk:
 class TestHealthDegraded503:
     def test_degraded_503_returns_payload_without_raising(self) -> None:
         """health() must return the structured degraded body on 503, not raise."""
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         payload = {
             "status": "degraded",
             "version": "0.1.0-alpha",
@@ -94,7 +94,7 @@ class TestHealthDegraded503:
 
     def test_degraded_503_preserves_db_error_field(self) -> None:
         """When the DB connection fails, the error field propagates."""
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         payload = {
             "status": "degraded",
             "version": "0.1.0-alpha",
@@ -122,7 +122,7 @@ class TestHealthDegraded503:
 class TestHealthUnexpectedErrors:
     def test_500_raises(self) -> None:
         """Non-200/503 status codes should still raise an error."""
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response(500, {"detail": "internal error"})
         with (
             patch.object(client.client, "get", return_value=mock_resp),
@@ -132,7 +132,7 @@ class TestHealthUnexpectedErrors:
 
     def test_401_raises(self) -> None:
         """401 Unauthorized should still raise."""
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response(401, {"detail": "unauthorized"})
         with (
             patch.object(client.client, "get", return_value=mock_resp),
@@ -142,7 +142,7 @@ class TestHealthUnexpectedErrors:
 
     def test_404_raises(self) -> None:
         """404 Not Found should still raise."""
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response(404, {"detail": "not found"})
         with (
             patch.object(client.client, "get", return_value=mock_resp),
@@ -159,7 +159,7 @@ class TestHealthUnexpectedErrors:
 class TestHealthApiKeyForwarded:
     def test_health_forwards_api_key_in_headers(self) -> None:
         """health() should include Authorization header when api_key is set."""
-        client = NeoVaxClient(base_url="http://localhost:8000", api_key="secret-key")
+        client = FoldAgentClient(base_url="http://localhost:8000", api_key="secret-key")
         payload = {"status": "ok", "version": "0.1.0-alpha", "mode": "demo"}
         mock_resp = _mock_response(200, payload)
         mock_resp.raise_for_status.side_effect = None
@@ -174,7 +174,7 @@ class TestHealthApiKeyForwarded:
 
 class TestStructureJobClientParity:
     def test_create_structure_job_posts_current_route_and_payload(self) -> None:
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         payload = {
             "id": "structure-1",
             "case_id": "case-1",
@@ -213,7 +213,7 @@ class TestStructureJobClientParity:
         )
 
     def test_create_structure_job_keeps_minimal_payload_small(self) -> None:
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response(
             201,
             {
@@ -236,7 +236,7 @@ class TestStructureJobClientParity:
 
 class TestMrnaSafetyGateClientParity:
     def test_safety_mrna_gate_posts_dedicated_endpoint(self) -> None:
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         payload = {
             "status": "requires_expert_approval",
             "allowed": False,

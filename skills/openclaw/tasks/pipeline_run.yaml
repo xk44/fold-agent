@@ -1,7 +1,7 @@
 name: pipeline_run
 version: "1.0.0"
 description: >
-  Execute the NeoVax bioinformatics pipeline (BWA, Mutect2, VEP, NetMHCpan)
+  Execute the FoldAgent bioinformatics pipeline (BWA, Mutect2, VEP, NetMHCpan)
   for a case. Supports synchronous and async execution modes with real-time
   WebSocket status streaming. Safety-gated — preflight must pass before run.
 framework: OpenClaw
@@ -17,7 +17,7 @@ safety_disclaimer: >
 inputs:
   case_id:
     type: string
-    description: UUID of the NeoVax case to run the pipeline for.
+    description: UUID of the FoldAgent case to run the pipeline for.
     required: true
   execution_mode:
     type: string

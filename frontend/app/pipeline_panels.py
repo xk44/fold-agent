@@ -1,4 +1,4 @@
-"""Focused render helpers for the NeoVax pipeline & AlphaFold panels.
+"""Focused render helpers for the FoldAgent pipeline & AlphaFold panels.
 
 This module extracts the large pipeline / AlphaFold UI surfaces from
 dashboard.py into reusable render functions:
@@ -47,10 +47,10 @@ from frontend.app.report_preview import (
 )
 from frontend.app.dashboard_helpers import normalize_table_rows
 
-from skills.shared.neovax_client import AlphaFoldValidationError, SafetyEnforcementError
+from skills.shared.foldagent_client import AlphaFoldValidationError, SafetyEnforcementError
 
 if TYPE_CHECKING:
-    from skills.shared.neovax_client import NeoVaxClient
+    from skills.shared.foldagent_client import FoldAgentClient
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ def render_alphafold_diagnostics(
 
 def render_pipeline_section(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     cases: list[dict],
     api_url: str,
     safe_call,
@@ -267,7 +267,7 @@ def render_pipeline_section(
 
 def _render_bioinformatics_shell(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     pipeline_case_id: str,
     pipeline_adapters: dict | None,
     pipeline_adapters_error: str | None,
@@ -313,7 +313,7 @@ def _render_bioinformatics_shell(
 
 def _render_alphafold_shell(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     pipeline_case_id: str,
     alphafold_backends: dict | None,
     alphafold_backends_error: str | None,

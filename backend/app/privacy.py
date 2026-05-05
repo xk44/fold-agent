@@ -1,4 +1,4 @@
-"""NeoVax-Agent Privacy Module
+"""FoldAgent Privacy Module
 
 Per-case data directories, file retention policies, cloud upload privacy gates,
 and audit export utilities.
@@ -113,7 +113,7 @@ def check_cloud_upload_allowed(
     if not settings.cloud_upload_enabled:
         return {
             "allowed": False,
-            "reason": "Cloud uploads are disabled by configuration (NEOVAX_CLOUD_UPLOAD_ENABLED=false).",
+            "reason": "Cloud uploads are disabled by configuration (FOLDAGENT_CLOUD_UPLOAD_ENABLED=false).",
             "requires_confirmation": False,
         }
 
@@ -178,7 +178,7 @@ def export_audit_log(
         return json.dumps({"audit_log": rows, "exported_at": datetime.now(UTC).isoformat()}, indent=2)
 
     lines = [
-        "# NeoVax-Agent Audit Log Export",
+        "# FoldAgent Audit Log Export",
         f"Exported: {datetime.now(UTC).isoformat()}",
         f"Total entries: {len(rows)}",
         "",

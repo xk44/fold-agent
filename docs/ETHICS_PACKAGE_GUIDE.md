@@ -1,12 +1,12 @@
 # Ethics Package Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-The ethics package generator creates structured review materials for licensed professionals considering a NeoVax-Agent research case. It does **not** determine legal sufficiency, replace IRB review, or constitute professional advice. Every package output requires review by a qualified physician, veterinary oncologist, or institutional ethics board before any real-world action is taken.
+The ethics package generator creates structured review materials for licensed professionals considering a FoldAgent research case. It does **not** determine legal sufficiency, replace IRB review, or constitute professional advice. Every package output requires review by a qualified physician, veterinary oncologist, or institutional ethics board before any real-world action is taken.
 
 Ethics packages are generated via `POST /cases/{case_id}/reports/ethics-package` and stored as `Report` records with type `ethics_package`.
 
@@ -39,7 +39,7 @@ A generated ethics package report includes these sections:
 ### 2. Consent Documentation Section
 
 - Current `consent_status` value for the case
-- Reminder that NeoVax-Agent records consent status but does not validate legal sufficiency
+- Reminder that FoldAgent records consent status but does not validate legal sufficiency
 - Placeholder checklist for IRB or ethics committee documentation
 
 ### 3. Privacy and Data Handling
@@ -85,7 +85,7 @@ Species-dependent checklist generated from the case mode:
 
 ### 6. Jurisdiction Warnings
 
-- NeoVax-Agent does not provide jurisdiction-specific legal or regulatory advice
+- FoldAgent does not provide jurisdiction-specific legal or regulatory advice
 - Human personalized vaccine research is regulated in most jurisdictions; consult a regulatory expert
 - Veterinary research regulations vary by country and institution
 - Outputs labeled "research candidate only" are not cleared, approved, or validated for clinical use
@@ -98,7 +98,7 @@ Every section of the package carries: **"Research candidate only — not adminis
 
 ## Consent Templates
 
-NeoVax-Agent includes plain-language consent template stubs accessible via the lab coordination module. These are **starting points only** — they must be reviewed and adapted by a legal or IRB professional before use.
+FoldAgent includes plain-language consent template stubs accessible via the lab coordination module. These are **starting points only** — they must be reviewed and adapted by a legal or IRB professional before use.
 
 Templates are in `backend/app/lab_coordination.py` and cover:
 
@@ -158,7 +158,7 @@ artifacts/cases/{case_id}/reports/{report_id}.{format}
 
 ## Professional Oversight Checklist (Summary)
 
-Before any real-world action based on NeoVax-Agent outputs:
+Before any real-world action based on FoldAgent outputs:
 
 - [ ] Licensed professional (physician or veterinary oncologist) has reviewed all outputs
 - [ ] Ethics package has been reviewed by the professional, not just generated
@@ -172,7 +172,7 @@ Before any real-world action based on NeoVax-Agent outputs:
 
 ## Limitations
 
-- NeoVax-Agent does not know your jurisdiction's regulations. Consult a regulatory expert.
+- FoldAgent does not know your jurisdiction's regulations. Consult a regulatory expert.
 - Generated consent language is a template only. A legal professional must review before use.
 - The checklist is a research coordination aid, not a compliance certification.
 - Ethics package generation does not replace IRB review or professional sign-off.

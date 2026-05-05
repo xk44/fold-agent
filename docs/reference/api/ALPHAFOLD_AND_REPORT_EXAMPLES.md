@@ -1,6 +1,6 @@
 # AlphaFold and report examples
 
-This file documents the upgraded AlphaFold, report, diagnostics, gating, dry-run parity, and dashboard-preview surfaces in the current NeoVax repo.
+This file documents the upgraded AlphaFold, report, diagnostics, gating, dry-run parity, and dashboard-preview surfaces in the current FoldAgent repo.
 
 ## Running API docs
 
@@ -70,7 +70,7 @@ POST `/alphafold/backends/alphafold3_local/run`
 ```
 
 Current API-side behavior:
-- if backend environment validation is not OK, NeoVax returns HTTP `409`
+- if backend environment validation is not OK, FoldAgent returns HTTP `409`
 - the error body now includes:
   - `detail`
   - `backend_name`
@@ -90,7 +90,7 @@ Example 409 body:
 
 Possible parsed outputs now supported:
 - direct `stdout` payload with `structure`
-- `stdout` payload with `output_dir`, where NeoVax inspects:
+- `stdout` payload with `output_dir`, where FoldAgent inspects:
   - `*_model.cif`
   - `*_summary_confidences.json`
 
@@ -188,7 +188,7 @@ Harvested files are copied under artifact root before registration so they are d
 
 ## Shared client methods relevant to these flows
 
-See `skills/shared/neovax_client.py` for:
+See `skills/shared/foldagent_client.py` for:
 - `alphafold_backend_dry_run()`
 - `alphafold_backend_run()`
 - `list_structure_jobs()`

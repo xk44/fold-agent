@@ -1,4 +1,4 @@
-"""NeoVax-Agent Safety Report Enhancements (Phase 7)
+"""FoldAgent Safety Report Enhancements (Phase 7)
 
 Provides insufficient-evidence flagging, false-positive risk assessment,
 source citations, and professional attestation gating for case reports.
@@ -375,7 +375,7 @@ _CITATION_TEMPLATES: dict[str, Citation] = {
         url="https://www.ncbi.nlm.nih.gov/assembly/GCF_011100685.1/",
     ),
     "mock": Citation(
-        source="NeoVax-Agent Mock Pipeline",
+        source="FoldAgent Mock Pipeline",
         description=(
             "Internal research mock pipeline for demonstration and testing. "
             "Not a validated clinical tool."

@@ -290,7 +290,7 @@ def test_citations_fallback_to_mock_for_empty_case(client: TestClient) -> None:
 
     assert len(citations) >= 1
     sources = [c.source for c in citations]
-    assert any("Mock" in s or "NeoVax" in s for s in sources)
+    assert any("Mock" in s or "FoldAgent" in s for s in sources)
 
 
 def test_citations_include_caller_and_annotation(client: TestClient) -> None:

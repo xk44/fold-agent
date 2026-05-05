@@ -1,4 +1,4 @@
-# Contributing to NeoVax-Agent
+# Contributing to FoldAgent
 
 Thank you for your interest in contributing. Please read this document carefully
 before submitting any code, documentation, or skill packs.

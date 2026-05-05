@@ -1,4 +1,4 @@
-# NeoVax API reference snapshot
+# FoldAgent API reference snapshot
 
 Generated local reference for current API surface.
 

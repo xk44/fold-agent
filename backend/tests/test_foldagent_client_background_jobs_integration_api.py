@@ -9,15 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.app.db import SessionLocal
 from backend.app.jobs import create_job
-from skills.shared.neovax_client import NeoVaxClient
+from skills.shared.foldagent_client import FoldAgentClient
 
 
 POLL_SLEEP_SECONDS = 0.05
 POLL_ATTEMPTS = 40
 
 
-def _bind_shared_client(test_client: TestClient) -> NeoVaxClient:
-    client = NeoVaxClient(base_url=str(test_client.base_url))
+def _bind_shared_client(test_client: TestClient) -> FoldAgentClient:
+    client = FoldAgentClient(base_url=str(test_client.base_url))
     client.client = test_client
     return client
 
@@ -28,7 +28,7 @@ def _create_demo_case(test_client: TestClient) -> str:
     return response.json()["id"]
 
 
-def _poll_job_status(shared_client: NeoVaxClient, job_id: str, terminal_statuses: set[str] | None = None) -> dict:
+def _poll_job_status(shared_client: FoldAgentClient, job_id: str, terminal_statuses: set[str] | None = None) -> dict:
     statuses = terminal_statuses or {"completed", "failed", "cancelled", "timed_out"}
     latest = shared_client.get_background_job(job_id)
     for _ in range(POLL_ATTEMPTS):
@@ -39,7 +39,7 @@ def _poll_job_status(shared_client: NeoVaxClient, job_id: str, terminal_statuses
     return latest
 
 
-def _poll_audit_actions(shared_client: NeoVaxClient, case_id: str, required_actions: set[str]) -> list[str]:
+def _poll_audit_actions(shared_client: FoldAgentClient, case_id: str, required_actions: set[str]) -> list[str]:
     latest_actions = [entry["action"] for entry in shared_client.get_audit_log(case_id)]
     for _ in range(POLL_ATTEMPTS):
         latest_actions = [entry["action"] for entry in shared_client.get_audit_log(case_id)]

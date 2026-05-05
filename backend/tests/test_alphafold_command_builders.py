@@ -124,7 +124,7 @@ class TestAlphaFold2CommandBuilder:
             "--fasta_paths",
             "/inputs/demo.fa",
             "--output_dir",
-            _temp_path("neovax_out"),
+            _temp_path("foldagent_out"),
         ]
 
     def test_sequence_uses_temp_fasta_path(self) -> None:

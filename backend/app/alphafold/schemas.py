@@ -246,7 +246,7 @@ class AlphaFoldJobRequestBase(BaseModel):
 
     case_id: str | None = None
     candidate_id: str | None = None
-    job_name: str = "neovax"
+    job_name: str = "foldagent"
     timeout_seconds: int = 30
     input_kind: InputKind = "fasta"
 

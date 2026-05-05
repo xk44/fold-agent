@@ -1,22 +1,22 @@
-# NeoVax-Agent
+# FoldAgent
 
-**AI-assisted neoantigen vaccine candidate pipeline for research and education.**
+**AI-assisted protein science and structural biology research coordination platform.**
 
 > **SAFETY DISCLAIMER — READ BEFORE USE**
 >
-> NeoVax-Agent is **not medical advice**, not veterinary advice, not a vaccine manufacturing tool, and not a treatment app.
+> FoldAgent is **not medical advice**, not veterinary advice, not a vaccine manufacturing tool, and not a treatment app.
 > Every output is research-only and requires review by a licensed physician or veterinary oncologist.
 > No output should be used as dosing, injection, formulation, manufacturing, or administration guidance.
 
 ## Inspiration
 
-NeoVax-Agent was inspired by Paul Conyngham's public story of using AI and AlphaFold to help coordinate a research approach for his dog Rosie's cancer treatment.
+FoldAgent was inspired by Paul Conyngham's public story of using AI and AlphaFold to help coordinate a research approach for his dog Rosie's cancer treatment.
 
 - Paul on X: <https://x.com/paul_conyngham>
 - UNSW article: <https://news.unsw.edu.au/en/meet-the-man-who-designed-a-cancer-vaccine-for-his-dog>
 - Source registry: [docs/source_registry.md](docs/source_registry.md)
 
-> Note: Paul's public GitHub repo is an autologous tumor-lysate protocol, not the exact mRNA neoantigen pipeline. NeoVax-Agent does not reproduce manufacturing, dosing, formulation, or administration details from any source.
+> Note: Paul's public GitHub repo is an autologous tumor-lysate protocol, not the exact mRNA neoantigen pipeline. FoldAgent does not reproduce manufacturing, dosing, formulation, or administration details from any source.
 
 ## Features
 
@@ -68,7 +68,7 @@ Current implemented stack includes:
   - `alphafold_db` (reference lookup backend)
 - Rich candidate-review and ethics-package report generation + markdown/json export
 - AlphaFold artifact harvesting for model CIF and summary-confidence outputs
-- Shared Python client in `skills/shared/neovax_client.py`
+- Shared Python client in `skills/shared/foldagent_client.py`
 
 ## What it does
 
@@ -101,7 +101,7 @@ Current implemented stack includes:
 
 ```bash
 # enter repo
-cd neovax
+cd foldagent
 
 # setup
 cp .env.example .env
@@ -114,7 +114,7 @@ make dev                 # defaults to http://127.0.0.1:8010
 make seed-demo
 
 # open dashboard
-make dashboard           # points at $(NEOVAX_API_URL) / defaults to http://127.0.0.1:8010
+make dashboard           # points at $(FOLDAGENT_API_URL) / defaults to http://127.0.0.1:8010
 ```
 
 You can override ports/URL without editing files:
@@ -123,7 +123,7 @@ You can override ports/URL without editing files:
 make dev API_PORT=18010
 make dashboard API_PORT=18010 DASHBOARD_PORT=18501
 # or explicitly
-make dashboard NEOVAX_API_URL=http://127.0.0.1:18010 DASHBOARD_PORT=18501
+make dashboard FOLDAGENT_API_URL=http://127.0.0.1:18010 DASHBOARD_PORT=18501
 ```
 
 Once running:
@@ -193,7 +193,7 @@ Dashboard readable preview helpers:
 
 ## Worker stack (opt-in)
 
-NeoVax-Agent supports an optional Celery + Redis worker stack for distributed
+FoldAgent supports an optional Celery + Redis worker stack for distributed
 background-job processing. By default, background jobs (pipeline runs,
 AlphaFold structure predictions) run in an in-process thread-pool — no
 additional infrastructure required.
@@ -215,9 +215,9 @@ make dev        # background jobs use the built-in threadpool
 1. **Uncomment the broker variables** in `.env`:
 
 ```bash
-NEOVAX_REDIS_URL=redis://localhost:6379/0
-NEOVAX_CELERY_BROKER_URL=redis://localhost:6379/0
-NEOVAX_CELERY_RESULT_BACKEND=redis://localhost:6379/1
+FOLDAGENT_REDIS_URL=redis://localhost:6379/0
+FOLDAGENT_CELERY_BROKER_URL=redis://localhost:6379/0
+FOLDAGENT_CELERY_RESULT_BACKEND=redis://localhost:6379/1
 ```
 
 2. **Install the worker extras**:
@@ -237,7 +237,7 @@ docker compose --profile worker up redis worker
 ```
 
 The app container detects the broker URL at dispatch time. If it can reach
-Redis and `NEOVAX_BACKGROUND_JOB_BACKEND` is `auto` (the default), jobs are
+Redis and `FOLDAGENT_BACKGROUND_JOB_BACKEND` is `auto` (the default), jobs are
 routed to Celery automatically. If Redis is unavailable, jobs fall back to the
 threadpool — no restart required.
 
@@ -246,7 +246,7 @@ threadpool — no restart required.
 Comment out (or remove) the broker variables in `.env`, or set:
 
 ```bash
-NEOVAX_BACKGROUND_JOB_BACKEND=threadpool
+FOLDAGENT_BACKGROUND_JOB_BACKEND=threadpool
 ```
 
 The app will always use the threadpool executor regardless of whether broker
@@ -318,4 +318,4 @@ Can I use AlphaFold Server? Yes, but only with explicit external-upload acknowle
 
 Apache-2.0 — see LICENSE file.
 
-> External tools wrapped by NeoVax-Agent (AlphaFold3 weights, NetMHCpan, pVACtools) have their own licenses. Review each before commercial or clinical use.
+> External tools wrapped by FoldAgent (AlphaFold3 weights, NetMHCpan, pVACtools) have their own licenses. Review each before commercial or clinical use.

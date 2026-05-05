@@ -1,12 +1,12 @@
 # Agent Skills Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Overview
 
-Agent skills are structured workflow definitions that guide AI agents (Claude Code, OpenClaw, Hermes) through NeoVax-Agent API operations safely. Each skill is a `SKILL.md` file that specifies required API endpoints, confirmation points, safety boundaries, and audit logging requirements.
+Agent skills are structured workflow definitions that guide AI agents (Claude Code, OpenClaw, Hermes) through FoldAgent API operations safely. Each skill is a `SKILL.md` file that specifies required API endpoints, confirmation points, safety boundaries, and audit logging requirements.
 
 Skills live under `skills/{framework}/` and share a common client and safety policy:
 
@@ -16,10 +16,10 @@ skills/
   openclaw/        — OpenClaw skill definitions
   hermes/          — Hermes skill definitions (includes ENRICHMENT_TEMPLATE.md)
   shared/
-    neovax_client.py       — Shared HTTP client for the NeoVax API
+    foldagent_client.py       — Shared HTTP client for the FoldAgent API
     event_stream_client.py — SSE event stream client
     safety_policy.md       — Canonical safety rules for all agents
-    openapi.json           — NeoVax OpenAPI spec for agent tool use
+    openapi.json           — FoldAgent OpenAPI spec for agent tool use
     report_templates/      — Shared report template stubs
     tests/                 — Shared skill integration tests
 ```
@@ -32,7 +32,7 @@ Each framework directory contains the same 9 skills:
 
 | Skill                                     | Purpose                                               |
 | ----------------------------------------- | ----------------------------------------------------- |
-| `run_full_neovax_case_review`             | End-to-end case review orchestration                  |
+| `run_full_foldagent_case_review`             | End-to-end case review orchestration                  |
 | `run_bioinformatics_pipeline`             | Launch, inspect, and summarize pipeline runs          |
 | `get_alphafold_structures`                | Backend diagnostics, dry-runs, structure jobs         |
 | `generate_candidate_review_report`        | Generate and export candidate review reports          |
@@ -51,7 +51,7 @@ Every `SKILL.md` file contains:
 - **Metadata header** — name, version, framework, tags, audit log integration flag
 - **When to Use / When NOT to Use** — explicit inclusion and exclusion criteria
 - **Safety Boundaries** — numbered list of hard limits specific to this skill
-- **Required NeoVax API Endpoints** — exact endpoints the skill may call
+- **Required FoldAgent API Endpoints** — exact endpoints the skill may call
 - **Required User Confirmation Points** — numbered list of actions requiring explicit user approval before proceeding
 - **Expected Output Artifact** — what the skill produces
 - **Steps** — numbered workflow steps
@@ -71,7 +71,7 @@ All skills must comply with `skills/shared/safety_policy.md`. The 10 canonical r
 1. Never generate prohibited outputs (dosing, injection, LNP formulation, manufacturing, self-treatment)
 2. Always include safety labels on significant outputs
 3. Always run `POST /safety/preflight` before writes, exports, or significant actions
-4. Always log actions to the audit trail via the NeoVax API
+4. Always log actions to the audit trail via the FoldAgent API
 5. Always request user confirmation before pipeline runs, report generation, and exports
 6. Never bypass the API — never modify data directly
 7. Respect mode restrictions: demo (synthetic only), dog (vet oversight), human (physician + IRB)
@@ -83,9 +83,9 @@ These rules apply equally across Claude Code, OpenClaw, and Hermes. Framework di
 
 ---
 
-## Shared Client (`neovax_client.py`)
+## Shared Client (`foldagent_client.py`)
 
-All skills use the shared client in `skills/shared/neovax_client.py` for HTTP communication with the NeoVax API. The client handles:
+All skills use the shared client in `skills/shared/foldagent_client.py` for HTTP communication with the FoldAgent API. The client handles:
 
 - Base URL configuration (default: `http://localhost:8010`)
 - Common headers and error handling
@@ -100,7 +100,7 @@ The event stream client (`event_stream_client.py`) provides SSE subscription for
 
 ### Claude Code
 
-Skills in `skills/claude-code/` are invoked as slash commands or described in `CLAUDE.md` task prompts. Claude Code reads the `SKILL.md`, follows the steps, and uses the NeoVax API via the shared client or direct HTTP tool calls.
+Skills in `skills/claude-code/` are invoked as slash commands or described in `CLAUDE.md` task prompts. Claude Code reads the `SKILL.md`, follows the steps, and uses the FoldAgent API via the shared client or direct HTTP tool calls.
 
 The **Context Seed Template** section in each skill tells Claude Code what state to carry in memory between steps (case ID, species mode, safety posture, open blockers, recent artifact IDs).
 
@@ -128,7 +128,7 @@ Skills in `skills/hermes/` include an additional `ENRICHMENT_TEMPLATE.md` at the
    - Metadata YAML header
    - When to Use / When NOT to Use
    - Safety Boundaries (reference `skills/shared/safety_policy.md`)
-   - Required NeoVax API Endpoints
+   - Required FoldAgent API Endpoints
    - Required User Confirmation Points
    - Steps
    - Self-Improvement Guardrails
@@ -151,7 +151,7 @@ Skills in `skills/hermes/` include an additional `ENRICHMENT_TEMPLATE.md` at the
 
 Skills are not code — they are instructions. Safety is enforced by:
 
-1. The NeoVax API's preflight system (server-side, cannot be bypassed by skill instructions)
+1. The FoldAgent API's preflight system (server-side, cannot be bypassed by skill instructions)
 2. The skill's own confirmation points (agent must pause and ask the user)
 3. The shared safety policy (defines what the agent must refuse regardless of user request)
 4. Audit logging (every action is recorded; deviations are traceable)

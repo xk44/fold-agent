@@ -17,8 +17,8 @@ pytestmark = pytest.mark.integration
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REDIS_URL = "redis://localhost:6379/0"
-RUN_FLAG = "NEOVAX_RUN_REDIS_SMOKE"
-EXTERNAL_URL_FLAG = "NEOVAX_REDIS_SMOKE_URL"
+RUN_FLAG = "FOLDAGENT_RUN_REDIS_SMOKE"
+EXTERNAL_URL_FLAG = "FOLDAGENT_REDIS_SMOKE_URL"
 
 
 if os.getenv(RUN_FLAG) != "1":
@@ -83,7 +83,7 @@ class _UvicornServer:
         self.redis_url = redis_url
         self.port = _pick_free_port()
         self.process: subprocess.Popen[str] | None = None
-        self.database_url = f"sqlite:////tmp/neovax_redis_smoke_{uuid4().hex}.db"
+        self.database_url = f"sqlite:////tmp/foldagent_redis_smoke_{uuid4().hex}.db"
 
     @property
     def base_url(self) -> str:
@@ -92,9 +92,9 @@ class _UvicornServer:
     def __enter__(self) -> str:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(PROJECT_ROOT)
-        env["NEOVAX_EVENT_BACKEND"] = "redis"
-        env["NEOVAX_REDIS_URL"] = self.redis_url
-        env["NEOVAX_DATABASE_URL"] = self.database_url
+        env["FOLDAGENT_EVENT_BACKEND"] = "redis"
+        env["FOLDAGENT_REDIS_URL"] = self.redis_url
+        env["FOLDAGENT_DATABASE_URL"] = self.database_url
         self.process = subprocess.Popen(
             [
                 str(PROJECT_ROOT / ".venv" / "bin" / "python"),
@@ -147,7 +147,7 @@ class _ComposeRedis:
                 return DEFAULT_REDIS_URL
             except Exception as exc:
                 raise RuntimeError(
-                    "localhost:6379 already in use by a non-ready service; set NEOVAX_REDIS_SMOKE_URL to a reachable Redis or free the port"
+                    "localhost:6379 already in use by a non-ready service; set FOLDAGENT_REDIS_SMOKE_URL to a reachable Redis or free the port"
                 ) from exc
 
         if not _command_ok(["docker", "compose", "version"]):
@@ -210,7 +210,7 @@ def _configure_live_redis_backend(redis_url: str, channel: str):
 def test_live_redis_backend_cross_process_pubsub_smoke() -> None:
     from backend.app.event_backends.redis_backend import RedisEventBackend
 
-    channel = f"neovax:events:smoke:{uuid4().hex}"
+    channel = f"foldagent:events:smoke:{uuid4().hex}"
     with _ComposeRedis() as redis_url:
         backend = RedisEventBackend(redis_url=redis_url, channel=channel)
         raw_client = redis.Redis.from_url(redis_url, decode_responses=True)
@@ -251,7 +251,7 @@ def test_live_redis_backend_websocket_end_to_end_smoke() -> None:
     from backend.app.main import app
     from backend.app.event_stream import InMemoryEventBackend, configure_backend
 
-    channel = f"neovax:events:smoke:ws:{uuid4().hex}"
+    channel = f"foldagent:events:smoke:ws:{uuid4().hex}"
     with _ComposeRedis() as redis_url:
         live_backend, _ = _configure_live_redis_backend(redis_url, channel)
         try:

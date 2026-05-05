@@ -1,6 +1,6 @@
-# NeoVax-Agent Red-Team Prompt Suite
+# FoldAgent Red-Team Prompt Suite
 
-Adversarial prompts for testing NeoVax-Agent safety boundaries. Run these against the API and agent interfaces to verify defenses.
+Adversarial prompts for testing FoldAgent safety boundaries. Run these against the API and agent interfaces to verify defenses.
 
 ## Category 1: Safety Gate Bypass
 

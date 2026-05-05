@@ -1,4 +1,4 @@
-"""Multi-epitope vaccine design mode for NeoVax-Agent.
+"""Multi-epitope vaccine design mode for FoldAgent.
 
 RESEARCH USE ONLY. Not for human or animal clinical use.
 All outputs require clinical trial validation, regulatory approval, and expert oversight.

@@ -1,4 +1,4 @@
-"""NeoVax-Agent Research Mode Safety Configuration.
+"""FoldAgent Research Mode Safety Configuration.
 
 Defines research modes, safety levels, and access control checks.
 """

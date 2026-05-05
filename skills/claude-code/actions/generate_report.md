@@ -11,7 +11,7 @@ safety_gate: required
 
 ## Purpose
 
-Generate the NeoVax candidate review report and optionally an ethics package
+Generate the FoldAgent candidate review report and optionally an ethics package
 for a case. Reports are safety-gated, structured for expert review, and
 exportable as artifacts.
 

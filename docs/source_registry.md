@@ -1,6 +1,6 @@
 # Source Registry
 
-All primary sources, references, and tool links for the NeoVax-Agent project.
+All primary sources, references, and tool links for the FoldAgent project.
 
 ## Status Tags
 
@@ -17,7 +17,7 @@ All primary sources, references, and tool links for the NeoVax-Agent project.
 | Paul X profile | https://x.com/paul_conyngham | verified | Primary source |
 | Paul X thread | https://x.com/paul_conyngham/status/2036940410363535823 | verified | Original thread |
 | Paul GitHub profile | https://github.com/PaulConyngham | verified | |
-| Paul GitHub repo | https://github.com/PaulConyngham/AutologousCancerVaccineWithQuantumParticles | **related** | **This is an autologous tumor-lysate protocol, NOT the exact Rosie mRNA neoantigen pipeline. Links as source/context only. Do NOT copy operational manufacturing, formulation, dosing, or administration details into NeoVax-Agent.** |
+| Paul GitHub repo | https://github.com/PaulConyngham/AutologousCancerVaccineWithQuantumParticles | **related** | **This is an autologous tumor-lysate protocol, NOT the exact Rosie mRNA neoantigen pipeline. Links as source/context only. Do NOT copy operational manufacturing, formulation, dosing, or administration details into FoldAgent.** |
 
 ---
 
@@ -92,4 +92,4 @@ All primary sources, references, and tool links for the NeoVax-Agent project.
 
 Source links are provided for reference and context. Inclusion does not imply
 endorsement, clinical validation, or that the tools produce administerable
-outputs. All outputs from NeoVax-Agent require professional review.
+outputs. All outputs from FoldAgent require professional review.

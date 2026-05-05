@@ -1,4 +1,4 @@
-"""NeoVax-Agent FastAPI Application.
+"""FoldAgent FastAPI Application.
 
 Local-first, safety-gated research coordination platform.
 """
@@ -307,7 +307,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="NeoVax-Agent",
+    title="FoldAgent",
     description="Local-first, safety-gated research coordination platform for personalized cancer-vaccine exploration under licensed professional supervision.",
     version="0.1.0-alpha",
     docs_url="/api/docs",
@@ -414,7 +414,7 @@ def alphafold_backend_dry_run(backend_name: str, payload: dict) -> dict:
     "/alphafold/backends/{backend_name}/run",
     summary="Run AlphaFold backend",
     description=(
-        "Run one of NeoVax's AlphaFold-family backends with backend-specific payload validation. "
+        "Run one of FoldAgent's AlphaFold-family backends with backend-specific payload validation. "
         "Examples include ColabFold/local_colabfold sequence runs, alphafold3_local JSON runs, "
         "alphafold_server remote submissions with external-upload acknowledgement, and alphafold_db accession lookups."
     ),

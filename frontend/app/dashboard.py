@@ -1,4 +1,4 @@
-"""NeoVax-Agent MVP dashboard.
+"""FoldAgent MVP dashboard.
 
 Live Streamlit UI for the current FastAPI case/safety/sample endpoints.
 """
@@ -38,14 +38,14 @@ from frontend.app.structure_viewer import (
     select_structure_artifact,
     viewer_format_for_artifact,
 )
-from skills.shared.neovax_client import AlphaFoldValidationError, NeoVaxClient
+from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_API_URL = "http://localhost:8000"
 
-st.set_page_config(page_title="NeoVax-Agent", layout="wide")
+st.set_page_config(page_title="FoldAgent", layout="wide")
 
-st.title("NeoVax-Agent")
+st.title("FoldAgent")
 st.caption("Local-first, safety-gated research coordination platform")
 st.warning(
     "Research coordination only. Not medical advice, not veterinary advice, "
@@ -55,7 +55,7 @@ st.warning(
 with st.sidebar:
     st.subheader("Connection")
     api_url = st.text_input("API URL", value=DEFAULT_API_URL)
-    client = NeoVaxClient(base_url=api_url)
+    client = FoldAgentClient(base_url=api_url)
 
     if st.button("Refresh API status", use_container_width=True):
         st.session_state["refresh_requested"] = True

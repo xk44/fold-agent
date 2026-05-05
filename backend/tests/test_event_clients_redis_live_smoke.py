@@ -35,7 +35,7 @@ from skills.shared.event_stream_client import EventClient, EventStreamClient, We
 def _publish_remote_later(redis_url: str, event_name: str, payload: dict, delay: float = 0.5) -> Thread:
     def _runner() -> None:
         time.sleep(delay)
-        _publish_remote(redis_url, "neovax:events", event_name, payload)
+        _publish_remote(redis_url, "foldagent:events", event_name, payload)
 
     thread = Thread(target=_runner, daemon=True)
     thread.start()

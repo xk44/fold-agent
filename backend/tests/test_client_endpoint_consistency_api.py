@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import httpx
 
-from skills.shared.neovax_client import AlphaFoldValidationError, NeoVaxClient
+from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 from fastapi.testclient import TestClient
 from backend.app.main import app
 
@@ -46,7 +46,7 @@ class _Recorder:
 
 
 def test_submit_alphafold_job_uses_backend_run_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 
@@ -61,7 +61,7 @@ def test_submit_alphafold_job_uses_backend_run_route() -> None:
 
 
 def test_alphafold_backend_run_raises_structured_validation_error() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     recorder.next_post_response = _DummyResponse(
         {
@@ -84,7 +84,7 @@ def test_alphafold_backend_run_raises_structured_validation_error() -> None:
 
 
 def test_get_alphafold_job_uses_structure_job_detail_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 
@@ -94,7 +94,7 @@ def test_get_alphafold_job_uses_structure_job_detail_route() -> None:
 
 
 def test_create_agent_task_uses_current_agent_tasks_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 

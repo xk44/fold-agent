@@ -1,6 +1,6 @@
 # AlphaFold docs-to-code gap report
 
-Generated after comparing the local NeoVax AlphaFold implementation against the dumped reference corpus in `docs/reference/alphafold/`.
+Generated after comparing the local FoldAgent AlphaFold implementation against the dumped reference corpus in `docs/reference/alphafold/`.
 
 ## Scope compared
 
@@ -12,14 +12,14 @@ Docs / references:
 - `alphafold_server` browser dump and archived pages
 - `alphafold_db` browser dump
 
-NeoVax code:
+FoldAgent code:
 - `backend/app/alphafold/base.py`
 - `backend/app/alphafold/shells.py`
 - `backend/app/main.py`
 - `backend/app/config.py`
 - AlphaFold tests under `backend/tests/`
 
-## What NeoVax already has
+## What FoldAgent already has
 
 1. Backend names are aligned at a high level.
    - Config exposes `mock`, `colabfold`, `local_colabfold`, `alphafold2_local`, `alphafold3_local`, `alphafold_server`.
@@ -30,7 +30,7 @@ NeoVax code:
    - Evidence: `backend/app/alphafold/base.py:50-151`
 
 3. Shell-backend discovery exists.
-   - NeoVax can already report whether `colabfold_batch`, `run_alphafold`, or `alphafold` are on PATH and build a dry-run command.
+   - FoldAgent can already report whether `colabfold_batch`, `run_alphafold`, or `alphafold` are on PATH and build a dry-run command.
    - Evidence: `backend/app/alphafold/shells.py:66-105`
 
 4. API surface exists for backend listing, dry-run, and run.
@@ -39,7 +39,7 @@ NeoVax code:
 5. Parsed structure outputs can already update candidate structure evidence.
    - Evidence: `backend/app/main.py:170-216`, `backend/tests/test_alphafold_output_parsing_api.py:8-105`
 
-## Root gap: NeoVax does not yet model real AlphaFold input/output dialects
+## Root gap: FoldAgent does not yet model real AlphaFold input/output dialects
 
 Current implementation is still a shell stub / generic command wrapper, not a real AlphaFold integration layer.
 
@@ -64,7 +64,7 @@ Docs say AF3 supports JSON input with:
 - automatic conversion from AlphaFold Server JSON dialect
 - Evidence: `docs/reference/alphafold/alphafold3/docs/input.md:5-45`, `:102-170`, `:178-233`
 
-Current NeoVax code:
+Current FoldAgent code:
 - only has `StructureInputManifest(sequence, sequence_type, job_name, case_id, candidate_id)`
 - no typed JSON payload model for AF3
 - no support for RNA, DNA, ligand, PTM, CCD, bonded atoms, multiple seeds, custom MSA, templates, or dialect/version fields
@@ -87,7 +87,7 @@ Docs say AF3 output directory includes:
 - confidence metrics including `ptm`, `iptm`, `ranking_score`, `chain_pair_iptm`, `chain_ptm`, `chain_iptm`, `pae`, `atom_plddts`
 - Evidence: `docs/reference/alphafold/alphafold3/docs/output.md:3-42`, `:81-219`
 
-Current NeoVax code:
+Current FoldAgent code:
 - only expects a parsed JSON blob in stdout with a `structure` object containing things like `pdb_file`, `pLDDT_mean`, `pAE_mean`
 - creates a `StructureJob` with only `output_path`, `pLDDT_mean`, `pAE_mean`
 - does not model mmCIF vs PDB distinction, sample/seed hierarchy, rankings, summary confidence files, embeddings, or distograms
@@ -107,7 +107,7 @@ Docs say LocalColabFold / ColabFold support:
 - `colabfold_batch --help`
 - Evidence: `docs/reference/alphafold/localcolabfold/README.md:149-217`, `:241-258`
 
-Current NeoVax code:
+Current FoldAgent code:
 - always builds `colabfold_batch <tmp fasta> <tmp output_dir>`
 - no support for any documented flags
 - no typed request model for seeds, recycles, templates, a3m, csv/tsv, multimer mode, or host-url
@@ -124,7 +124,7 @@ Docs say ColabFold can use:
 - MSA server config concepts like address/port/workers/rate limit/GPU mode
 - Evidence: `docs/reference/alphafold/colabfold/MsaServer/README.md:27-34`, `:62-65`
 
-Current NeoVax code:
+Current FoldAgent code:
 - no config field for ColabFold MSA host URL
 - no endpoint-specific backend metadata
 - no distinction between online MMseqs-backed mode and fully local DB mode
@@ -132,7 +132,7 @@ Current NeoVax code:
 - Evidence: `backend/app/config.py:53-64`, `backend/app/alphafold/shells.py:66-71`
 
 Impact:
-- NeoVax cannot cleanly target a custom ColabFold endpoint yet.
+- FoldAgent cannot cleanly target a custom ColabFold endpoint yet.
 
 ### E. AlphaFold Server-specific capabilities and restrictions are not encoded
 
@@ -145,7 +145,7 @@ Server docs/browser state show:
 - external upload/privacy implications
 - Evidence: browser snapshot of `https://alphafoldserver.com/welcome`; archived pages under site archive and local dump
 
-Current NeoVax code:
+Current FoldAgent code:
 - has backend name `alphafold_server` in config but no actual shell/backend implementation in `SHELL_BACKENDS`
 - no request model for server dialect JSON
 - no explicit token-limit validation
@@ -160,7 +160,7 @@ Impact:
 
 Docs/browser state show AlphaFold DB/API docs exist and are relevant as a compatible reference source for precomputed structures.
 
-Current NeoVax code:
+Current FoldAgent code:
 - no backend or helper for lookup-first workflow against AlphaFold DB
 - no retrieval of precomputed structures by UniProt/accession/name
 - no strategy that prefers DB hits before running expensive structure jobs
@@ -170,7 +170,7 @@ Impact:
 
 ## Most important architectural conclusion
 
-NeoVax currently mixes three very different things under one thin shell abstraction:
+FoldAgent currently mixes three very different things under one thin shell abstraction:
 1. local command-line predictors
 2. external/server predictors
 3. structure database lookup/reference services
@@ -313,7 +313,7 @@ P2:
 
 ## Bottom line
 
-The repo is already pointed in the correct direction, but the current AlphaFold layer is still a mock-era shell facade. The docs corpus confirms NeoVax can interface with AlphaFold-family tools, but only after the backend layer is upgraded from:
+The repo is already pointed in the correct direction, but the current AlphaFold layer is still a mock-era shell facade. The docs corpus confirms FoldAgent can interface with AlphaFold-family tools, but only after the backend layer is upgraded from:
 - one generic `dict` request
 - one generic shell command shape
 - one thin parsed JSON expectation

@@ -1,6 +1,6 @@
 {
   "repo_root_actual": "/home/xkm/projects",
-  "working_subtree": "/home/xkm/projects/neovax",
+  "working_subtree": "/home/xkm/projects/foldagent",
   "generated_for": "commit-prep-safe-bundle",
   "file_count": 82,
   "files": [
@@ -15,7 +15,7 @@
     "frontend/app/dashboard.py",
     "frontend/app/report_preview.py",
     "frontend/tests/test_alphafold_diagnostics_preview.py",
-    "skills/shared/neovax_client.py",
+    "skills/shared/foldagent_client.py",
     "Makefile",
     "alembic.ini",
     "backend/app/__init__.py",

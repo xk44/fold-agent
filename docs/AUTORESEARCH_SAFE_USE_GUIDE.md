@@ -12,7 +12,7 @@
 
 ## What Autoresearch Is
 
-The `autoresearch_optimize_software_pipeline` skill uses NeoVax operational
+The `autoresearch_optimize_software_pipeline` skill uses FoldAgent operational
 data (audit logs, job outcomes, adapter diagnostics) to improve the **software
 workflow**: eval harnesses, agent task configuration, pipeline adapter
 performance, and orchestration efficiency.
@@ -126,7 +126,7 @@ Autoresearch experiments that touch code should always run in a branch:
 git checkout -b autoresearch/pipeline-timing-$(date +%Y%m%d)
 
 # Run the experiment (mock mode, demo data only)
-NEOVAX_PIPELINE_MODE=mock NEOVAX_SPECIES_MODE=demo make dev
+FOLDAGENT_PIPELINE_MODE=mock FOLDAGENT_SPECIES_MODE=demo make dev
 
 # Review what changed
 git diff
@@ -157,7 +157,7 @@ These are not suggestions. A skill that violates them must be reverted.
 
 ## Safety Enforcement Chain
 
-Autoresearch cannot bypass the NeoVax safety system:
+Autoresearch cannot bypass the FoldAgent safety system:
 
 1. **Server-side preflight** (`POST /safety/preflight`) — blocks prohibited
    outputs regardless of skill instructions
@@ -166,7 +166,7 @@ Autoresearch cannot bypass the NeoVax safety system:
 4. **Skill guardrails** — explicit prohibitions in `SKILL.md`
 
 All four layers remain active during autoresearch sessions. Disabling any
-layer (`NEOVAX_SAFETY_PREFLIGHT_ENABLED=false`) is prohibited during
+layer (`FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=false`) is prohibited during
 autoresearch experiments.
 
 ---

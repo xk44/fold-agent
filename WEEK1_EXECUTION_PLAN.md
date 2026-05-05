@@ -1,4 +1,4 @@
-# NeoVax-Agent: Week 1 Execution Plan
+# FoldAgent: Week 1 Execution Plan
 
 ## Prioritized Phase Breakdown
 
@@ -215,9 +215,9 @@ Create `backend/app/safety/mrna_gate.py`:
 
 ## AGENT LAYER (Day 5-6) -- Shared Client + Skill Packs
 
-### D5.1 -- Shared NeoVax API client
+### D5.1 -- Shared FoldAgent API client
 
-Create `skills/shared/neovax_client.py`:
+Create `skills/shared/foldagent_client.py`:
 - Python client wrapping all API endpoints
 - Safety policy built in: client-side preflight before dangerous actions
 - Retry logic, error handling, idempotency keys
@@ -234,7 +234,7 @@ Create `skills/shared/report_templates/`:
 ### D5.2 -- Claude Code skill packs
 
 Create all 9 skills under `skills/claude-code/`:
-- run_full_neovax_case_review/SKILL.md
+- run_full_foldagent_case_review/SKILL.md
 - organize_case_data/SKILL.md
 - run_bioinformatics_pipeline/SKILL.md
 - get_alphafold_structures/SKILL.md

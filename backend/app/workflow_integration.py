@@ -301,7 +301,7 @@ def _mock_predict_deterministic(sequence: str, backend_name: str) -> tuple[str |
     runtime = _hash_float(seed + ":runtime", 0.001, 0.05)
 
     lines = [
-        "REMARK  NeoVax deterministic mock structure",
+        "REMARK  FoldAgent deterministic mock structure",
         f"REMARK  sequence length: {len(sequence)}",
     ]
     for i, aa in enumerate(sequence[:50], start=1):
@@ -553,10 +553,10 @@ TOOL_VERSIONS: dict[str, str] = {
     "rfdiffusion2": "2.0.0",
     "mock": "1.0.0",
     # Workflow integration tools
-    "neovax_workflow": "24.1.0",
-    "neovax_ensemble": "1.2.0",
-    "neovax_batch": "1.1.0",
-    "neovax_normalizer": "1.0.0",
+    "foldagent_workflow": "24.1.0",
+    "foldagent_ensemble": "1.2.0",
+    "foldagent_batch": "1.1.0",
+    "foldagent_normalizer": "1.0.0",
 }
 
 # Supersession map: tool -> tool that supersedes it

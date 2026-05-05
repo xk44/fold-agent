@@ -37,7 +37,7 @@ def test_format_health_status_summary_surfaces_degraded_db_snapshot() -> None:
         {
             "status": "degraded",
             "db_status": "degraded",
-            "database_url": "sqlite:///./neovax.db",
+            "database_url": "sqlite:///./foldagent.db",
             "db_init_mode": "create_all",
             "tables_present": 0,
             "tables_expected": 14,
@@ -52,7 +52,7 @@ def test_format_health_status_summary_surfaces_degraded_db_snapshot() -> None:
     assert "0 / 14 tables present" in summary
     assert "missing: background_jobs, cases" in summary
     assert "db_init_mode: create_all" in summary
-    assert "database: sqlite:///./neovax.db" in summary
+    assert "database: sqlite:///./foldagent.db" in summary
     assert "error: no such table: cases" in summary
 
 

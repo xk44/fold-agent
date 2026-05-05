@@ -1,4 +1,4 @@
-"""Additional ethics and review template generators for NeoVax-Agent.
+"""Additional ethics and review template generators for FoldAgent.
 
 All templates are research coordination artifacts only.
 They do not constitute medical advice, veterinary advice, or treatment instructions.
@@ -209,7 +209,7 @@ def build_adverse_event_template(case_id: str, species: str) -> dict:
                 "label": "Actions taken",
                 "instructions": (
                     f"Document all actions taken by the {oversight_label}. "
-                    "NeoVax-Agent does not provide treatment or intervention instructions."
+                    "FoldAgent does not provide treatment or intervention instructions."
                 ),
                 "value": "[TO BE COMPLETED BY LICENSED PROFESSIONAL]",
             },
@@ -234,7 +234,7 @@ def build_adverse_event_template(case_id: str, species: str) -> dict:
         },
         "disclaimer": RESEARCH_COORDINATION_DISCLAIMER,
         "warnings": [
-            "THIS IS A TEMPLATE ONLY. NeoVax-Agent does not generate final adverse event reports.",
+            "THIS IS A TEMPLATE ONLY. FoldAgent does not generate final adverse event reports.",
             "All fields must be completed by a licensed professional.",
             "Do not use this template as a substitute for institutional reporting obligations.",
             "No dosing, injection, formulation, or manufacturing guidance is included.",
@@ -245,7 +245,7 @@ def build_adverse_event_template(case_id: str, species: str) -> dict:
 def build_compassionate_use_checklist(species: str) -> dict:
     """Return a checklist for compassionate/experimental use review.
 
-    NeoVax-Agent cannot bypass, replace, or substitute for formal ethics approval.
+    FoldAgent cannot bypass, replace, or substitute for formal ethics approval.
     This checklist is a research coordination aid only.
     """
     vet = _is_veterinary(species)
@@ -342,9 +342,9 @@ def build_compassionate_use_checklist(species: str) -> dict:
         },
         {
             "id": "cu_12",
-            "category": "NeoVax-Agent scope",
+            "category": "FoldAgent scope",
             "item": (
-                "Confirm that NeoVax-Agent outputs are used as research coordination "
+                "Confirm that FoldAgent outputs are used as research coordination "
                 "artifacts only, not as direct clinical instructions."
             ),
             "required_attestation": professional_label,
@@ -357,7 +357,7 @@ def build_compassionate_use_checklist(species: str) -> dict:
             "role": professional_label,
             "attestation": (
                 f"I confirm that I am a licensed {professional_label}, that I have reviewed "
-                "the NeoVax-Agent research outputs, and that any further steps will be taken "
+                "the FoldAgent research outputs, and that any further steps will be taken "
                 "under my professional supervision and in compliance with applicable regulations."
             ),
             "signature_placeholder": "[SIGNATURE / DATE]",
@@ -388,7 +388,7 @@ def build_compassionate_use_checklist(species: str) -> dict:
         },
         "required_professional_attestations": required_attestations,
         "critical_warning": (
-            "NeoVax-Agent CANNOT bypass, substitute for, or satisfy ethics board approval. "
+            "FoldAgent CANNOT bypass, substitute for, or satisfy ethics board approval. "
             "This checklist is a research coordination aid only. "
             "Formal approval from the appropriate ethics/regulatory body is mandatory."
         ),
@@ -440,7 +440,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
                 f"Based on the diagnosis summary and research candidate data for case {case_id}, "
                 f"what standard-of-care treatment options are currently available for this {subject_label}?"
             ),
-            "context": "NeoVax-Agent has generated research candidate antigens. Professional assessment of treatment options is required independently of these computational outputs.",
+            "context": "FoldAgent has generated research candidate antigens. Professional assessment of treatment options is required independently of these computational outputs.",
             "for_professional": professional_label,
         },
         {
@@ -449,7 +449,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
                 "Are there active clinical trials or research protocols this case may be eligible for, "
                 "based on the species, diagnosis, and molecular profile?"
             ),
-            "context": f"Candidate count in NeoVax-Agent pipeline: {candidate_count}. Trial eligibility must be assessed by a licensed professional.",
+            "context": f"Candidate count in FoldAgent pipeline: {candidate_count}. Trial eligibility must be assessed by a licensed professional.",
             "for_professional": professional_label,
         },
     ]
@@ -461,14 +461,14 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
                 f"What is the expected prognosis for this {subject_label} given the available clinical information, "
                 "independent of any experimental research coordination?"
             ),
-            "context": "NeoVax-Agent does not generate prognosis estimates. Professional clinical judgment is required.",
+            "context": "FoldAgent does not generate prognosis estimates. Professional clinical judgment is required.",
             "for_professional": professional_label,
         },
         {
             "topic": "prognosis",
             "question": (
                 "How should the owner/guardian/family be counselled regarding the investigational nature "
-                "of any research coordination outputs from NeoVax-Agent?"
+                "of any research coordination outputs from FoldAgent?"
             ),
             "context": "Informed consent and prognostic counselling are the responsibility of the licensed professional.",
             "for_professional": professional_label,
@@ -490,9 +490,9 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
             "topic": "sequencing_results_interpretation",
             "question": (
                 "What additional sequencing, pathology, or molecular testing would you recommend "
-                "to validate or refute the candidate antigens identified by NeoVax-Agent?"
+                "to validate or refute the candidate antigens identified by FoldAgent?"
             ),
-            "context": "NeoVax-Agent outputs should be treated as hypothesis-generating, not clinically validated.",
+            "context": "FoldAgent outputs should be treated as hypothesis-generating, not clinically validated.",
             "for_professional": professional_label,
         },
         {
@@ -522,7 +522,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
                 "What institutional or regulatory approvals would be required before this case "
                 "could proceed from computational research coordination to any experimental procedure?"
             ),
-            "context": "NeoVax-Agent cannot authorise, replace, or expedite any regulatory or ethics approval process.",
+            "context": "FoldAgent cannot authorise, replace, or expedite any regulatory or ethics approval process.",
             "for_professional": professional_label,
         },
     ]
@@ -541,7 +541,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
             "clinical_trial_eligibility": trial_questions,
         },
         "instructions": (
-            f"These questions are pre-populated from NeoVax-Agent case data to facilitate "
+            f"These questions are pre-populated from FoldAgent case data to facilitate "
             f"a structured consultation with a {professional_label}. "
             "They are starting points only — the professional should expand, modify, or "
             "discard questions as clinically appropriate."
@@ -549,7 +549,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
         "disclaimer": RESEARCH_COORDINATION_DISCLAIMER,
         "warnings": [
             "These questions do not constitute a clinical consultation.",
-            "NeoVax-Agent does not provide medical or veterinary advice.",
+            "FoldAgent does not provide medical or veterinary advice.",
             "No dosing, injection, formulation, or manufacturing guidance is included.",
             "All clinical decisions must be made by the licensed professional.",
         ],

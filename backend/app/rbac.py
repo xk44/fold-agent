@@ -1,4 +1,4 @@
-"""Role-based access control model for NeoVax-Agent.
+"""Role-based access control model for FoldAgent.
 
 Defines roles, permissions, and the mapping between them.
 Actual auth middleware is deferred — this is the permission model only.

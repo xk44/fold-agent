@@ -1,7 +1,7 @@
 name: candidate_review
 version: "1.0.0"
 description: >
-  Retrieve, rank, and annotate neoantigen candidates after NeoVax pipeline
+  Retrieve, rank, and annotate neoantigen candidates after FoldAgent pipeline
   execution. Supports evidence retrieval, false-positive risk assessment,
   and writing expert review flags via PATCH endpoints.
 framework: OpenClaw
@@ -16,7 +16,7 @@ safety_disclaimer: >
 inputs:
   case_id:
     type: string
-    description: UUID of the NeoVax case to review candidates for.
+    description: UUID of the FoldAgent case to review candidates for.
     required: true
   write_review_flags:
     type: boolean

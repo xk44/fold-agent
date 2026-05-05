@@ -1,4 +1,4 @@
-"""Source registry page helpers for NeoVax-Agent dashboard.
+"""Source registry page helpers for FoldAgent dashboard.
 
 Renders the Paul Conyngham / Rosie links, AlphaFold resources,
 bioinformatics tools, and agent framework references.
@@ -35,7 +35,7 @@ SOURCE_CATEGORIES = [
     },
     {
         "title": "AlphaFold / Protein Structure",
-        "description": "Structure prediction backends supported by NeoVax-Agent.",
+        "description": "Structure prediction backends supported by FoldAgent.",
         "icon": "🧬",
         "links": [
             {"label": "AlphaFold 2", "url": "https://github.com/google-deepmind/alphafold"},
@@ -47,7 +47,7 @@ SOURCE_CATEGORIES = [
     },
     {
         "title": "Bioinformatics Tools",
-        "description": "Pipeline tools wrapped by NeoVax-Agent adapters.",
+        "description": "Pipeline tools wrapped by FoldAgent adapters.",
         "icon": "🔬",
         "links": [
             {"label": "BWA/BWA-MEM2", "url": "https://github.com/bwa-mem2/bwa-mem2"},
@@ -59,7 +59,7 @@ SOURCE_CATEGORIES = [
     },
     {
         "title": "Agent Frameworks",
-        "description": "Agent skill formats supported by NeoVax-Agent.",
+        "description": "Agent skill formats supported by FoldAgent.",
         "icon": "🤖",
         "links": [
             {"label": "Claude Code Skills", "url": "https://code.claude.com/docs/en/skills"},
@@ -83,7 +83,7 @@ SOURCE_CATEGORIES = [
 def render_source_registry(st: Any) -> None:
     st.header("Source Registry")
     st.caption(
-        "Curated links to the people, tools, and research that inspired NeoVax-Agent. "
+        "Curated links to the people, tools, and research that inspired FoldAgent. "
         "This project does not provide medical advice or treatment instructions."
     )
 

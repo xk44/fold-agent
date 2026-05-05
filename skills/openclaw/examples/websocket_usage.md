@@ -1,19 +1,19 @@
 ---
 title: WebSocket Usage — Real-Time Pipeline Status
 framework: OpenClaw
-skill: neovax-openclaw
+skill: foldagent-openclaw
 ---
 
 # WebSocket Usage: Real-Time Pipeline Status
 
-The NeoVax API exposes a WebSocket endpoint for live agent event streaming.
+The FoldAgent API exposes a WebSocket endpoint for live agent event streaming.
 This lets OpenClaw tasks receive pipeline step completions, failures, and job
 state changes without polling.
 
 ## Endpoint
 
 ```
-ws://<NEOVAX_HOST>/agent/events/ws
+ws://<FOLDAGENT_HOST>/agent/events/ws
 ```
 
 ### Query Parameters
@@ -63,10 +63,10 @@ import asyncio
 import json
 import websockets
 
-NEOVAX_WS = "ws://localhost:8000/agent/events/ws"
+FOLDAGENT_WS = "ws://localhost:8000/agent/events/ws"
 
 async def stream_pipeline_events(case_id: str) -> None:
-    url = f"{NEOVAX_WS}?prefix=pipeline,job&heartbeat=15"
+    url = f"{FOLDAGENT_WS}?prefix=pipeline,job&heartbeat=15"
     async with websockets.connect(url) as ws:
         print(f"Connected. Watching pipeline events for case {case_id}...")
         async for raw in ws:

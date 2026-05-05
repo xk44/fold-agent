@@ -1,4 +1,4 @@
-"""NeoVax-Agent Pipeline Module
+"""FoldAgent Pipeline Module
 
 Defines the PipelineStep base class and mock implementations for the MVP.
 Real bioinformatics tool wrappers will replace mocks behind the same interface.

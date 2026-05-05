@@ -1,4 +1,4 @@
-"""NeoVax-Agent Hallucination Guard (Phase 21)
+"""FoldAgent Hallucination Guard (Phase 21)
 
 Detects potentially hallucinated content in AI-generated reports:
 - Unknown or near-miss source citations
@@ -128,7 +128,7 @@ HALLUCINATION_PATTERNS: list[dict] = [
         "pattern": (
             r"\b(?:NeoDB|NeoBase|VaccinDB|NeoAntigenDB|PeptideAtlas2|"
             r"CancerNeoAg|ImmunoDB|HLAdb Pro|MHCdb Plus|VaccineDB|"
-            r"TumorNeoantigenDB|NeoVaxDB|OpenNeoAg)\b"
+            r"TumorNeoantigenDB|FoldAgentDB|OpenNeoAg)\b"
         ),
         "description": "Known non-existent or unverified database name",
         "severity": "high",

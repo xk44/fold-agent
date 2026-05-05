@@ -1,15 +1,15 @@
 {
-  "name": "neovax-client",
+  "name": "foldagent-client",
   "version": "0.1.0",
-  "description": "TypeScript client for NeoVax-Agent API",
-  "main": "dist/neovax-client.js",
-  "types": "dist/neovax-client.d.ts",
+  "description": "TypeScript client for FoldAgent API",
+  "main": "dist/foldagent-client.js",
+  "types": "dist/foldagent-client.d.ts",
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
-    "neovax",
+    "foldagent",
     "bioinformatics",
     "neoantigen"
   ],

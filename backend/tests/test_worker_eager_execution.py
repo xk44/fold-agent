@@ -474,7 +474,7 @@ class TestRunAlphafoldJobPersistence:
 
 def _make_eager_app() -> Celery:
     """Create a Celery app configured for eager (synchronous) execution."""
-    app = Celery("neovax_test", broker="memory://", backend="cache+memory://")
+    app = Celery("foldagent_test", broker="memory://", backend="cache+memory://")
     app.conf.update(
         task_always_eager=True,
         task_eager_propagates=True,
@@ -824,8 +824,8 @@ class TestDirectTaskImport:
         """Set broker env vars so the worker module can be imported, then
         inject a mock Celery app so tasks can be called as plain functions."""
         # Set env vars for the config module
-        monkeypatch.setenv("NEOVAX_CELERY_BROKER_URL", "redis://localhost:6379/0")
-        monkeypatch.setenv("NEOVAX_REDIS_URL", "redis://localhost:6379/0")
+        monkeypatch.setenv("FOLDAGENT_CELERY_BROKER_URL", "redis://localhost:6379/0")
+        monkeypatch.setenv("FOLDAGENT_REDIS_URL", "redis://localhost:6379/0")
 
         # Reload config to pick up new env vars
         import backend.app.config as _cfg

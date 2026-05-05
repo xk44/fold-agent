@@ -1,1 +1,1 @@
-"""NeoVax-Agent operation modes."""
+"""FoldAgent operation modes."""

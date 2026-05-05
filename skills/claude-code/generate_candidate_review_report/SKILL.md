@@ -1,13 +1,13 @@
 ---
 name: generate_candidate_review_report
-description: Generate, inspect, and export a NeoVax candidate-review report under safety gating and professional-review framing.
+description: Generate, inspect, and export a FoldAgent candidate-review report under safety gating and professional-review framing.
 version: 0.2.0
 license: Apache-2.0
 framework: Claude Code
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - reporting
   - candidate-review
   - safety-gated
@@ -22,18 +22,18 @@ Use this skill when a case is ready for a candidate-review report summarizing va
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
 
-1. Every report must retain the NeoVax research-only safety label.
+1. Every report must retain the FoldAgent research-only safety label.
 2. All export paths must pass safety preflight before proceeding.
 3. Blocked or approval-required exports must stop immediately.
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Gate report generation and export actions
 - `GET /cases/{case_id}` — Verify target case
@@ -85,7 +85,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 

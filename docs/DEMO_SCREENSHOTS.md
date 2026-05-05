@@ -1,4 +1,4 @@
-# NeoVax-Agent Demo Screenshots
+# FoldAgent Demo Screenshots
 
 Placeholder documentation for UI screenshots. Screenshots to be added after UI stabilization.
 

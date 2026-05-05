@@ -1,4 +1,4 @@
-# NeoVax-Agent
+# FoldAgent
 
 # Byte-compiled / optimized
 __pycache__/
@@ -36,7 +36,7 @@ htmlcov/
 
 # Database
 *.db
-neovax.db
+foldagent.db
 
 # Logs
 audit_logs/

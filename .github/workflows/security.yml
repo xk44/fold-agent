@@ -97,7 +97,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: ./
-          artifact-name: neovax-sbom.spdx.json
+          artifact-name: foldagent-sbom.spdx.json
           format: spdx-json
           upload-artifact: true
           upload-artifact-retention: 90

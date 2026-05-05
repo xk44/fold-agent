@@ -1,4 +1,4 @@
-# NeoVax-Agent Configuration Example
+# FoldAgent Configuration Example
 
 # === Species Mode ===
 # Determines which restrictions and templates are active
@@ -9,7 +9,7 @@ species_mode: demo
 # === Database ===
 # SQLite for local-first development
 # PostgreSQL for production
-database_url: "sqlite:///./neovax.db"
+database_url: "sqlite:///./foldagent.db"
 
 # === Optional worker stack ===
 # Enable only when async background workers are needed.

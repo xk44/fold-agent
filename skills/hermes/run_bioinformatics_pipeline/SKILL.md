@@ -1,13 +1,13 @@
 ---
 name: run_bioinformatics_pipeline
-description: Run or inspect the NeoVax mock bioinformatics pipeline and summarize reproducible outputs under safety gating.
+description: Run or inspect the FoldAgent mock bioinformatics pipeline and summarize reproducible outputs under safety gating.
 version: 0.2.0
 license: Apache-2.0
 framework: Hermes
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - pipeline
   - bioinformatics
   - safety-gated
@@ -17,12 +17,12 @@ tags:
 
 ## When to Use
 
-Use this skill when you need to launch, inspect, or summarize NeoVax pipeline execution for a case. It is the operational wrapper around synchronous runs, async background runs, adapter checks, and pipeline status/history review. This skill does NOT claim scientific validity beyond the currently available pipeline implementation and mode.
+Use this skill when you need to launch, inspect, or summarize FoldAgent pipeline execution for a case. It is the operational wrapper around synchronous runs, async background runs, adapter checks, and pipeline status/history review. This skill does NOT claim scientific validity beyond the currently available pipeline implementation and mode.
 
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -33,7 +33,7 @@ Use this skill when you need to launch, inspect, or summarize NeoVax pipeline ex
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Gate pipeline execution or retry decisions
 - `GET /cases/{case_id}` — Verify case and species mode
@@ -92,7 +92,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 
@@ -101,7 +101,7 @@ A structured output package containing:
 - Log every pipeline start, async dispatch, retry, or cancellation decision.
 - Log per-step failures and surfaced warnings when they exist in API results.
 - Log job ids, execution ids, and artifact references used in the summary.
-- Preserve all workflow changes through the NeoVax audit trail.
+- Preserve all workflow changes through the FoldAgent audit trail.
 
 ## Failure Handling
 

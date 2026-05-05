@@ -1,4 +1,4 @@
-# Threat Model — NeoVax Agent
+# Threat Model — FoldAgent Agent
 
 **Classification:** Internal — Research Use Only  
 **Phase:** 19 (Security Hardening)  
@@ -9,7 +9,7 @@
 
 ## Scope
 
-This document covers the threat surface of the NeoVax Agent platform: a local-first, safety-gated research coordination tool for personalized cancer-vaccine exploration under licensed professional supervision. It does not cover threats to downstream wet-lab or clinical processes.
+This document covers the threat surface of the FoldAgent Agent platform: a local-first, safety-gated research coordination tool for personalized cancer-vaccine exploration under licensed professional supervision. It does not cover threats to downstream wet-lab or clinical processes.
 
 ---
 
@@ -54,7 +54,7 @@ The platform processes patient-adjacent genomic data: somatic mutation calls (VC
 | GP-1 | Raw VCF/FASTA files exfiltrated from local data directory                   | Medium     | Critical |
 | GP-2 | Genomic data included in LLM API requests to cloud providers                | Medium     | Critical |
 | GP-3 | Audit logs inadvertently capture sequence snippets or mutation coordinates  | Low        | High     |
-| GP-4 | SQLite database (`neovax.db`) copied or accessed without authorization      | Medium     | High     |
+| GP-4 | SQLite database (`foldagent.db`) copied or accessed without authorization      | Medium     | High     |
 | GP-5 | Browser/frontend session leaks sequence data to browser history or devtools | Low        | Medium   |
 
 ### 2.3 Mitigations
@@ -63,7 +63,7 @@ The platform processes patient-adjacent genomic data: somatic mutation calls (VC
 - LLM API calls receive only derivative artifacts (epitope scores, binding predictions) — not raw sequences — by policy enforced in skill wrappers.
 - `data/` directory is `.gitignore`d and excluded from all CI artifact uploads.
 - Audit log fields are schema-controlled; sequence fields are hashed before logging.
-- `neovax.db` is SQLite with file-system permissions; Docker compose mounts it as a named volume with restricted container access.
+- `foldagent.db` is SQLite with file-system permissions; Docker compose mounts it as a named volume with restricted container access.
 
 ### 2.4 Residual Risks
 
@@ -95,7 +95,7 @@ The platform installs ~80+ transitive Python dependencies from PyPI. A compromis
 - **Dependabot** (`dependabot.yml`) files automated PRs for dependency updates; major-version bumps require manual review.
 - GitHub Actions use pinned SHA references for third-party actions (enforce via Dependabot `github-actions` ecosystem).
 - **CodeQL** scans for known vulnerable code patterns introduced by deps.
-- SBOM (`neovax-sbom.spdx.json`) generated on every main-branch push and uploaded to GitHub dependency graph for continuous monitoring.
+- SBOM (`foldagent-sbom.spdx.json`) generated on every main-branch push and uploaded to GitHub dependency graph for continuous monitoring.
 
 ### 3.4 Residual Risks
 
@@ -142,7 +142,7 @@ AlphaFold Server and future cloud APIs (ESMFold, OpenFold) accept protein sequen
 | Safety preflight gate                         | `backend/safety/`                     | PI-1, PI-2, CU-1  |
 | Audit logging (structured, append-only)       | `audit_logs/`, `structlog`            | PI-\*, GP-3, CU-5 |
 | Local-first default (no network by default)   | `config.example.yaml`                 | GP-2, CU-1..3     |
-| `.gitignore` for `data/`, `.env`, `neovax.db` | `.gitignore`                          | GP-4, CU-4        |
+| `.gitignore` for `data/`, `.env`, `foldagent.db` | `.gitignore`                          | GP-4, CU-4        |
 | `requirements.lock` pinned deps               | `requirements.lock`                   | SC-5              |
 | `pip-audit` in CI                             | `.github/workflows/security.yml`      | SC-1..2           |
 | Dependabot automated updates                  | `.github/dependabot.yml`              | SC-3              |
@@ -158,7 +158,7 @@ AlphaFold Server and future cloud APIs (ESMFold, OpenFold) accept protein sequen
 ## 6. Out of Scope
 
 - Physical security of the host machine.
-- Security of the clinical or laboratory systems that consume NeoVax outputs.
+- Security of the clinical or laboratory systems that consume FoldAgent outputs.
 - Threats to downstream manufacturing or treatment processes.
 - Compliance with specific jurisdictional regulations (HIPAA, GDPR) — see `DATA_PRIVACY.md`.
 

@@ -40,7 +40,7 @@ class TestDockerfile:
         ), "Dockerfile must use Python 3.11 base image"
 
     def test_dockerfile_has_non_root_user(self) -> None:
-        assert "USER neovax" in self.content, "Dockerfile must run as non-root user"
+        assert "USER foldagent" in self.content, "Dockerfile must run as non-root user"
 
     def test_dockerfile_has_healthcheck(self) -> None:
         assert "HEALTHCHECK" in self.content, "Dockerfile must define a HEALTHCHECK"
@@ -244,23 +244,23 @@ class TestEnvExample:
 
     def test_worker_backend_var_documented(self) -> None:
         assert (
-            "NEOVAX_BACKGROUND_JOB_BACKEND" in self.content
-        ), ".env.example must document NEOVAX_BACKGROUND_JOB_BACKEND"
+            "FOLDAGENT_BACKGROUND_JOB_BACKEND" in self.content
+        ), ".env.example must document FOLDAGENT_BACKGROUND_JOB_BACKEND"
 
     def test_redis_url_documented(self) -> None:
         assert (
-            "NEOVAX_REDIS_URL" in self.content
-        ), ".env.example must document NEOVAX_REDIS_URL"
+            "FOLDAGENT_REDIS_URL" in self.content
+        ), ".env.example must document FOLDAGENT_REDIS_URL"
 
     def test_celery_broker_url_documented(self) -> None:
         assert (
-            "NEOVAX_CELERY_BROKER_URL" in self.content
-        ), ".env.example must document NEOVAX_CELERY_BROKER_URL"
+            "FOLDAGENT_CELERY_BROKER_URL" in self.content
+        ), ".env.example must document FOLDAGENT_CELERY_BROKER_URL"
 
     def test_celery_result_backend_documented(self) -> None:
         assert (
-            "NEOVAX_CELERY_RESULT_BACKEND" in self.content
-        ), ".env.example must document NEOVAX_CELERY_RESULT_BACKEND"
+            "FOLDAGENT_CELERY_RESULT_BACKEND" in self.content
+        ), ".env.example must document FOLDAGENT_CELERY_RESULT_BACKEND"
 
     def test_auto_default_documented(self) -> None:
         assert (
@@ -297,9 +297,9 @@ class TestWorkerModule:
         env = os.environ.copy()
         # Remove broker-related env vars
         for key in (
-            "NEOVAX_REDIS_URL",
-            "NEOVAX_CELERY_BROKER_URL",
-            "NEOVAX_CELERY_RESULT_BACKEND",
+            "FOLDAGENT_REDIS_URL",
+            "FOLDAGENT_CELERY_BROKER_URL",
+            "FOLDAGENT_CELERY_RESULT_BACKEND",
         ):
             env.pop(key, None)
 
@@ -312,8 +312,8 @@ class TestWorkerModule:
         )
         assert result.returncode != 0, "Worker must not start without a broker URL"
         assert (
-            "NEOVAX_CELERY_BROKER_URL" in result.stderr
-            or "NEOVAX_REDIS_URL" in result.stderr
+            "FOLDAGENT_CELERY_BROKER_URL" in result.stderr
+            or "FOLDAGENT_REDIS_URL" in result.stderr
         ), f"Error message should mention required env vars, got: {result.stderr}"
 
     @pytest.mark.skipif(
@@ -326,8 +326,8 @@ class TestWorkerModule:
         import sys
 
         env = os.environ.copy()
-        env["NEOVAX_CELERY_BROKER_URL"] = "redis://localhost:6379/0"
-        env["NEOVAX_CELERY_RESULT_BACKEND"] = "redis://localhost:6379/1"
+        env["FOLDAGENT_CELERY_BROKER_URL"] = "redis://localhost:6379/0"
+        env["FOLDAGENT_CELERY_RESULT_BACKEND"] = "redis://localhost:6379/1"
 
         result = subprocess.run(
             [

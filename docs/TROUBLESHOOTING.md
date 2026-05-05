@@ -1,6 +1,6 @@
 # Troubleshooting
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
@@ -19,13 +19,13 @@
 **Fix:**
 
 1. Stop all services: `make docker-down` or kill all uvicorn/celery processes
-2. Check for stale lock files: `ls neovax.db*` — if `neovax.db-shm` or `neovax.db-wal` are present and the database is not in use, they can be safely removed
+2. Check for stale lock files: `ls foldagent.db*` — if `foldagent.db-shm` or `foldagent.db-wal` are present and the database is not in use, they can be safely removed
 3. Restart: `make dev` or `make docker-up`
 
 For production workloads with concurrent workers, migrate to PostgreSQL:
 
 ```bash
-NEOVAX_DATABASE_URL=postgresql://user:pass@localhost/neovax
+FOLDAGENT_DATABASE_URL=postgresql://user:pass@localhost/foldagent
 ```
 
 ---
@@ -40,7 +40,7 @@ NEOVAX_DATABASE_URL=postgresql://user:pass@localhost/neovax
 
 ```bash
 # Option 1: auto-create all tables (bypasses Alembic)
-NEOVAX_DB_INIT_MODE=create_all make dev
+FOLDAGENT_DB_INIT_MODE=create_all make dev
 
 # Option 2: apply Alembic migrations
 make migrate && make dev
@@ -61,7 +61,7 @@ If the database file is new (e.g. after `make reset`), run `make migrate` or sta
 
 **Symptom:** App fails to start with `RuntimeError: Schema validation failed: missing tables [...]`.
 
-**Cause:** `NEOVAX_DB_INIT_MODE=validate` found ORM models with no corresponding database table. A migration was added but not applied.
+**Cause:** `FOLDAGENT_DB_INIT_MODE=validate` found ORM models with no corresponding database table. A migration was added but not applied.
 
 **Fix:**
 
@@ -91,7 +91,7 @@ make migrate
 
 After installing, restart the API. The `PIPELINE_ADAPTERS` dict and backend registry are populated at startup.
 
-If you only need mock functionality, set `NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock` — the mock backend always passes `validate_environment()`.
+If you only need mock functionality, set `FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock` — the mock backend always passes `validate_environment()`.
 
 ---
 
@@ -133,7 +133,7 @@ See `docs/SAFETY_GUIDE.md` for the full preflight decision tree.
 
 **Fix:** Install the tool and add it to `PATH`. Then restart the API (the registry checks `shutil.which()` at startup).
 
-For running without real tools, switch to mock mode: `NEOVAX_PIPELINE_MODE=mock`.
+For running without real tools, switch to mock mode: `FOLDAGENT_PIPELINE_MODE=mock`.
 
 ---
 
@@ -144,8 +144,8 @@ For running without real tools, switch to mock mode: `NEOVAX_PIPELINE_MODE=mock`
 **Fix:** Override via environment variable:
 
 ```bash
-NEOVAX_PIPELINE_BWA_REFERENCE=/path/to/your/reference.fa
-NEOVAX_PIPELINE_GATK_REFERENCE=/path/to/your/reference.fa
+FOLDAGENT_PIPELINE_BWA_REFERENCE=/path/to/your/reference.fa
+FOLDAGENT_PIPELINE_GATK_REFERENCE=/path/to/your/reference.fa
 ```
 
 Or pass `reference` directly in the request payload — payload values always override config defaults.
@@ -193,7 +193,7 @@ pytest backend/tests/test_preflight.py -v
 
 ### Dashboard shows "Cannot connect to API"
 
-**Cause:** API server is not running, or `NEOVAX_API_URL` is wrong.
+**Cause:** API server is not running, or `FOLDAGENT_API_URL` is wrong.
 
 **Fix:**
 
@@ -202,10 +202,10 @@ pytest backend/tests/test_preflight.py -v
 make dev   # in a separate terminal
 
 # Ensure the dashboard uses the correct URL
-NEOVAX_API_URL=http://127.0.0.1:8010 make dashboard
+FOLDAGENT_API_URL=http://127.0.0.1:8010 make dashboard
 ```
 
-In Docker, the dashboard service uses `NEOVAX_API_URL=http://app:8010` (internal Docker network). If running outside Docker, change this to `http://127.0.0.1:8010`.
+In Docker, the dashboard service uses `FOLDAGENT_API_URL=http://app:8010` (internal Docker network). If running outside Docker, change this to `http://127.0.0.1:8010`.
 
 ---
 
@@ -226,14 +226,14 @@ make ports-check   # shows what is listening on 8010 and 8502
 
 **Symptom:** Log output is plain text instead of JSON.
 
-**Fix:** Ensure `NEOVAX_STRUCTURED_LOGS=true` (default). If running in a terminal and JSON is hard to read, set `NEOVAX_STRUCTURED_LOGS=false` for local development.
+**Fix:** Ensure `FOLDAGENT_STRUCTURED_LOGS=true` (default). If running in a terminal and JSON is hard to read, set `FOLDAGENT_STRUCTURED_LOGS=false` for local development.
 
 ### `make reset` cleared the database but tables are missing
 
 After `make reset`, the SQLite file is deleted. Recreate the schema:
 
 ```bash
-NEOVAX_DB_INIT_MODE=create_all make dev
+FOLDAGENT_DB_INIT_MODE=create_all make dev
 # or
 make migrate
 ```

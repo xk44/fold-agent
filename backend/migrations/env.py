@@ -19,7 +19,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     configured = config.get_main_option("sqlalchemy.url")
-    if configured and configured != "sqlite:///./neovax.db":
+    if configured and configured != "sqlite:///./foldagent.db":
         return configured
     return settings.database_url
 

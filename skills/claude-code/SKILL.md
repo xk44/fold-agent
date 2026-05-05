@@ -1,19 +1,19 @@
 ---
-name: neovax-pipeline
-description: Claude Code skill for running the NeoVax neoantigen vaccine pipeline. Coordinates case setup, data upload, pipeline execution, candidate review, report generation, and safety checks under mandatory expert oversight.
+name: foldagent-pipeline
+description: Claude Code skill for running the FoldAgent neoantigen vaccine pipeline. Coordinates case setup, data upload, pipeline execution, candidate review, report generation, and safety checks under mandatory expert oversight.
 version: 1.0.0
 license: Apache-2.0
 framework: Claude Code
-install_path: ~/.claude/skills/neovax-pipeline/
+install_path: ~/.claude/skills/foldagent-pipeline/
 tags:
-  - neovax-agent
+  - foldagent
   - oncology-research
   - pipeline
   - neoantigen
   - safety-gated
 ---
 
-# NeoVax Pipeline Skill
+# FoldAgent Pipeline Skill
 
 > **Safety Disclaimer**: This skill coordinates research workflow only. It does NOT provide
 > medical advice, treatment recommendations, dosing instructions, formulation guidance, or
@@ -23,7 +23,7 @@ tags:
 
 ## Overview
 
-The `neovax-pipeline` skill gives Claude Code agents structured access to the NeoVax
+The `foldagent-pipeline` skill gives Claude Code agents structured access to the FoldAgent
 neoantigen vaccine pipeline API. It wraps BWA alignment, Mutect2 variant calling, VEP
 annotation, NetMHCpan binding prediction, and AlphaFold structure prediction behind
 safety-gated, audited API calls.
@@ -42,7 +42,7 @@ safety-gated, audited API calls.
 
 ```
 # Create a new canine osteosarcoma case
-"Create a new NeoVax case for a canine patient with osteosarcoma. Supervising
+"Create a new FoldAgent case for a canine patient with osteosarcoma. Supervising
 vet is Dr. Smith."
 
 # Run the full pipeline
@@ -61,20 +61,20 @@ binding affinities."
 
 ## Prerequisites
 
-- NeoVax API running at `http://localhost:8000` (or configured `NEOVAX_API_URL`)
+- FoldAgent API running at `http://localhost:8000` (or configured `FOLDAGENT_API_URL`)
 - Case must be created before running pipeline
 - Safety preflight must pass before pipeline execution on non-demo data
 - Licensed professional must be named as `supervising_professional` on each case
 
 ## Shared Utilities
 
-- `skills/shared/neovax_client.py` — API client with auth and retry
+- `skills/shared/foldagent_client.py` — FoldAgent API client with auth and retry
 - `skills/shared/event_stream_client.py` — SSE/WebSocket event streaming
 - `skills/shared/safety_policy.md` — Full safety policy reference
 
 ## Audit Trail
 
-Every action taken through this skill is logged to the NeoVax audit trail via
+Every action taken through this skill is logged to the FoldAgent audit trail via
 `GET /audit/{case_id}` and `GET /audit/export`. Do not bypass the audit trail.
 
 ## No Medical Advice Warning

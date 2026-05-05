@@ -1,6 +1,6 @@
-# NeoVax Day-1 Minimum Governance/Safety Documentation Set
+# FoldAgent Day-1 Minimum Governance/Safety Documentation Set
 
-Extracted from "NeoVax-Agent — Full Project Plan" (Section 5, Section 13 Phase 0,
+Extracted from "FoldAgent — Full Project Plan" (Section 5, Section 13 Phase 0,
 Section 17 build order items 1-3, plus cross-cutting wording constraints).
 
 ---
@@ -9,7 +9,7 @@ Section 17 build order items 1-3, plus cross-cutting wording constraints).
 
 ### Must-Have Sections
 1. **Project title and one-sentence summary** — Use exact phrasing:
-   > NeoVax-Agent is a local-first, safety-gated research coordination platform
+   > FoldAgent is a local-first, safety-gated research coordination platform
    > that turns the Paul Conyngham / Rosie story into an auditable,
    > expert-supervised software workflow with AlphaFold support, bioinformatics
    > adapters, ethics documentation, and plug-and-play Claude Code / OpenClaw /
@@ -20,13 +20,13 @@ Section 17 build order items 1-3, plus cross-cutting wording constraints).
    Critical wording (from Phase 0 todo):
    > NOT MEDICAL ADVICE · NOT VETERINARY ADVICE · NOT TREATMENT INSTRUCTIONS
 
-3. **What NeoVax-Agent IS** (Section 3):
+3. **What FoldAgent IS** (Section 3):
    - Privacy-first research case manager
    - Computational biology workflow orchestrator
    - For personalized cancer-vaccine exploration under licensed professional
      supervision
 
-4. **What NeoVax-Agent IS NOT** (Section 3):
+4. **What FoldAgent IS NOT** (Section 3):
    - NOT a cure generator
    - NOT a direct-to-consumer treatment app
    - NOT a vaccine manufacturing guide
@@ -272,7 +272,7 @@ Section 17 build order items 1-3, plus cross-cutting wording constraints).
 
 2. **Critical warning** (MUST be prominent) — must use wording:
    > Paul's GitHub repo is related direct material, NOT verified as the exact
-   > Rosie mRNA pipeline. NeoVax-Agent must NOT copy operational manufacturing,
+   > Rosie mRNA pipeline. FoldAgent must NOT copy operational manufacturing,
    > formulation, dosing, or administration details from it.
 
 3. **Reporting and context links** (Section 2.2):

@@ -10,18 +10,24 @@ services:
       - path: .env
         required: false
     environment:
-      - NEOVAX_API_PORT=8010
-      - NEOVAX_DATABASE_URL=sqlite:///./data/neovax.db
-      - NEOVAX_SPECIES_MODE=demo
-      - NEOVAX_SAFETY_PREFLIGHT_ENABLED=true
-      - NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock
-      - NEOVAX_PIPELINE_MODE=mock
+      - FOLDAGENT_API_PORT=8010
+      - FOLDAGENT_DATABASE_URL=sqlite:///./data/foldagent.db
+      - FOLDAGENT_SPECIES_MODE=demo
+      - FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=true
+      - FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock
+      - FOLDAGENT_PIPELINE_MODE=mock
     volumes:
       - ./data:/app/data
       - ./audit_logs:/app/audit_logs
       - ./artifacts:/app/artifacts
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')",
+        ]
       interval: 30s
       timeout: 5s
       start_interval: 5s
@@ -40,13 +46,19 @@ services:
       - path: .env
         required: false
     environment:
-      - NEOVAX_DASHBOARD_PORT=8502
-      - NEOVAX_API_URL=http://app:8010
+      - FOLDAGENT_DASHBOARD_PORT=8502
+      - FOLDAGENT_API_URL=http://app:8010
     depends_on:
       app:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8502/_stcore/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8502/_stcore/health')",
+        ]
       interval: 30s
       timeout: 5s
       start_period: 20s
@@ -65,8 +77,8 @@ services:
   #
   #   docker compose --profile worker up redis worker
   #
-  # Make sure NEOVAX_CELERY_BROKER_URL and NEOVAX_CELERY_RESULT_BACKEND
-  # are set (or rely on NEOVAX_REDIS_URL as fallback) in your .env.
+  # Make sure FOLDAGENT_CELERY_BROKER_URL and FOLDAGENT_CELERY_RESULT_BACKEND
+  # are set (or rely on FOLDAGENT_REDIS_URL as fallback) in your .env.
   # When these services are running, background jobs will be dispatched
   # through Celery; otherwise the app falls back to its threadpool.
   # ------------------------------------------------------------------
@@ -97,14 +109,14 @@ services:
       - path: .env
         required: false
     environment:
-      - NEOVAX_REDIS_URL=redis://redis:6379/0
-      - NEOVAX_CELERY_BROKER_URL=redis://redis:6379/0
-      - NEOVAX_CELERY_RESULT_BACKEND=redis://redis:6379/1
-      - NEOVAX_DATABASE_URL=sqlite:///./data/neovax.db
-      - NEOVAX_SPECIES_MODE=demo
-      - NEOVAX_SAFETY_PREFLIGHT_ENABLED=true
-      - NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock
-      - NEOVAX_PIPELINE_MODE=mock
+      - FOLDAGENT_REDIS_URL=redis://redis:6379/0
+      - FOLDAGENT_CELERY_BROKER_URL=redis://redis:6379/0
+      - FOLDAGENT_CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - FOLDAGENT_DATABASE_URL=sqlite:///./data/foldagent.db
+      - FOLDAGENT_SPECIES_MODE=demo
+      - FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=true
+      - FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock
+      - FOLDAGENT_PIPELINE_MODE=mock
     depends_on:
       redis:
         condition: service_healthy

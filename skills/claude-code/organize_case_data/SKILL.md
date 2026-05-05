@@ -1,13 +1,13 @@
 ---
 name: organize_case_data
-description: Organize NeoVax case data inventory, metadata, and sample registration before downstream analysis.
+description: Organize FoldAgent case data inventory, metadata, and sample registration before downstream analysis.
 version: 0.2.0
 license: Apache-2.0
 framework: Claude Code
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - case-management
   - data-inventory
   - safety-gated
@@ -17,12 +17,12 @@ tags:
 
 ## When to Use
 
-Use this skill when setting up a new NeoVax case, normalizing existing metadata, or auditing sample completeness before downstream analysis. It focuses on case, subject, and sample organization so later pipeline and reporting skills can operate on clean inventory state. This skill does NOT run scientific analysis or generate treatment-facing conclusions.
+Use this skill when setting up a new FoldAgent case, normalizing existing metadata, or auditing sample completeness before downstream analysis. It focuses on case, subject, and sample organization so later pipeline and reporting skills can operate on clean inventory state. This skill does NOT run scientific analysis or generate treatment-facing conclusions.
 
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -34,7 +34,7 @@ Use this skill when setting up a new NeoVax case, normalizing existing metadata,
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Gate new sample registration or real-data handling
 - `GET /cases/{case_id}` — Verify the case exists and inspect summary metadata
@@ -90,7 +90,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 
@@ -99,7 +99,7 @@ A structured output package containing:
 - Log every case, subject, and sample lookup with case context.
 - Log all safety preflight outcomes before registration steps.
 - Log each created subject or sample id after successful writes.
-- Keep the NeoVax audit trail as the authoritative registration record.
+- Keep the FoldAgent audit trail as the authoritative registration record.
 
 ## Failure Handling
 

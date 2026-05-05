@@ -1,4 +1,4 @@
-# NeoVax-Agent MVP Architecture & Stack Recommendation
+# FoldAgent MVP Architecture & Stack Recommendation
 
 **Goal:** Fastest path to a useful, safe, local-first product.
 
@@ -36,7 +36,7 @@
 ## RECOMMENDED ARCHITECTURE
 
 ```
-neovax-agent/
+foldagent/
   backend/
     app/
       main.py              # FastAPI app + lifespan
@@ -95,12 +95,12 @@ neovax-agent/
       structure_viewer.py      # py3Dmol wrapper
   skills/
     shared/
-      neovax_client.py         # Python API client
+      foldagent_client.py         # Python API client
       openapi.json
       safety_policy.md
       report_templates/
     claude-code/               # MVP: Claude Code only
-      run_full_neovax_case_review/
+      run_full_foldagent_case_review/
       organize_case_data/
       run_bioinformatics_pipeline/
       get_alphafold_structures/
@@ -120,7 +120,7 @@ neovax-agent/
 ### Key Architectural Decisions
 
 **1. SQLite-first, not Postgres-first**
-- Local-first means `git clone && pip install && neovax serve` works with zero config
+- Local-first means `git clone && pip install && foldagent serve` works with zero config
 - SQLite handles single-user and small team use cases fine
 - Alembic migrations make Postgres a config swap for production
 - WAL mode + busy_timeout handles concurrent reads
@@ -209,10 +209,10 @@ neovax-agent/
 - **Why fourth:** Dashboard makes the system usable and testable by humans. Without it, the API is invisible. Streamlit gets you here in days, not weeks.
 
 ### Priority 5: Claude Code skill packs + API client + shared safety policy
-- `skills/shared/neovax_client.py` — Python client wrapping the OpenAPI spec
+- `skills/shared/foldagent_client.py` — Python client wrapping the OpenAPI spec
 - `skills/shared/safety_policy.md` — agent-readable safety policy
 - `skills/shared/openapi.json` — auto-generated from FastAPI
-- 5 priority SKILL.md packs: `run_full_neovax_case_review`, `organize_case_data`, `run_bioinformatics_pipeline`, `get_alphafold_structures`, `generate_candidate_review_report`
+- 5 priority SKILL.md packs: `run_full_foldagent_case_review`, `organize_case_data`, `run_bioinformatics_pipeline`, `get_alphafold_structures`, `generate_candidate_review_report`
 - Each SKILL.md includes: name, description, safety boundaries, required endpoints, no-medical-advice warning
 - Install instructions for Claude Code
 - **Why fifth:** Agent integration is a key differentiator but depends on a stable API. Build the API surface first, then expose it to agents. Claude Code first because it has the largest developer audience and simplest skill format.
@@ -222,7 +222,7 @@ neovax-agent/
 ## WHAT v0.1.0 LOOKS LIKE
 
 A user can:
-1. `git clone` + `pip install` + `neovax serve` (zero Docker required)
+1. `git clone` + `pip install` + `foldagent serve` (zero Docker required)
 2. Open Streamlit dashboard
 3. Create a demo case (dog/human/demo mode)
 4. Register synthetic sequencing files

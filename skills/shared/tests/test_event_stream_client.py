@@ -278,7 +278,7 @@ class TestEventStreamClient:
     def _make_stream_cm(self, raw_lines: list[str]):
         return _make_stream_cm(raw_lines)
 
-    def test_default_base_url_matches_neovax_local_api_port(self) -> None:
+    def test_default_base_url_matches_foldagent_local_api_port(self) -> None:
         client = EventStreamClient()
 
         assert client._base_url == "http://localhost:8010"
@@ -463,7 +463,7 @@ class TestWebSocketEventClientParseMessage:
 class TestWebSocketEventClientURL:
     """Tests for WebSocketEventClient URL construction."""
 
-    def test_default_base_url_matches_neovax_local_api_port(self) -> None:
+    def test_default_base_url_matches_foldagent_local_api_port(self) -> None:
         client = WebSocketEventClient()
 
         assert client._ws_url_base == "ws://localhost:8010"
@@ -473,8 +473,8 @@ class TestWebSocketEventClientURL:
         assert client._ws_url_base == "ws://localhost:8000"
 
     def test_https_url_converts_to_wss(self) -> None:
-        client = WebSocketEventClient(base_url="https://neovax.example.com")
-        assert client._ws_url_base == "wss://neovax.example.com"
+        client = WebSocketEventClient(base_url="https://foldagent.example.com")
+        assert client._ws_url_base == "wss://foldagent.example.com"
 
     def test_trailing_slash_stripped(self) -> None:
         client = WebSocketEventClient(base_url="http://localhost:8000/")

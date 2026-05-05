@@ -3,12 +3,7 @@
     "schemas": {
       "AgentFrameworkEnum": {
         "description": "Agent framework types.",
-        "enum": [
-          "claude_code",
-          "openclaw",
-          "hermes",
-          "other"
-        ],
+        "enum": ["claude_code", "openclaw", "hermes", "other"],
         "title": "AgentFrameworkEnum",
         "type": "string"
       },
@@ -59,11 +54,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "framework",
-          "skill_name",
-          "skill_path"
-        ],
+        "required": ["framework", "skill_name", "skill_path"],
         "title": "AgentSkillRead",
         "type": "object"
       },
@@ -117,10 +108,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "framework",
-          "skill_name"
-        ],
+        "required": ["framework", "skill_name"],
         "title": "AgentTaskCreate",
         "type": "object"
       },
@@ -174,10 +162,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "framework",
-          "skill_name"
-        ],
+        "required": ["framework", "skill_name"],
         "title": "AgentTaskDryRunRequest",
         "type": "object"
       },
@@ -597,13 +582,7 @@
             "title": "Timeout Seconds"
           }
         },
-        "required": [
-          "id",
-          "case_id",
-          "job_type",
-          "status",
-          "created_at"
-        ],
+        "required": ["id", "case_id", "job_type", "status", "created_at"],
         "title": "BackgroundJobRead",
         "type": "object"
       },
@@ -685,9 +664,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "variant_id"
-        ],
+        "required": ["variant_id"],
         "title": "CandidateCreate",
         "type": "object"
       },
@@ -856,10 +833,7 @@
             "title": "Content Text"
           },
           "format": {
-            "enum": [
-              "markdown",
-              "json"
-            ],
+            "enum": ["markdown", "json"],
             "title": "Format",
             "type": "string"
           },
@@ -868,11 +842,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "case_id",
-          "format",
-          "safety_label"
-        ],
+        "required": ["case_id", "format", "safety_label"],
         "title": "CaseBundleExport",
         "type": "object"
       },
@@ -995,9 +965,7 @@
             "title": "Supervising Professional"
           }
         },
-        "required": [
-          "species"
-        ],
+        "required": ["species"],
         "title": "CaseCreate",
         "type": "object"
       },
@@ -1030,9 +998,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "case_id"
-        ],
+        "required": ["case_id"],
         "title": "CaseDeleteResult",
         "type": "object"
       },
@@ -1127,9 +1093,7 @@
             "$ref": "#/components/schemas/RedactionLevelEnum"
           }
         },
-        "required": [
-          "redaction_level"
-        ],
+        "required": ["redaction_level"],
         "title": "CaseRedactRequest",
         "type": "object"
       },
@@ -1171,10 +1135,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "case_id",
-          "redaction_level"
-        ],
+        "required": ["case_id", "redaction_level"],
         "title": "CaseRedactResult",
         "type": "object"
       },
@@ -1224,9 +1185,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "CaseTaskCreate",
         "type": "object"
       },
@@ -1426,9 +1385,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "detail"
-        ],
+        "required": ["detail"],
         "title": "ErrorResponse",
         "type": "object"
       },
@@ -1738,12 +1695,7 @@
       },
       "RedactionLevelEnum": {
         "description": "Redaction level for case data privacy.\n\n- ``full``: all data visible (default)\n- ``deidentify``: PII fields replaced with placeholders, identifiers scrambled\n- ``anonymous``: only aggregate / statistical data retained\n- ``deleted``: data marked as permanently deleted (soft-delete marker)",
-        "enum": [
-          "full",
-          "deidentify",
-          "anonymous",
-          "deleted"
-        ],
+        "enum": ["full", "deidentify", "anonymous", "deleted"],
         "title": "RedactionLevelEnum",
         "type": "string"
       },
@@ -1773,10 +1725,7 @@
             "title": "Content Text"
           },
           "format": {
-            "enum": [
-              "markdown",
-              "json"
-            ],
+            "enum": ["markdown", "json"],
             "title": "Format",
             "type": "string"
           },
@@ -1789,11 +1738,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "report_id",
-          "format",
-          "safety_label"
-        ],
+        "required": ["report_id", "format", "safety_label"],
         "title": "ReportExport",
         "type": "object"
       },
@@ -1905,9 +1850,7 @@
             "$ref": "#/components/schemas/ReviewStatusEnum"
           }
         },
-        "required": [
-          "review_status"
-        ],
+        "required": ["review_status"],
         "title": "ReviewUpdate",
         "type": "object"
       },
@@ -1934,11 +1877,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "detail",
-          "safety_status",
-          "safety_reason"
-        ],
+        "required": ["detail", "safety_status", "safety_reason"],
         "title": "SafetyEnforcementErrorResponse",
         "type": "object"
       },
@@ -1983,10 +1922,7 @@
             "$ref": "#/components/schemas/SpeciesMode"
           }
         },
-        "required": [
-          "action",
-          "species_mode"
-        ],
+        "required": ["action", "species_mode"],
         "title": "SafetyPreflightRequest",
         "type": "object"
       },
@@ -2028,12 +1964,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "allowed",
-          "blocked",
-          "needs_approval"
-        ],
+        "required": ["status", "allowed", "blocked", "needs_approval"],
         "title": "SafetyPreflightResponse",
         "type": "object"
       },
@@ -2104,9 +2035,7 @@
             "title": "Subject Id"
           }
         },
-        "required": [
-          "sample_type"
-        ],
+        "required": ["sample_type"],
         "title": "SampleCreate",
         "type": "object"
       },
@@ -2213,12 +2142,7 @@
       },
       "SampleTypeEnum": {
         "description": "Sample type classification.",
-        "enum": [
-          "tumor",
-          "normal",
-          "rna",
-          "other"
-        ],
+        "enum": ["tumor", "normal", "rna", "other"],
         "title": "SampleTypeEnum",
         "type": "string"
       },
@@ -2263,11 +2187,7 @@
             "type": "string"
           },
           "format": {
-            "enum": [
-              "markdown",
-              "json",
-              "binary"
-            ],
+            "enum": ["markdown", "json", "binary"],
             "title": "Format",
             "type": "string"
           },
@@ -2316,11 +2236,7 @@
       },
       "SpeciesMode": {
         "description": "Operating mode determining safety restrictions and templates.",
-        "enum": [
-          "demo",
-          "dog",
-          "human"
-        ],
+        "enum": ["demo", "dog", "human"],
         "title": "SpeciesMode",
         "type": "string"
       },
@@ -2385,10 +2301,7 @@
             "title": "Visualization Path"
           }
         },
-        "required": [
-          "candidate_id",
-          "backend_used"
-        ],
+        "required": ["candidate_id", "backend_used"],
         "title": "StructureJobCreate",
         "type": "object"
       },
@@ -2511,9 +2424,7 @@
             "title": "Privacy Flags"
           }
         },
-        "required": [
-          "anonymized_display_name"
-        ],
+        "required": ["anonymized_display_name"],
         "title": "SubjectCreate",
         "type": "object"
       },
@@ -2600,9 +2511,7 @@
             "$ref": "#/components/schemas/RedactionLevelEnum"
           }
         },
-        "required": [
-          "redaction_level"
-        ],
+        "required": ["redaction_level"],
         "title": "SubjectRedactRequest",
         "type": "object"
       },
@@ -2697,11 +2606,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError",
         "type": "object"
       },
@@ -2790,9 +2695,7 @@
             "title": "Transcript"
           }
         },
-        "required": [
-          "genomic_coordinates"
-        ],
+        "required": ["genomic_coordinates"],
         "title": "VariantCreate",
         "type": "object"
       },
@@ -2943,7 +2846,7 @@
   },
   "info": {
     "description": "Local-first, safety-gated research coordination platform for personalized cancer-vaccine exploration under licensed professional supervision.",
-    "title": "NeoVax-Agent",
+    "title": "FoldAgent",
     "version": "0.1.0-alpha"
   },
   "openapi": "3.1.0",
@@ -3415,7 +3318,7 @@
     },
     "/alphafold/backends/{backend_name}/run": {
       "post": {
-        "description": "Run one of NeoVax's AlphaFold-family backends with backend-specific payload validation. Examples include ColabFold/local_colabfold sequence runs, alphafold3_local JSON runs, alphafold_server remote submissions with external-upload acknowledgement, and alphafold_db accession lookups.",
+        "description": "Run one of FoldAgent's AlphaFold-family backends with backend-specific payload validation. Examples include ColabFold/local_colabfold sequence runs, alphafold3_local JSON runs, alphafold_server remote submissions with external-upload acknowledgement, and alphafold_db accession lookups.",
         "operationId": "alphafold_backend_run_alphafold_backends__backend_name__run_post",
         "parameters": [
           {
@@ -5263,15 +5166,12 @@
             "content": {
               "application/json": {
                 "example": {
-                  "database_url": "sqlite:///./neovax.db",
+                  "database_url": "sqlite:///./foldagent.db",
                   "db_init_mode": "create_all",
                   "db_status": "degraded",
                   "error": "no such table: cases",
                   "extra_tables": [],
-                  "missing_tables": [
-                    "background_jobs",
-                    "cases"
-                  ],
+                  "missing_tables": ["background_jobs", "cases"],
                   "mode": "demo",
                   "status": "degraded",
                   "tables_expected": 14,

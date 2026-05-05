@@ -1,6 +1,6 @@
 # Bioinformatics Adapter Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
@@ -28,7 +28,7 @@ Every `StepResult` carries the safety label: **"Research candidate only — not 
 
 ## Pipeline Mode
 
-The `NEOVAX_PIPELINE_MODE` setting controls whether real adapters run:
+The `FOLDAGENT_PIPELINE_MODE` setting controls whether real adapters run:
 
 - `mock` (default): Uses `MockAlignmentStep`, `MockVariantCallingStep`, `MockAnnotationStep`, `MockCandidatePrioritizationStep` from `pipeline/base.py`. No real tools required.
 - `real`: Routes requests through the shell adapters. Requires all tools installed.
@@ -115,10 +115,10 @@ Builds: `bwa mem [-t THREADS] [-R READ_GROUP] REFERENCE FASTQ_1 [FASTQ_2]`
 
 Key fields:
 
-- `reference` — FASTA reference genome path (default: `NEOVAX_PIPELINE_BWA_REFERENCE`)
+- `reference` — FASTA reference genome path (default: `FOLDAGENT_PIPELINE_BWA_REFERENCE`)
 - `fastq_1` — First read file (required)
 - `fastq_2` — Second read file (optional, for paired-end)
-- `threads` — Parallelism (default: `NEOVAX_PIPELINE_DEFAULT_THREADS`)
+- `threads` — Parallelism (default: `FOLDAGENT_PIPELINE_DEFAULT_THREADS`)
 - `read_group` — SAM `@RG` header string
 - `output_bam` — Output BAM path
 
@@ -134,10 +134,10 @@ Key fields:
 
 - `input_bam` — Tumor BAM (required)
 - `normal_bam` — Matched normal BAM (optional but recommended)
-- `reference` — Reference FASTA (default: `NEOVAX_PIPELINE_GATK_REFERENCE`)
+- `reference` — Reference FASTA (default: `FOLDAGENT_PIPELINE_GATK_REFERENCE`)
 - `intervals` — Genomic intervals (BED or interval list)
-- `panel_of_normals` — PON VCF path (default: `NEOVAX_PIPELINE_GATK_PANEL_OF_NORMALS`)
-- `germline_resource` — Germline AF resource (default: `NEOVAX_PIPELINE_GATK_GERMLINE_RESOURCE`)
+- `panel_of_normals` — PON VCF path (default: `FOLDAGENT_PIPELINE_GATK_PANEL_OF_NORMALS`)
+- `germline_resource` — Germline AF resource (default: `FOLDAGENT_PIPELINE_GATK_GERMLINE_RESOURCE`)
 - `tumor_sample` — Sample name in the BAM header
 - `output_vcf` — Output VCF path
 
@@ -150,9 +150,9 @@ Builds: `vep --input_file VCF [--dir_cache CACHE_DIR] [--assembly ASSEMBLY] [--f
 Key fields:
 
 - `input_vcf` — Input VCF (required)
-- `cache_dir` — VEP cache directory (default: `NEOVAX_PIPELINE_VEP_CACHE_DIR`)
-- `assembly` — Reference assembly e.g. `GRCh38` (default: `NEOVAX_PIPELINE_VEP_ASSEMBLY`)
-- `fork` — CPU threads for VEP (default: `NEOVAX_PIPELINE_VEP_FORK`)
+- `cache_dir` — VEP cache directory (default: `FOLDAGENT_PIPELINE_VEP_CACHE_DIR`)
+- `assembly` — Reference assembly e.g. `GRCh38` (default: `FOLDAGENT_PIPELINE_VEP_ASSEMBLY`)
+- `fork` — CPU threads for VEP (default: `FOLDAGENT_PIPELINE_VEP_FORK`)
 - `everything` — Enable all annotation plugins (bool)
 - `hgvs`, `symbol`, `canonical` — Common annotation flags
 
@@ -168,8 +168,8 @@ Key fields:
 
 - `input_vcf` — Annotated VCF from VEP (required)
 - `sample_name` — Sample identifier in the VCF (required)
-- `alleles` — List of HLA/DLA alleles e.g. `["HLA-A*02:01"]` (default: `NEOVAX_PIPELINE_PVACTOOLS_ALLELES`)
-- `prediction_algorithms` — List of algorithms e.g. `["NetMHC"]` (default: `NEOVAX_PIPELINE_PVACTOOLS_ALGORITHMS`)
+- `alleles` — List of HLA/DLA alleles e.g. `["HLA-A*02:01"]` (default: `FOLDAGENT_PIPELINE_PVACTOOLS_ALLELES`)
+- `prediction_algorithms` — List of algorithms e.g. `["NetMHC"]` (default: `FOLDAGENT_PIPELINE_PVACTOOLS_ALGORITHMS`)
 - `output_dir` — Output directory
 - `peptide_length` — Peptide length for binding prediction
 - `netmhc_stab` — Enable NetMHCstab stability predictions
@@ -189,20 +189,20 @@ The `create_reproducibility_manifest()` method on `PipelineStep` hashes all inpu
 ## Configuration Reference
 
 ```bash
-NEOVAX_PIPELINE_MODE=mock                          # mock or real
-NEOVAX_PIPELINE_BWA_REFERENCE=/data/reference/hg38.fa
-NEOVAX_PIPELINE_GATK_REFERENCE=/data/reference/hg38.fa
-NEOVAX_PIPELINE_GATK_PANEL_OF_NORMALS=/data/pon.vcf.gz
-NEOVAX_PIPELINE_GATK_GERMLINE_RESOURCE=/data/af-only-gnomad.hg38.vcf.gz
-NEOVAX_PIPELINE_VEP_CACHE_DIR=/data/vep_cache
-NEOVAX_PIPELINE_VEP_ASSEMBLY=GRCh38
-NEOVAX_PIPELINE_VEP_FORK=4
-NEOVAX_PIPELINE_PVACTOOLS_ALLELES=HLA-A*02:01
-NEOVAX_PIPELINE_PVACTOOLS_ALGORITHMS=NetMHC
-NEOVAX_PIPELINE_DEFAULT_THREADS=4
-NEOVAX_PIPELINE_DEFAULT_MEMORY_GB=8
-NEOVAX_PIPELINE_CONCURRENT_WORKERS=2
-NEOVAX_PIPELINE_RETRY_MAX_ATTEMPTS=3
+FOLDAGENT_PIPELINE_MODE=mock                          # mock or real
+FOLDAGENT_PIPELINE_BWA_REFERENCE=/data/reference/hg38.fa
+FOLDAGENT_PIPELINE_GATK_REFERENCE=/data/reference/hg38.fa
+FOLDAGENT_PIPELINE_GATK_PANEL_OF_NORMALS=/data/pon.vcf.gz
+FOLDAGENT_PIPELINE_GATK_GERMLINE_RESOURCE=/data/af-only-gnomad.hg38.vcf.gz
+FOLDAGENT_PIPELINE_VEP_CACHE_DIR=/data/vep_cache
+FOLDAGENT_PIPELINE_VEP_ASSEMBLY=GRCh38
+FOLDAGENT_PIPELINE_VEP_FORK=4
+FOLDAGENT_PIPELINE_PVACTOOLS_ALLELES=HLA-A*02:01
+FOLDAGENT_PIPELINE_PVACTOOLS_ALGORITHMS=NetMHC
+FOLDAGENT_PIPELINE_DEFAULT_THREADS=4
+FOLDAGENT_PIPELINE_DEFAULT_MEMORY_GB=8
+FOLDAGENT_PIPELINE_CONCURRENT_WORKERS=2
+FOLDAGENT_PIPELINE_RETRY_MAX_ATTEMPTS=3
 ```
 
 ---

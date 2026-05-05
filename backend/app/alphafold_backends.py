@@ -1,4 +1,4 @@
-"""NeoVax-Agent AlphaFold Backend Abstraction (Phase 6).
+"""FoldAgent AlphaFold Backend Abstraction (Phase 6).
 
 Provides:
 - AlphaFoldBackend ABC with predict() / validate() contract
@@ -82,7 +82,7 @@ class AlphaFoldBackend(ABC):
 def _synthetic_pdb(sequence: str) -> str:
     """Generate minimal synthetic PDB text for testing/mock purposes."""
     lines: list[str] = [
-        "REMARK  NeoVax mock structure — not a real prediction",
+        "REMARK  FoldAgent mock structure — not a real prediction",
         "REMARK  sequence length: " + str(len(sequence)),
     ]
     for i, aa in enumerate(sequence[:50], start=1):

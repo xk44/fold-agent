@@ -1,4 +1,4 @@
-"""End-to-end integration tests for the NeoVax demo pipeline (Phase 21).
+"""End-to-end integration tests for the FoldAgent demo pipeline (Phase 21).
 
 Exercises the full demo flow via the FastAPI test client:
   - Case creation through the demo endpoint

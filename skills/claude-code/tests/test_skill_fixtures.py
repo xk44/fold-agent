@@ -1,7 +1,7 @@
-"""Tests for Claude Code NeoVax skill fixtures.
+"""Tests for Claude Code FoldAgent skill fixtures.
 
 Validates that all skill markdown files exist, are non-empty, have required
-frontmatter fields, and reference valid NeoVax API endpoints.
+frontmatter fields, and reference valid FoldAgent API endpoints.
 """
 from __future__ import annotations
 
@@ -119,7 +119,7 @@ def test_action_file_frontmatter(filename: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 6: Action files reference valid NeoVax API endpoints
+# Test 6: Action files reference valid FoldAgent API endpoints
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("endpoint", REQUIRED_ENDPOINTS)
 def test_required_endpoints_referenced(endpoint: str) -> None:
@@ -130,13 +130,13 @@ def test_required_endpoints_referenced(endpoint: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 7: SKILL.md tags field is a non-empty list including 'neovax-agent'
+# Test 7: SKILL.md tags field is a non-empty list including 'foldagent'
 # ---------------------------------------------------------------------------
-def test_skill_md_tags_include_neovax_agent() -> None:
+def test_skill_md_tags_include_foldagent_agent() -> None:
     fm = _extract_frontmatter(SKILL_ROOT / "SKILL.md")
     tags = fm.get("tags", [])
     assert isinstance(tags, list) and len(tags) > 0, "tags must be a non-empty list"
-    assert "neovax-agent" in tags, "tags must include 'neovax-agent'"
+    assert "foldagent" in tags, "tags must include 'foldagent'"
 
 
 # ---------------------------------------------------------------------------

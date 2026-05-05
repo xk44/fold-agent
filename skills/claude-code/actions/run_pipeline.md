@@ -1,6 +1,6 @@
 ---
 name: run_pipeline
-description: Execute the NeoVax bioinformatics pipeline (BWA, Mutect2, VEP, NetMHCpan) for a case.
+description: Execute the FoldAgent bioinformatics pipeline (BWA, Mutect2, VEP, NetMHCpan) for a case.
 action_type: write
 primary_endpoint: POST /cases/{case_id}/pipeline/run
 framework: Claude Code
@@ -11,7 +11,7 @@ safety_gate: required
 
 ## Purpose
 
-Launch the NeoVax bioinformatics pipeline for a case. The pipeline runs
+Launch the FoldAgent bioinformatics pipeline for a case. The pipeline runs
 BWA alignment, Mutect2 somatic variant calling, VEP annotation, and
 NetMHCpan MHC-binding prediction to produce a ranked neoantigen candidate list.
 

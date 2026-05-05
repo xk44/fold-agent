@@ -1,4 +1,4 @@
-"""NeoVax-Agent Ensemble Prediction Module.
+"""FoldAgent Ensemble Prediction Module.
 
 Provides multi-backend ensemble scoring and backend comparison utilities.
 """

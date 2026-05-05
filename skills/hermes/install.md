@@ -1,11 +1,11 @@
 ---
-title: Installation — neovax-hermes
+title: Installation — foldagent-hermes
 framework: Hermes
-skill: neovax-hermes
+skill: foldagent-hermes
 version: 1.0.0
 ---
 
-# Installing the neovax-hermes Skill Pack
+# Installing the foldagent-hermes Skill Pack
 
 ## Install Path
 
@@ -13,14 +13,14 @@ Hermes skills are installed under `~/.hermes/skills/`. Each skill in this
 pack occupies its own subdirectory:
 
 ```
-~/.hermes/skills/neovax-hermes/
+~/.hermes/skills/foldagent-hermes/
 ├── SKILL.md
 ├── install.md
 ├── emergent_improvements.md
 ├── audit_integration.md
 ├── run_bioinformatics_pipeline/
 │   └── SKILL.md
-├── run_full_neovax_case_review/
+├── run_full_foldagent_case_review/
 │   └── SKILL.md
 ├── organize_case_data/
 │   └── SKILL.md
@@ -41,32 +41,32 @@ pack occupies its own subdirectory:
 ## Prerequisites
 
 - Hermes agent runtime installed and configured
-- NeoVax API accessible at `NEOVAX_API_URL` (default: `http://localhost:8000`)
+- FoldAgent API accessible at `FOLDAGENT_API_URL` (default: `http://localhost:8000`)
 - Python 3.11+ with `skills/shared/` dependencies installed:
   ```
   pip install httpx pydantic
   ```
-- `skills/shared/neovax_client.py` and `skills/shared/event_stream_client.py`
-  symlinked or copied into `~/.hermes/skills/neovax-hermes/shared/`
+- `skills/shared/foldagent_client.py` and `skills/shared/event_stream_client.py`
+  symlinked or copied into `~/.hermes/skills/foldagent-hermes/shared/`
 
 ## Installation Steps
 
 ### Option A: Copy from project source
 
 ```bash
-cp -r /path/to/neovax/skills/hermes ~/.hermes/skills/neovax-hermes
-mkdir -p ~/.hermes/skills/neovax-hermes/shared
-cp /path/to/neovax/skills/shared/neovax_client.py \
-   /path/to/neovax/skills/shared/event_stream_client.py \
-   /path/to/neovax/skills/shared/safety_policy.md \
-   ~/.hermes/skills/neovax-hermes/shared/
+cp -r /path/to/foldagent/skills/hermes ~/.hermes/skills/foldagent-hermes
+mkdir -p ~/.hermes/skills/foldagent-hermes/shared
+cp /path/to/foldagent/skills/shared/foldagent_client.py \
+   /path/to/foldagent/skills/shared/event_stream_client.py \
+   /path/to/foldagent/skills/shared/safety_policy.md \
+   ~/.hermes/skills/foldagent-hermes/shared/
 ```
 
 ### Option B: Symlink for active development
 
 ```bash
-ln -s /path/to/neovax/skills/hermes ~/.hermes/skills/neovax-hermes
-ln -s /path/to/neovax/skills/shared ~/.hermes/skills/neovax-hermes/shared
+ln -s /path/to/foldagent/skills/hermes ~/.hermes/skills/foldagent-hermes
+ln -s /path/to/foldagent/skills/shared ~/.hermes/skills/foldagent-hermes/shared
 ```
 
 ## Environment Configuration
@@ -74,9 +74,9 @@ ln -s /path/to/neovax/skills/shared ~/.hermes/skills/neovax-hermes/shared
 Set the following environment variables before running Hermes with this pack:
 
 ```bash
-export NEOVAX_API_URL="http://localhost:8000"
+export FOLDAGENT_API_URL="http://localhost:8000"
 # For production deployments, set auth credentials:
-# export NEOVAX_API_TOKEN="<token>"
+# export FOLDAGENT_API_TOKEN="<token>"
 ```
 
 ## Verify Installation
@@ -84,11 +84,11 @@ export NEOVAX_API_URL="http://localhost:8000"
 After installing, confirm Hermes can discover the skills:
 
 ```bash
-hermes skills list | grep neovax
+hermes skills list | grep foldagent
 ```
 
 Expected output includes all 9 skill names (e.g., `run_bioinformatics_pipeline`,
-`run_full_neovax_case_review`, etc.).
+`run_full_foldagent_case_review`, etc.).
 
 ## Updating
 
@@ -96,17 +96,17 @@ To update the skill pack, re-copy or re-symlink from the source. If using
 Option A, remove the old install first:
 
 ```bash
-rm -rf ~/.hermes/skills/neovax-hermes
+rm -rf ~/.hermes/skills/foldagent-hermes
 # Then repeat Option A steps above
 ```
 
 ## Uninstalling
 
 ```bash
-rm -rf ~/.hermes/skills/neovax-hermes
+rm -rf ~/.hermes/skills/foldagent-hermes
 ```
 
-This does not affect the NeoVax database, audit logs, or case data.
+This does not affect the FoldAgent database, audit logs, or case data.
 
 ## Safety Note
 

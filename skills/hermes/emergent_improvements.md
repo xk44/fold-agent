@@ -1,14 +1,14 @@
 ---
-title: Emergent Skill Improvement Patterns — neovax-hermes
+title: Emergent Skill Improvement Patterns — foldagent-hermes
 framework: Hermes
-skill: neovax-hermes
+skill: foldagent-hermes
 version: 1.0.0
 ---
 
 # Emergent Skill Improvement Patterns
 
 This document defines allowed and prohibited self-improvement patterns for
-Hermes agents operating NeoVax skills. Hermes agents may propose workflow
+Hermes agents operating FoldAgent skills. Hermes agents may propose workflow
 improvements based on observed execution patterns, but all changes are
 subject to the guardrails below.
 
@@ -82,7 +82,7 @@ dosing instructions, formulation guidance, administration routes, or
 manufacturing procedures is prohibited.
 
 **If observed**: Stop. Do not implement. Escalate to the supervising
-professional and the NeoVax project maintainer.
+professional and the FoldAgent project maintainer.
 
 ### PROHIBITED: Bypassing Safety Preflight
 
@@ -104,7 +104,7 @@ human for review.
 ### PROHIBITED: Autonomous SKILL.md Modification
 
 Agents must not autonomously edit, overwrite, or replace any `SKILL.md` file
-in `~/.hermes/skills/neovax-hermes/`. All SKILL.md changes require human
+in `~/.hermes/skills/foldagent-hermes/`. All SKILL.md changes require human
 review and version control.
 
 ### PROHIBITED: Expanding Audit-Bypass Paths
@@ -119,7 +119,7 @@ fall into a prohibited category but the agent is uncertain — the correct
 action is:
 
 1. Stop the improvement proposal.
-2. Log the observation to the NeoVax audit trail via `GET /audit/{case_id}`
+2. Log the observation to the FoldAgent audit trail via `GET /audit/{case_id}`
    context note.
 3. Surface the ambiguity to the supervising professional and a human reviewer.
 4. Do not proceed until a human explicitly approves or rejects the change.

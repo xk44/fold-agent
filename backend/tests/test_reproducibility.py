@@ -235,10 +235,10 @@ class TestManifestVerification:
 # ---------------------------------------------------------------------------
 
 class TestRerunCommand:
-    def test_contains_neovax_run(self):
+    def test_contains_foldagent_run(self):
         m = _make_manifest()
         cmd = generate_rerun_command(m)
-        assert cmd.startswith("neovax run")
+        assert cmd.startswith("foldagent run")
 
     def test_contains_manifest_id_flag(self):
         m = _make_manifest()
@@ -316,7 +316,7 @@ class TestManifestStore:
 class TestFAIRMetadata:
     def test_persistent_id_format(self):
         meta = generate_fair_metadata("Title", "Desc", ["A"], ["protein"])
-        assert meta.persistent_id.startswith("neovax:pred/")
+        assert meta.persistent_id.startswith("foldagent:pred/")
         pid_suffix = meta.persistent_id.split("/", 2)[-1]
         import uuid
         uuid.UUID(pid_suffix)

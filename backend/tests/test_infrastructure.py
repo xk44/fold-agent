@@ -91,7 +91,7 @@ from backend.app.encryption import (
 class TestEncryptionRoundtrip:
     def test_encrypt_decrypt_roundtrip(self):
         key = b"0123456789abcdef0123456789abcdef"  # 32 bytes
-        plaintext = b"neovax test payload"
+        plaintext = b"foldagent test payload"
         ciphertext = encrypt_data(plaintext, key)
         assert ciphertext != plaintext
         recovered = decrypt_data(ciphertext, key)

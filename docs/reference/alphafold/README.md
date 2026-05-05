@@ -2,7 +2,7 @@
 
 Generated: 2026-04-18T06:18:41.754443+00:00
 
-Purpose: local reference corpus for NeoVax AlphaFold backend/interface work.
+Purpose: local reference corpus for FoldAgent AlphaFold backend/interface work.
 
 Included upstream sets:
 - alphafold2
@@ -12,7 +12,7 @@ Included upstream sets:
 - alphafold_server
 - alphafold_db
 
-Current NeoVax backend names in config/shell stubs:
+Current FoldAgent backend names in config/shell stubs:
 - mock
 - colabfold
 - local_colabfold

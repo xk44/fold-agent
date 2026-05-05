@@ -1,4 +1,4 @@
-"""Focused render helpers for the NeoVax case inspection panels.
+"""Focused render helpers for the FoldAgent case inspection panels.
 
 This module extracts the large case inspection UI from dashboard.py into
 reusable render functions:
@@ -88,7 +88,7 @@ from frontend.app.variant_explorer import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from skills.shared.neovax_client import NeoVaxClient
+    from skills.shared.foldagent_client import FoldAgentClient
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ if TYPE_CHECKING:
 
 def render_create_case_panel(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     safe_call,
 ) -> None:
     """Render the case creation form."""
@@ -152,7 +152,7 @@ def render_task_card(task: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def render_provenance_summary(
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     api_url: str,
     variants: list[dict] | None,
     candidates: list[dict] | None,
@@ -256,7 +256,7 @@ def render_provenance_summary(
 
 def render_case_inspection(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     api_url: str,
     root_dir: Path,
     cases: list[dict],
@@ -268,7 +268,7 @@ def render_case_inspection(
     samples, audit, variants, candidates, structure jobs, reports, artifacts).
 
     Args:
-        client: NeoVaxClient instance.
+        client: FoldAgentClient instance.
         api_url: Base API URL for artifact link buttons.
         root_dir: Project ROOT path for upload staging.
         cases: List of case dicts from the API.
@@ -382,7 +382,7 @@ def render_case_inspection(
 
 def _render_data_inventory(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     safe_call,
 ) -> None:
@@ -462,7 +462,7 @@ def _render_data_inventory(
 
 def _render_case_governance_panel(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     case_detail: dict,
     safe_call,
@@ -692,7 +692,7 @@ def _render_case_governance_panel(
 
 def _render_case_tasks(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     safe_call,
 ) -> None:
@@ -787,7 +787,7 @@ def _render_case_tasks(
 
 def _render_sample_intake(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     case_detail: dict | None,
     root_dir: Path,
@@ -954,7 +954,7 @@ def _render_sample_intake(
 
 def _render_audit_log(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     safe_call,
     inventory_data: dict,
@@ -1029,7 +1029,7 @@ def _render_audit_log(
 
 def _render_report_generation(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     selected_case_id: str,
     safe_call,
     render_api_error,
@@ -1062,7 +1062,7 @@ def _render_report_generation(
 
 def _render_candidate_review(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     api_url: str,
     selected_case_id: str,
     safe_call,
@@ -1394,7 +1394,7 @@ def _render_candidate_review(
 
 def _render_structure_job_explorer(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     api_url: str,
     selected_case_id: str,
     safe_call,
@@ -1553,7 +1553,7 @@ def _render_structure_job_explorer(
 
 def _render_report_detail(
     *,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     api_url: str,
     selected_case_id: str,
     case_detail: dict,

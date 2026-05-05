@@ -1,6 +1,6 @@
-# NeoVax Operator Guide
+# FoldAgent Operator Guide
 
-This guide is for someone running the local NeoVax stack and trying to understand the current working surfaces.
+This guide is for someone running the local FoldAgent stack and trying to understand the current working surfaces.
 
 ## Core endpoints
 
@@ -65,9 +65,9 @@ Each backend payload can expose:
 - configured path checks for AlphaFold-specific env vars when those env vars are set
 
 Current env-path checks:
-- `NEOVAX_ALPHAFOLD2_DATA_DIR`
-- `NEOVAX_ALPHAFOLD3_MODEL_DIR`
-- `NEOVAX_ALPHAFOLD3_DB_DIR`
+- `FOLDAGENT_ALPHAFOLD2_DATA_DIR`
+- `FOLDAGENT_ALPHAFOLD3_MODEL_DIR`
+- `FOLDAGENT_ALPHAFOLD3_DB_DIR`
 
 If one of those env vars is set and the path is missing, diagnostics report it and `validation_ok` becomes false.
 
@@ -258,7 +258,7 @@ Harvested AlphaFold files are copied under artifact root before registration, so
 ## Shared client
 
 Primary integration helper:
-- `skills/shared/neovax_client.py`
+- `skills/shared/foldagent_client.py`
 
 Useful current methods:
 - `alphafold_backend_dry_run()`

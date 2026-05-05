@@ -416,7 +416,7 @@ audit_log = HashChainedAuditLog()
 # ---------------------------------------------------------------------------
 
 WATERMARK_TEXT = "NOT FOR CLINICAL USE — RESEARCH ARTIFACT ONLY"
-_TOOL_VERSION = "neovax-agent-phase24"
+_TOOL_VERSION = "foldagent-phase24"
 
 
 def _watermark_hash(text: str) -> str:
@@ -475,15 +475,15 @@ def watermark_report(report_text: str, format: str = "html") -> WatermarkedOutpu
 
     if format == "html":
         meta_comment = (
-            f"<!-- NEOVAX_WATERMARK: {json.dumps(meta, separators=(',', ':'))} -->"
+            f"<!-- FOLDAGENT_WATERMARK: {json.dumps(meta, separators=(',', ':'))} -->"
         )
         header = (
-            f'<div class="neovax-watermark" style="background:#ffd700;color:#000;'
+            f'<div class="foldagent-watermark" style="background:#ffd700;color:#000;'
             f'font-weight:bold;padding:8px;text-align:center;">'
             f"{WATERMARK_TEXT}</div>\n"
         )
         footer = (
-            f'\n<div class="neovax-watermark-footer" style="background:#ffd700;color:#000;'
+            f'\n<div class="foldagent-watermark-footer" style="background:#ffd700;color:#000;'
             f'font-weight:bold;padding:8px;text-align:center;">'
             f"{WATERMARK_TEXT}</div>\n"
             f"{meta_comment}\n"
@@ -492,7 +492,7 @@ def watermark_report(report_text: str, format: str = "html") -> WatermarkedOutpu
     else:
         header = f"{'=' * 60}\n{WATERMARK_TEXT}\n{'=' * 60}\n"
         footer = f"\n{'=' * 60}\n{WATERMARK_TEXT}\n{'=' * 60}\n"
-        meta_line = f"# NEOVAX_METADATA: {json.dumps(meta, separators=(',', ':'))}\n"
+        meta_line = f"# FOLDAGENT_METADATA: {json.dumps(meta, separators=(',', ':'))}\n"
         watermarked = header + report_text + footer + meta_line
 
     return WatermarkedOutput(

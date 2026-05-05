@@ -14,7 +14,7 @@ changes to software parameters, runs experiments in a sandboxed environment,
 measures outcomes against pre-approved metrics, and retains changes only when
 tests pass.
 
-In NeoVax-Agent, autoresearch targets **software pipeline performance** — things
+In FoldAgent, autoresearch targets **software pipeline performance** — things
 like execution speed, memory efficiency, cache hit rates, and test coverage. It
 does not touch scientific thresholds, clinical parameters, or safety gates.
 

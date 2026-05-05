@@ -1,4 +1,4 @@
-"""NeoVax-Agent Safety Package Init"""
+"""FoldAgent Safety Package Init"""
 
 from backend.app.safety.audit import log_action, compute_hash, SafetyGateResult
 from backend.app.safety.mrna_gate import evaluate_mrna_gate, looks_like_sequence_content

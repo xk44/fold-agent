@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
-from skills.shared.neovax_client import NeoVaxClient
+from skills.shared.foldagent_client import FoldAgentClient
 
 
 class _DummyResponse:
@@ -38,7 +38,7 @@ class _Recorder:
 
 
 def test_redact_case_uses_current_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 
@@ -50,7 +50,7 @@ def test_redact_case_uses_current_route() -> None:
 
 
 def test_redact_subject_uses_current_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 
@@ -62,7 +62,7 @@ def test_redact_subject_uses_current_route() -> None:
 
 
 def test_delete_case_uses_current_route() -> None:
-    client = NeoVaxClient(base_url="http://localhost:8000")
+    client = FoldAgentClient(base_url="http://localhost:8000")
     recorder = _Recorder()
     client.client = recorder
 

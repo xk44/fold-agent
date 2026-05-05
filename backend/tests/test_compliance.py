@@ -358,7 +358,7 @@ class TestWatermarkReport:
 
     def test_html_contains_machine_readable_metadata(self) -> None:
         result = watermark_report("<p>Report</p>", format="html")
-        assert "NEOVAX_WATERMARK" in result.data or "neovax-watermark" in result.data.lower()
+        assert "FOLDAGENT_WATERMARK" in result.data or "foldagent-watermark" in result.data.lower()
 
     def test_text_watermark_injected(self) -> None:
         result = watermark_report("Report text", format="text")

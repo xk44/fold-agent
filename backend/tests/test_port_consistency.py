@@ -1,6 +1,6 @@
 """Regression tests for canonical local runtime ports.
 
-NeoVax local development intentionally avoids port 8000 because that port is
+FoldAgent local development intentionally avoids port 8000 because that port is
 commonly occupied on this workstation.  Keep the API, dashboard, Docker, CORS,
 and docs/runbook defaults aligned so live verification does not split-brain.
 """
@@ -13,7 +13,7 @@ import yaml
 
 from backend.app.config import Settings
 from backend.app.main import app
-from skills.shared.neovax_client import DEFAULT_BASE_URL
+from skills.shared.foldagent_client import DEFAULT_BASE_URL
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CANONICAL_API_PORT = "8010"
@@ -82,7 +82,7 @@ def test_docker_compose_uses_canonical_ports() -> None:
     assert app_service["ports"] == [
         f"127.0.0.1:{CANONICAL_API_PORT}:{CANONICAL_API_PORT}"
     ]
-    assert f"NEOVAX_API_PORT={CANONICAL_API_PORT}" in app_service["environment"]
+    assert f"FOLDAGENT_API_PORT={CANONICAL_API_PORT}" in app_service["environment"]
     assert (
         f"localhost:{CANONICAL_API_PORT}/health"
         in app_service["healthcheck"]["test"][-1]
@@ -93,11 +93,11 @@ def test_docker_compose_uses_canonical_ports() -> None:
         f"127.0.0.1:{CANONICAL_DASHBOARD_PORT}:{CANONICAL_DASHBOARD_PORT}"
     ]
     assert (
-        f"NEOVAX_DASHBOARD_PORT={CANONICAL_DASHBOARD_PORT}"
+        f"FOLDAGENT_DASHBOARD_PORT={CANONICAL_DASHBOARD_PORT}"
         in dashboard_service["environment"]
     )
     assert (
-        f"NEOVAX_API_URL=http://app:{CANONICAL_API_PORT}"
+        f"FOLDAGENT_API_URL=http://app:{CANONICAL_API_PORT}"
         in dashboard_service["environment"]
     )
     assert (
@@ -113,9 +113,9 @@ def test_docs_and_env_example_document_canonical_defaults() -> None:
     )
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "NEOVAX_API_PORT=8010" in env_example
-    assert "NEOVAX_DASHBOARD_PORT=8502" in env_example
-    assert "NEOVAX_CORS_ORIGINS" in env_example
+    assert "FOLDAGENT_API_PORT=8010" in env_example
+    assert "FOLDAGENT_DASHBOARD_PORT=8502" in env_example
+    assert "FOLDAGENT_CORS_ORIGINS" in env_example
     assert "| Dashboard  | `DASHBOARD_PORT`  | `8502`" in walkthrough
     assert "http://127.0.0.1:8502" in walkthrough
     assert "http://127.0.0.1:8502" in readme

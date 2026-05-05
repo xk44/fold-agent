@@ -1,4 +1,4 @@
-"""NeoVax-Agent Demo Pipeline Runner (Phase 21)
+"""FoldAgent Demo Pipeline Runner (Phase 21)
 
 Exercises the full demo pipeline end-to-end via the REST API:
   1. Create a demo case
@@ -101,7 +101,7 @@ def info(msg: str) -> None:
 
 def run_demo(api_base: str) -> int:
     """Run the full demo pipeline. Returns 0 on success, 1 on fatal error."""
-    print(f"\nNeoVax-Agent Demo Pipeline Runner")
+    print(f"\nFoldAgent Demo Pipeline Runner")
     print(f"API base: {api_base}")
     print(f"{'='*60}")
 
@@ -124,7 +124,7 @@ def run_demo(api_base: str) -> int:
         demo_enabled = body.get("demo_mode", False)
         ok(f"demo_mode={demo_enabled}")
         if not demo_enabled:
-            warn("NEOVAX_DEMO_MODE is not set — demo data will still be created but flag is off")
+            warn("FOLDAGENT_DEMO_MODE is not set — demo data will still be created but flag is off")
     else:
         warn(f"Could not check demo status: {status}")
 
@@ -271,7 +271,7 @@ def run_demo(api_base: str) -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=textwrap.dedent("""\
-            NeoVax-Agent Demo Pipeline Runner.
+            FoldAgent Demo Pipeline Runner.
             Exercises the full pipeline end-to-end via the REST API.
             All data created is synthetic — NOT FOR CLINICAL USE.
         """),
@@ -280,7 +280,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--api-base",
         default="http://localhost:8000",
-        help="Base URL of the NeoVax API (default: http://localhost:8000)",
+        help="Base URL of the FoldAgent API (default: http://localhost:8000)",
     )
     return parser.parse_args()
 

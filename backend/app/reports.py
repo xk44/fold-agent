@@ -1,4 +1,4 @@
-"""Safe report generation helpers for NeoVax-Agent."""
+"""Safe report generation helpers for FoldAgent."""
 
 from __future__ import annotations
 

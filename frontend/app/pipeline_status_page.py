@@ -1,4 +1,4 @@
-"""Pipeline status and step management page for NeoVax-Agent dashboard.
+"""Pipeline status and step management page for FoldAgent dashboard.
 
 Renders pipeline run history, available steps, and dry-run controls.
 """

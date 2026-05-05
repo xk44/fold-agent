@@ -1,4 +1,4 @@
-# Genomic Privacy Threat Model — NeoVax-Agent
+# Genomic Privacy Threat Model — FoldAgent
 
 **Classification:** Internal — Research Use Only
 **Phase:** 19 (Security Hardening)
@@ -13,7 +13,7 @@
 
 ## Scope
 
-Genomic data processed by NeoVax-Agent — somatic VCF calls, expressed neoantigen candidates,
+Genomic data processed by FoldAgent — somatic VCF calls, expressed neoantigen candidates,
 HLA typing, protein sequences — is among the most sensitive personal information possible. It is
 permanent, familially linked, and re-identifiable even after apparent anonymization. This document
 catalogs threats to that data across the full platform lifecycle.
@@ -82,7 +82,7 @@ are common in research settings.
 
 ### 1.5 SQLite Database Exfiltration
 
-**Threat:** `neovax.db` is a single file on the local filesystem. Anyone with read access to
+**Threat:** `foldagent.db` is a single file on the local filesystem. Anyone with read access to
 the file can copy the entire database, including all case records, candidates, and variants.
 
 **Severity:** High — no application-layer controls protect against file-level copy.
@@ -105,7 +105,7 @@ risk must be accepted and managed by policy.
 ### 2.1 Local-First Architecture
 
 - **Default:** All genomic data stays on the local machine. No network egress unless the
-  operator explicitly sets `NEOVAX_CLOUD_UPLOAD_ENABLED=true`.
+  operator explicitly sets `FOLDAGENT_CLOUD_UPLOAD_ENABLED=true`.
 - Cloud upload skills (`alphafold_server`, `alphafold_db`) are disabled by default in
   `config.example.yaml`.
 - `check_cloud_upload_allowed()` in `privacy.py` enforces the gate programmatically before
@@ -149,7 +149,7 @@ risk must be accepted and managed by policy.
 
 ## 3. HIPAA Considerations (Non-Compliance Disclaimer)
 
-> This section is informational only. NeoVax-Agent is **not** a HIPAA-covered entity or
+> This section is informational only. FoldAgent is **not** a HIPAA-covered entity or
 > Business Associate by itself. Operators using this platform with Protected Health Information
 > (PHI) must independently assess and establish HIPAA compliance, including BAAs with any
 > cloud providers.

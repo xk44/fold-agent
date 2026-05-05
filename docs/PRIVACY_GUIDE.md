@@ -1,14 +1,14 @@
 # Privacy Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
 ## Architecture: Local-First
 
-NeoVax-Agent is designed to run entirely on your local machine. By default:
+FoldAgent is designed to run entirely on your local machine. By default:
 
-- The database is SQLite at `./data/neovax.db` (or `./neovax.db` in dev)
+- The database is SQLite at `./data/foldagent.db` (or `./foldagent.db` in dev)
 - All artifacts, reports, and uploaded files are written to `./artifacts/`
 - Audit logs are written to `./audit_logs/`
 - No data is sent externally unless you explicitly enable a cloud backend
@@ -42,8 +42,8 @@ artifacts/cases/{case_id}/
 Encryption at rest is **not enabled by default**. To enable:
 
 ```bash
-NEOVAX_ENCRYPTION_AT_REST_ENABLED=true
-NEOVAX_ENCRYPTION_KEY=your-32-byte-base64-encoded-key
+FOLDAGENT_ENCRYPTION_AT_REST_ENABLED=true
+FOLDAGENT_ENCRYPTION_KEY=your-32-byte-base64-encoded-key
 ```
 
 When enabled, artifacts written to disk are encrypted before storage. The encryption key must be provided at startup; there is no key recovery mechanism. Store keys in a secrets manager, not in `.env` files committed to version control.
@@ -60,13 +60,13 @@ Returns `"encryption_at_rest": true/false` among other privacy metadata.
 
 ## Cloud Upload Gates
 
-Cloud uploads are **disabled by default** (`NEOVAX_CLOUD_UPLOAD_ENABLED=false`).
+Cloud uploads are **disabled by default** (`FOLDAGENT_CLOUD_UPLOAD_ENABLED=false`).
 
 To enable (not recommended for human data):
 
 ```bash
-NEOVAX_CLOUD_UPLOAD_ENABLED=true
-NEOVAX_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true  # always leave true
+FOLDAGENT_CLOUD_UPLOAD_ENABLED=true
+FOLDAGENT_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true  # always leave true
 ```
 
 Before any cloud operation, `check_cloud_upload_allowed()` is called. It returns:
@@ -110,7 +110,7 @@ The consent status is surfaced in:
 - Ethics package reports
 - Audit log exports
 
-NeoVax-Agent does not validate the legal sufficiency of consent. It records what you tell it. Actual consent documentation must be managed outside the system.
+FoldAgent does not validate the legal sufficiency of consent. It records what you tell it. Actual consent documentation must be managed outside the system.
 
 ---
 
@@ -140,7 +140,7 @@ from backend.app.privacy import find_expired_artifacts
 expired = find_expired_artifacts(db, retention_days=365)
 ```
 
-Returns a list of artifact records older than the retention window. NeoVax-Agent does not automatically delete expired artifacts — you must implement a retention job or cron task that calls `remove_case_data_dir()` for cases whose artifacts have all expired.
+Returns a list of artifact records older than the retention window. FoldAgent does not automatically delete expired artifacts — you must implement a retention job or cron task that calls `remove_case_data_dir()` for cases whose artifacts have all expired.
 
 ---
 
@@ -197,21 +197,21 @@ Returns:
 ## Configuration Reference
 
 ```bash
-NEOVAX_DATABASE_URL=sqlite:///./data/neovax.db
-NEOVAX_ARTIFACT_ROOT=./artifacts
-NEOVAX_AUDIT_LOG_PATH=./audit_logs
-NEOVAX_CLOUD_UPLOAD_ENABLED=false
-NEOVAX_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true
-NEOVAX_ENCRYPTION_AT_REST_ENABLED=false
-NEOVAX_ENCRYPTION_KEY=                          # required if encryption enabled
-NEOVAX_SPECIES_MODE=demo                        # demo | dog | human
+FOLDAGENT_DATABASE_URL=sqlite:///./data/foldagent.db
+FOLDAGENT_ARTIFACT_ROOT=./artifacts
+FOLDAGENT_AUDIT_LOG_PATH=./audit_logs
+FOLDAGENT_CLOUD_UPLOAD_ENABLED=false
+FOLDAGENT_CLOUD_UPLOAD_CONFIRMATION_REQUIRED=true
+FOLDAGENT_ENCRYPTION_AT_REST_ENABLED=false
+FOLDAGENT_ENCRYPTION_KEY=                          # required if encryption enabled
+FOLDAGENT_SPECIES_MODE=demo                        # demo | dog | human
 ```
 
 ---
 
 ## Human Mode Data Handling
 
-When `NEOVAX_SPECIES_MODE=human`:
+When `FOLDAGENT_SPECIES_MODE=human`:
 
 - Sequence-level exports are hard-blocked without expert mode + IRB attestation
 - External AlphaFold backends require explicit acknowledgement and preflight approval

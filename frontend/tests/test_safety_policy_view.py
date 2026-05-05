@@ -12,7 +12,7 @@ from frontend.app.safety_policy_view import (
 )
 
 
-SAMPLE_POLICY = """# NeoVax-Agent Safety Policy
+SAMPLE_POLICY = """# FoldAgent Safety Policy
 
 ## Scope
 

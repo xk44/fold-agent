@@ -1,4 +1,4 @@
-"""NeoVax-Agent Audit Logging
+"""FoldAgent Audit Logging
 
 Append-only, tamper-evident audit log system.
 Every action (user, system, or agent) must be recorded here.

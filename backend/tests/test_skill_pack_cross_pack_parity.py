@@ -10,7 +10,7 @@ REQUIRED_SECTIONS = (
     "## When to Use",
     "## When NOT to Use",
     "## Safety Boundaries",
-    "## Required NeoVax API Endpoints",
+    "## Required FoldAgent API Endpoints",
     "## Required User Confirmation Points",
     "## Expected Output Artifact",
     "## Steps",

@@ -1,4 +1,4 @@
-"""NeoVax-Agent Security Module — Phase 19
+"""FoldAgent Security Module — Phase 19
 
 SBOM generation, secrets scanning, skill directory auditing,
 data deletion verification, upload confirmation, and audit chain validation.
@@ -142,7 +142,7 @@ def generate_sbom() -> dict:
         "version": 1,
         "metadata": {
             "component": {
-                "name": "neovax-agent",
+                "name": "foldagent",
                 "version": "0.1.0-alpha",
             },
             "source": source,

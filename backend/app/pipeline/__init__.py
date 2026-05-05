@@ -1,4 +1,4 @@
-"""NeoVax-Agent Pipeline Module"""
+"""FoldAgent Pipeline Module"""
 
 
 from backend.app.pipeline.base import (

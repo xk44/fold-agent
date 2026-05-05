@@ -135,7 +135,7 @@ def capture_environment() -> EnvironmentSnapshot:
     """Capture current execution environment snapshot."""
     relevant_env_vars = {
         k: v for k, v in os.environ.items()
-        if any(k.startswith(p) for p in ("NEOVAX_", "CUDA_", "PATH", "PYTHONPATH"))
+        if any(k.startswith(p) for p in ("FOLDAGENT_", "CUDA_", "PATH", "PYTHONPATH"))
     }
     env_hash = _sha256(json.dumps(relevant_env_vars, sort_keys=True))
 
@@ -258,7 +258,7 @@ def generate_rerun_command(manifest: PipelineManifest) -> str:
         seeds_str = ",".join(f"{k}={v}" for k, v in manifest.random_seeds.items())
         seeds_part = f" --seeds {seeds_str}"
     return (
-        f"neovax run"
+        f"foldagent run"
         f" --manifest-id {manifest.manifest_id}"
         f" --tools {tools}"
         f"{seeds_part}"
@@ -328,7 +328,7 @@ EDAM_ONTOLOGY_TERMS: dict[str, str] = {
 
 @dataclass
 class FAIRMetadata:
-    persistent_id: str  # "neovax:pred/{uuid}"
+    persistent_id: str  # "foldagent:pred/{uuid}"
     title: str
     description: str
     creators: list[str]
@@ -358,7 +358,7 @@ def generate_fair_metadata(
     keywords: list[str],
 ) -> FAIRMetadata:
     """Auto-generate FAIR metadata with persistent ID and EDAM ontology terms."""
-    pid = f"neovax:pred/{uuid.uuid4()}"
+    pid = f"foldagent:pred/{uuid.uuid4()}"
     now = _now_iso()
 
     # Map keywords to EDAM terms
@@ -412,14 +412,14 @@ def create_fair_report(prediction_data: dict, metadata: FAIRMetadata) -> FAIRRep
         "subjectOf": EDAM_ONTOLOGY_TERMS,
         "additionalType": metadata.ontology_terms,
         "variableMeasured": list(prediction_data.keys()),
-        "contentUrl": f"https://neovax.research/data/{metadata.persistent_id}",
+        "contentUrl": f"https://foldagent.research/data/{metadata.persistent_id}",
     }
 
     machine_readable = json.dumps(json_ld, indent=2)
 
     # Human-readable summary
     lines = [
-        f"NeoVax Prediction Report",
+        f"FoldAgent Prediction Report",
         f"========================",
         f"ID: {metadata.persistent_id}",
         f"Title: {metadata.title}",

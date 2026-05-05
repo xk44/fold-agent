@@ -1,4 +1,4 @@
-"""NeoVax-Agent Configuration
+"""FoldAgent Configuration
 
 Local-first, safety-gated research coordination platform.
 """
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     ]
 
     # Database
-    database_url: str = "sqlite:///./neovax.db"
+    database_url: str = "sqlite:///./foldagent.db"
     db_init_mode: DbInitMode = DbInitMode.create_all
 
     # Optional worker stack
@@ -134,7 +134,7 @@ class Settings(BaseSettings):
     # Secret
     secret_key: str = "changeme-set-a-real-secret-key"
 
-    model_config = {"env_prefix": "NEOVAX_"}
+    model_config = {"env_prefix": "FOLDAGENT_"}
 
 
 settings = Settings()

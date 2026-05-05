@@ -4,7 +4,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8010
 DASHBOARD_HOST ?= 127.0.0.1
 DASHBOARD_PORT ?= 8502
-NEOVAX_API_URL ?= http://$(API_HOST):$(API_PORT)
+FOLDAGENT_API_URL ?= http://$(API_HOST):$(API_PORT)
 
 # Install dependencies
 install:
@@ -27,7 +27,7 @@ worker:
 
 # Run Streamlit dashboard
 dashboard:
-	NEOVAX_API_URL=$(NEOVAX_API_URL) PYTHONPATH=. streamlit run frontend/app/dashboard.py --server.address $(DASHBOARD_HOST) --server.port $(DASHBOARD_PORT)
+	FOLDAGENT_API_URL=$(FOLDAGENT_API_URL) PYTHONPATH=. streamlit run frontend/app/dashboard.py --server.address $(DASHBOARD_HOST) --server.port $(DASHBOARD_PORT)
 
 # Run all tests
 test:
@@ -56,7 +56,7 @@ smoke:
 # Live verification — check running API and dashboard respond correctly.
 # Respects API_HOST, API_PORT, DASHBOARD_HOST, DASHBOARD_PORT overrides.
 smoke-verify:
-	@echo "=== NeoVax Live Verification ==="
+	@echo "=== FoldAgent Live Verification ==="
 	@echo "--- API health ---"
 	@tmp=$$(mktemp); code=$$(curl -sS -o $$tmp -w "%{http_code}" http://$(API_HOST):$(API_PORT)/health) || (rm -f $$tmp; echo "FAIL: API /health unreachable at http://$(API_HOST):$(API_PORT)" && exit 1); python3 -m json.tool < $$tmp; echo "  /health HTTP $$code (expected 200 or 503)"; rm -f $$tmp; if [ "$$code" != "200" ] && [ "$$code" != "503" ]; then echo "FAIL: API /health returned HTTP $$code" && exit 1; fi
 	@echo ""
@@ -72,9 +72,9 @@ smoke-verify:
 	@echo "=== Verification complete ==="
 
 # Opt-in live Redis smoke using the worker-profile Redis container.
-# Requires Docker and a free localhost:6379 unless NEOVAX_REDIS_SMOKE_URL is set.
+# Requires Docker and a free localhost:6379 unless FOLDAGENT_REDIS_SMOKE_URL is set.
 smoke-redis-live:
-	NEOVAX_RUN_REDIS_SMOKE=1 PYTHONPATH=. pytest backend/tests/test_event_stream_redis_live_smoke.py backend/tests/test_event_clients_redis_live_smoke.py -v -s
+	FOLDAGENT_RUN_REDIS_SMOKE=1 PYTHONPATH=. pytest backend/tests/test_event_stream_redis_live_smoke.py backend/tests/test_event_clients_redis_live_smoke.py -v -s
 
 # Run linters
 lint:
@@ -115,9 +115,9 @@ verify-local:
 	make -n docker-health
 	@echo "verify-local complete"
 
-# Report current listeners on the canonical NeoVax local ports.
+# Report current listeners on the canonical FoldAgent local ports.
 ports-check:
-	@echo "=== NeoVax canonical port check ==="
+	@echo "=== FoldAgent canonical port check ==="
 	@echo "API: http://$(API_HOST):$(API_PORT)"
 	@echo "Dashboard: http://$(DASHBOARD_HOST):$(DASHBOARD_PORT)"
 	@if command -v ss >/dev/null 2>&1; then \
@@ -189,10 +189,10 @@ docker-health:
 	@docker compose ps
 	@echo ""
 	@echo "=== Health Checks ==="
-	@tmp=$$(mktemp); code=$$(curl -sS -o $$tmp -w "%{http_code}" $(NEOVAX_API_URL)/health) || (rm -f $$tmp; echo "app health: UNREACHABLE" && exit 0); python3 -m json.tool < $$tmp 2>/dev/null || cat $$tmp; echo "app /health HTTP $$code (expected 200 or 503)"; rm -f $$tmp
+	@tmp=$$(mktemp); code=$$(curl -sS -o $$tmp -w "%{http_code}" $(FOLDAGENT_API_URL)/health) || (rm -f $$tmp; echo "app health: UNREACHABLE" && exit 0); python3 -m json.tool < $$tmp 2>/dev/null || cat $$tmp; echo "app /health HTTP $$code (expected 200 or 503)"; rm -f $$tmp
 	@tmp=$$(mktemp); code=$$(curl -sS -o $$tmp -w "%{http_code}" http://$(DASHBOARD_HOST):$(DASHBOARD_PORT)/_stcore/health) || (rm -f $$tmp; echo "dashboard health: UNREACHABLE" && exit 0); cat $$tmp; echo ""; echo "dashboard health HTTP $$code (expected 200)"; rm -f $$tmp
 
 # Full development reset
 reset: clean
-	rm -f neovax.db
+	rm -f foldagent.db
 	@echo "Database reset complete. Recreate schema when DB layer lands."

@@ -1,4 +1,4 @@
-"""NeoVax-Agent Demo Mode (Phase 21)
+"""FoldAgent Demo Mode (Phase 21)
 
 Provides demo case creation, synthetic dataset generation, and demo data reset.
 All demo data is clearly marked as synthetic — not for clinical use.
@@ -33,10 +33,10 @@ if TYPE_CHECKING:
 # Demo mode flag
 # ---------------------------------------------------------------------------
 
-DEMO_MODE: bool = os.environ.get("NEOVAX_DEMO_MODE", "false").lower() in ("1", "true", "yes")
+DEMO_MODE: bool = os.environ.get("FOLDAGENT_DEMO_MODE", "false").lower() in ("1", "true", "yes")
 
 # Tag applied to every demo-created record so reset can find them
-_DEMO_TAG = "neovax_demo_created"
+_DEMO_TAG = "foldagent_demo_created"
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ def create_demo_case(db: "Session") -> dict:
     """Create a complete demo case with samples, variants, candidates, structure job, and report.
 
     Returns a summary dict with all created IDs.
-    Marks every record with ``neovax_demo_created=True`` so ``reset_demo_data`` can remove them.
+    Marks every record with ``foldagent_demo_created=True`` so ``reset_demo_data`` can remove them.
     """
     from backend.app.reports import RESEARCH_LABEL, build_candidate_review_report
 
@@ -530,7 +530,7 @@ def create_synthetic_dataset(db: "Session", n_cases: int = 3) -> list[dict]:
 
 
 def reset_demo_data(db: "Session") -> dict:
-    """Clear all demo-created records (those tagged with neovax_demo_created=True).
+    """Clear all demo-created records (those tagged with foldagent_demo_created=True).
 
     Deletes in dependency order to avoid FK constraint violations.
     Returns counts of deleted records per model.

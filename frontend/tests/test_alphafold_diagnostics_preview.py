@@ -415,7 +415,7 @@ def test_format_alphafold_troubleshooting_summary_surfaces_invalid_backend_reaso
         "gpu_runtime_available": False,
         "configured_paths": {
             "alphafold3_model_dir": {
-                "env_var": "NEOVAX_ALPHAFOLD3_MODEL_DIR",
+                "env_var": "FOLDAGENT_ALPHAFOLD3_MODEL_DIR",
                 "configured": True,
                 "path": "/missing/model_dir",
                 "exists": False,
@@ -433,7 +433,7 @@ def test_format_alphafold_troubleshooting_summary_surfaces_invalid_backend_reaso
     assert "AlphaFold validation troubleshooting" in summary
     assert "alphafold3_local" in summary
     assert "GPU runtime was not detected" in summary
-    assert "NEOVAX_ALPHAFOLD3_MODEL_DIR" in summary
+    assert "FOLDAGENT_ALPHAFOLD3_MODEL_DIR" in summary
     assert "version probe failed" in summary.lower()
 
 

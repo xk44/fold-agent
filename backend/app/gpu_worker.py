@@ -1,4 +1,4 @@
-"""NeoVax-Agent GPU Worker Profile — Infrastructure Stubs
+"""FoldAgent GPU Worker Profile — Infrastructure Stubs
 
 GPU worker configuration profiles and availability checks.
 """

@@ -1,6 +1,6 @@
 # Frequently Asked Questions
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
@@ -8,19 +8,19 @@
 
 ### Is this medical advice?
 
-No. NeoVax-Agent is a research coordination platform. It does not diagnose, treat, prescribe, or advise on any medical condition. All outputs are research coordination materials only and require review by a licensed physician, oncologist, or veterinary oncologist before any real-world action.
+No. FoldAgent is a research coordination platform. It does not diagnose, treat, prescribe, or advise on any medical condition. All outputs are research coordination materials only and require review by a licensed physician, oncologist, or veterinary oncologist before any real-world action.
 
 ### Can this make a vaccine?
 
-No. NeoVax-Agent coordinates research workflows and produces candidate rankings and analysis summaries. It does not produce administerable vaccines, formulation instructions, dosing schedules, or manufacturing protocols. Any output labeled "research candidate" means exactly that — a candidate for further research, not a finished product.
+No. FoldAgent coordinates research workflows and produces candidate rankings and analysis summaries. It does not produce administerable vaccines, formulation instructions, dosing schedules, or manufacturing protocols. Any output labeled "research candidate" means exactly that — a candidate for further research, not a finished product.
 
 ### Can I use this clinically?
 
-No. NeoVax-Agent outputs are not approved, cleared, or validated for clinical use. They have not undergone regulatory review. Do not use any output as the basis for administering, prescribing, or recommending a treatment to a patient or animal. Clinical use requires licensed professional oversight, institutional approval, and (in most jurisdictions) regulatory clearance that NeoVax-Agent cannot provide.
+No. FoldAgent outputs are not approved, cleared, or validated for clinical use. They have not undergone regulatory review. Do not use any output as the basis for administering, prescribing, or recommending a treatment to a patient or animal. Clinical use requires licensed professional oversight, institutional approval, and (in most jurisdictions) regulatory clearance that FoldAgent cannot provide.
 
 ### What is it actually for?
 
-NeoVax-Agent helps researchers:
+FoldAgent helps researchers:
 
 - Organize genomic sequencing data and sample metadata for a case
 - Run or simulate bioinformatics pipelines (alignment, variant calling, annotation, neoantigen prioritization)
@@ -36,7 +36,7 @@ NeoVax-Agent helps researchers:
 
 ### What species does this support?
 
-NeoVax-Agent supports three operating modes:
+FoldAgent supports three operating modes:
 
 - **Demo** — Synthetic data only. No real patient or animal data. Used for development, testing, and exploration.
 - **Dog (veterinary)** — Research coordination for canine cancer cases. Requires licensed veterinary oncologist oversight.
@@ -46,7 +46,7 @@ Other species are not currently supported. Dog mode exists because canine compar
 
 ### Can I use human mode for my patient?
 
-NeoVax-Agent is not a clinical tool and must not be used as one. If you are a licensed researcher or physician using it as part of an IRB-approved study, you may use human mode for research coordination — but the platform itself does not constitute medical care and its outputs are not treatment plans.
+FoldAgent is not a clinical tool and must not be used as one. If you are a licensed researcher or physician using it as part of an IRB-approved study, you may use human mode for research coordination — but the platform itself does not constitute medical care and its outputs are not treatment plans.
 
 ---
 
@@ -54,20 +54,20 @@ NeoVax-Agent is not a clinical tool and must not be used as one. If you are a li
 
 ### Is my data safe?
 
-NeoVax-Agent is local-first by design. By default:
+FoldAgent is local-first by design. By default:
 
 - All data stays on your machine
 - No sequence data is sent to external services unless you explicitly enable a cloud AlphaFold backend
 - The database is a local SQLite file
 - Audit logs and artifacts are written to local directories
 
-Cloud uploads are disabled by default (`NEOVAX_CLOUD_UPLOAD_ENABLED=false`). The only backends that send data externally are `alphafold_server` (sends sequences to Google DeepMind) and `alphafold_db` (sends UniProt accessions to EBI). Both require explicit opt-in and user confirmation.
+Cloud uploads are disabled by default (`FOLDAGENT_CLOUD_UPLOAD_ENABLED=false`). The only backends that send data externally are `alphafold_server` (sends sequences to Google DeepMind) and `alphafold_db` (sends UniProt accessions to EBI). Both require explicit opt-in and user confirmation.
 
 See `docs/PRIVACY_GUIDE.md` for full details.
 
-### Does NeoVax-Agent store patient identifiers?
+### Does FoldAgent store patient identifiers?
 
-NeoVax-Agent stores what you give it. The default redaction level for all cases is `full`. The system does not require or validate real patient identifiers — use pseudonymized or de-identified identifiers for all cases unless your institution's data governance policy explicitly permits otherwise.
+FoldAgent stores what you give it. The default redaction level for all cases is `full`. The system does not require or validate real patient identifiers — use pseudonymized or de-identified identifiers for all cases unless your institution's data governance policy explicitly permits otherwise.
 
 ### Can I delete a case and its data?
 
@@ -93,9 +93,9 @@ No. All structure predictions — from any backend — carry the label: **"Struc
 
 ### Can the safety checks be disabled?
 
-`NEOVAX_SAFETY_PREFLIGHT_ENABLED` can be set to `false`, but this should never be done in production or in any context where real patient or animal data is present. The safety system exists to prevent the platform from producing prohibited outputs (dosing schedules, injection instructions, manufacturing protocols). Disabling it removes that protection.
+`FOLDAGENT_SAFETY_PREFLIGHT_ENABLED` can be set to `false`, but this should never be done in production or in any context where real patient or animal data is present. The safety system exists to prevent the platform from producing prohibited outputs (dosing schedules, injection instructions, manufacturing protocols). Disabling it removes that protection.
 
-The unsafe text scanner has a separate flag (`NEOVAX_UNSAFE_TEXT_SCANNER_ENABLED`) but the same reasoning applies — leave it enabled.
+The unsafe text scanner has a separate flag (`FOLDAGENT_UNSAFE_TEXT_SCANNER_ENABLED`) but the same reasoning applies — leave it enabled.
 
 ### What happens when preflight blocks an action?
 
@@ -107,7 +107,7 @@ The API returns a structured error with the exact block reason. The block is log
 
 ### What agent frameworks are supported?
 
-NeoVax-Agent ships skill packs for three agent frameworks:
+FoldAgent ships skill packs for three agent frameworks:
 
 - **Claude Code** — skills in `skills/claude-code/`, invoked as slash commands or CLAUDE.md task prompts. See [docs/CLAUDE_CODE_INSTALL_GUIDE.md](CLAUDE_CODE_INSTALL_GUIDE.md).
 - **OpenClaw** — structured YAML task definitions in `skills/openclaw/`, with WebSocket event streaming. See [docs/OPENCLAW_INSTALL_GUIDE.md](OPENCLAW_INSTALL_GUIDE.md).
@@ -117,7 +117,7 @@ All three frameworks share the same 9 workflow skills, the same shared API clien
 
 ### What are the agent skills?
 
-Skills are structured workflow definitions for AI agents (Claude Code, OpenClaw, Hermes). They guide the agent through NeoVax API operations with built-in safety gates and confirmation points. See `docs/AGENT_SKILLS_GUIDE.md`.
+Skills are structured workflow definitions for AI agents (Claude Code, OpenClaw, Hermes). They guide the agent through FoldAgent API operations with built-in safety gates and confirmation points. See `docs/AGENT_SKILLS_GUIDE.md`.
 
 ### Can an agent bypass the safety system?
 
@@ -129,7 +129,7 @@ No. Safety is enforced server-side by the FastAPI application. Agent instruction
 
 ### Do I need BWA, GATK, VEP, and pVACtools installed?
 
-Only for real pipeline mode (`NEOVAX_PIPELINE_MODE=real`). The default mock mode simulates all pipeline steps without any external tools. Use mock mode for development and testing. Install real tools only when you have actual sequencing data and a validated research setup.
+Only for real pipeline mode (`FOLDAGENT_PIPELINE_MODE=real`). The default mock mode simulates all pipeline steps without any external tools. Use mock mode for development and testing. Install real tools only when you have actual sequencing data and a validated research setup.
 
 ### What reference genome is used?
 
@@ -141,7 +141,7 @@ The default configuration references `hg38` (GRCh38) for human mode. For dog mod
 
 ### Can I use this for commercial research?
 
-NeoVax-Agent itself is Apache-2.0 licensed. However, the external tools it wraps (AlphaFold3 weights, NetMHCpan, pVACtools dependencies) have their own licenses. Review each tool's license before commercial or clinical use. The AlphaFold3 model weights have a non-commercial research license from Google DeepMind.
+FoldAgent itself is Apache-2.0 licensed. However, the external tools it wraps (AlphaFold3 weights, NetMHCpan, pVACtools dependencies) have their own licenses. Review each tool's license before commercial or clinical use. The AlphaFold3 model weights have a non-commercial research license from Google DeepMind.
 
 ### Who should oversee use of this platform?
 
@@ -151,7 +151,7 @@ Any use beyond synthetic demo data should involve:
 - An institutional review board (IRB) or veterinary ethics committee
 - A data governance officer if institutional patient/animal data is involved
 
-NeoVax-Agent is a tool to assist qualified researchers. It is not a substitute for professional expertise or institutional oversight.
+FoldAgent is a tool to assist qualified researchers. It is not a substitute for professional expertise or institutional oversight.
 
 ---
 
@@ -159,7 +159,7 @@ NeoVax-Agent is a tool to assist qualified researchers. It is not a substitute f
 
 ### Can I use this for my pet's treatment?
 
-No. NeoVax-Agent is for research and education only. Always consult a qualified veterinarian or veterinary oncologist. This software does not provide medical or veterinary advice.
+No. FoldAgent is for research and education only. Always consult a qualified veterinarian or veterinary oncologist. This software does not provide medical or veterinary advice.
 
 ### Is the AlphaFold Server safe to use?
 

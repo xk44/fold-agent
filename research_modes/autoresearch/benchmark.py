@@ -1,6 +1,6 @@
 """Autoresearch software benchmark.
 
-Runs a set of synthetic pipeline tasks against a running NeoVax API instance
+Runs a set of synthetic pipeline tasks against a running FoldAgent API instance
 to measure execution time, memory, and success rate. This is a **toy software
 benchmark** — it does not process real patient data or produce clinically
 meaningful outputs.

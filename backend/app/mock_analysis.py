@@ -1,4 +1,4 @@
-"""Mock analysis data helpers for NeoVax-Agent.
+"""Mock analysis data helpers for FoldAgent.
 
 Seeds synthetic variants/candidates so the dashboard and reports have structured
 research data before real bioinformatics wrappers land.

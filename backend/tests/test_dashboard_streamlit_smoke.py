@@ -53,7 +53,7 @@ class _LiveApiServer:
     def __enter__(self) -> str:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(PROJECT_ROOT)
-        env["NEOVAX_DATABASE_URL"] = self.database_url
+        env["FOLDAGENT_DATABASE_URL"] = self.database_url
         self.process = subprocess.Popen(
             [
                 sys.executable,
@@ -98,7 +98,7 @@ def live_api_url(tmp_path: Path) -> Generator[str, None, None]:
 
 
 def _run_dashboard(*, base_url: str, home_dir: Path, monkeypatch: pytest.MonkeyPatch) -> AppTest:
-    monkeypatch.setenv("NEOVAX_API_URL", base_url)
+    monkeypatch.setenv("FOLDAGENT_API_URL", base_url)
     monkeypatch.setenv("HOME", str(home_dir))
     at = AppTest.from_file(PROJECT_ROOT / "frontend/app/dashboard.py", default_timeout=10)
     return at.run(timeout=30)
@@ -296,7 +296,7 @@ def test_dashboard_streamlit_smoke_renders_live_case_without_exception(
     at = _run_dashboard(base_url=live_api_url, home_dir=tmp_path / "home", monkeypatch=monkeypatch)
 
     assert not at.exception, at.exception[0].value
-    assert at.title[0].value == "NeoVax-Agent"
+    assert at.title[0].value == "FoldAgent"
     assert any(widget.value == "API health" for widget in at.subheader)
     assert any(widget.value == "Safety preflight" for widget in at.subheader)
     assert any(

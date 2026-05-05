@@ -1,13 +1,13 @@
 ---
 name: autoresearch_optimize_software_pipeline
-description: Use NeoVax operational data to improve the software workflow, eval harnesses, and agent automation without drifting into unsafe medical outputs.
+description: Use FoldAgent operational data to improve the software workflow, eval harnesses, and agent automation without drifting into unsafe medical outputs.
 version: 0.2.0
 license: Apache-2.0
 framework: Hermes
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - software-optimization
   - agent-ops
   - safety-gated
@@ -17,12 +17,12 @@ tags:
 
 ## When to Use
 
-Use this skill when improving NeoVax software behavior, orchestration, eval loops, or agent task setup based on observed workflow friction. It is for software optimization, not biological optimization. This skill must never self-improve into unsafe medical-output generation or bypass NeoVax safety controls.
+Use this skill when improving FoldAgent software behavior, orchestration, eval loops, or agent task setup based on observed workflow friction. It is for software optimization, not biological optimization. This skill must never self-improve into unsafe medical-output generation or bypass FoldAgent safety controls.
 
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -33,7 +33,7 @@ Use this skill when improving NeoVax software behavior, orchestration, eval loop
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `POST /safety/preflight` — Gate automation or agent-task creation when needed
 - `GET /health` — Check API availability
@@ -90,7 +90,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 

@@ -1,4 +1,4 @@
-"""Pydantic schemas for the NeoVax API."""
+"""Pydantic schemas for the FoldAgent API."""
 
 from __future__ import annotations
 

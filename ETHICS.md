@@ -1,8 +1,8 @@
-# NeoVax-Agent Ethics Policy
+# FoldAgent Ethics Policy
 
 ## Purpose
 
-NeoVax-Agent is a research coordination platform, not a medical device or
+FoldAgent is a research coordination platform, not a medical device or
 treatment recommendation system. This document defines the ethical boundaries
 that every feature, module, agent skill, and output must respect.
 
@@ -27,7 +27,6 @@ that every feature, module, agent skill, and output must respect.
    require explicit, informed consent. No training on user data.
 
 6. **Mode-Specific Restrictions**
-
    - **Demo mode**: Synthetic data only. No treatment claims.
    - **Dog/Veterinary mode**: Vet-oncologist oversight required. DLA/MHC
      limitations surfaced. No self-administration.
@@ -68,7 +67,7 @@ must be locked behind:
 ## Source Material Policy
 
 Paul Conyngham's public GitHub repository contains a related autologous
-tumor-lysate protocol. NeoVax-Agent links to it as source/context only and
+tumor-lysate protocol. FoldAgent links to it as source/context only and
 does NOT copy operational lab protocol steps, manufacturing details, or
 administration instructions.
 

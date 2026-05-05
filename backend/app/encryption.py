@@ -1,4 +1,4 @@
-"""NeoVax-Agent Encryption at Rest — Infrastructure Stubs
+"""FoldAgent Encryption at Rest — Infrastructure Stubs
 
 Configuration scaffold for encryption. Not for production use without
 a proper key management solution.

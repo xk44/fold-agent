@@ -1,4 +1,4 @@
-"""NeoVax-Agent Safety Preflight System
+"""FoldAgent Safety Preflight System
 
 Every write action, export, and agent task must pass through the safety
 preflight system before execution. This module implements the core safety

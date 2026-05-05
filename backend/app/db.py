@@ -1,4 +1,4 @@
-"""Database wiring for NeoVax-Agent."""
+"""Database wiring for FoldAgent."""
 
 from __future__ import annotations
 
@@ -128,7 +128,7 @@ def validate_schema(bind: Engine) -> None:
         raise RuntimeError(
             f"Database schema at {_safe_database_url(bind)} is missing tables expected by the ORM models: "
             f"{sorted(missing)}. Run Alembic migrations or switch "
-            f"NEOVAX_DB_INIT_MODE to 'create_all' for development."
+            f"FOLDAGENT_DB_INIT_MODE to 'create_all' for development."
         )
 
 

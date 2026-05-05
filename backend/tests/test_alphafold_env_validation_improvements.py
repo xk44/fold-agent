@@ -1,4 +1,4 @@
-"""Test-first improvements for NeoVax AlphaFold diagnostics environment validation.
+"""Test-first improvements for FoldAgent AlphaFold diagnostics environment validation.
 
 These tests specify the **gaps** identified in backend/app/alphafold/shells.py and
 propose concrete, test-first additions.  Each test category starts with a comment
@@ -212,7 +212,7 @@ class TestGpuDetailInDiagnostics:
 #   - resolved_target: str|None = str(p.resolve()) when exists
 #
 # GOTCHA: On some NFS mounts, os.readlink may raise.  Wrap in try/except.
-# On Windows, is_symlink() may behave differently; but NeoVax targets Linux.
+# On Windows, is_symlink() may behave differently; but FoldAgent targets Linux.
 
 
 class TestConfiguredPathSymlinkDetection:
@@ -228,7 +228,7 @@ class TestConfiguredPathSymlinkDetection:
         real_dir.mkdir()
         symlink_dir = tmp_path / "link_data"
         symlink_dir.symlink_to(real_dir)
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(symlink_dir))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(symlink_dir))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -244,7 +244,7 @@ class TestConfiguredPathSymlinkDetection:
         dead_target = tmp_path / "does_not_exist"
         broken_link = tmp_path / "dead_link"
         broken_link.symlink_to(dead_target)
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(broken_link))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(broken_link))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -281,7 +281,7 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
         data_dir = tmp_path / "af2data"
         data_dir.mkdir()
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(data_dir))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -299,7 +299,7 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
         absent = tmp_path / "no_such_dir"
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(absent))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(absent))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -317,7 +317,7 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
         a_file = tmp_path / "models.tgz"
         a_file.write_text("dummy")
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(a_file))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(a_file))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -562,11 +562,11 @@ class TestTimeoutConstants:
 # ===========================================================================
 
 # GAP: configured_paths is per-backend.  There's no top-level summary of which
-# NEOVAX_* env vars are set/missing across ALL backends.  The operator must
+# FOLDAGENT_* env vars are set/missing across ALL backends.  The operator must
 # scan each backend individually.
 #
 # PROPOSED FIX: Add an `env_summary` key to list_alphafold_shell_statuses()
-# output that collects all NEOVAX_* vars relevant to AlphaFold backends into
+# output that collects all FOLDAGENT_* vars relevant to AlphaFold backends into
 # a single dict with each key having a set/unset/present-but-missing status.
 
 
@@ -576,15 +576,15 @@ class TestEnvSummaryInDiagnostics:
     def test_list_alphafold_shell_statuses_includes_env_summary(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
-        monkeypatch.delenv("NEOVAX_ALPHAFOLD2_DATA_DIR", raising=False)
-        monkeypatch.delenv("NEOVAX_ALPHAFOLD3_MODEL_DIR", raising=False)
-        monkeypatch.delenv("NEOVAX_ALPHAFOLD3_DB_DIR", raising=False)
+        monkeypatch.delenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", raising=False)
+        monkeypatch.delenv("FOLDAGENT_ALPHAFOLD3_MODEL_DIR", raising=False)
+        monkeypatch.delenv("FOLDAGENT_ALPHAFOLD3_DB_DIR", raising=False)
 
         payload = shells.list_alphafold_shell_statuses()
         assert "env_summary" in payload
         assert isinstance(payload["env_summary"], dict)
-        assert "NEOVAX_ALPHAFOLD2_DATA_DIR" in payload["env_summary"]
-        assert "NEOVAX_ALPHAFOLD3_MODEL_DIR" in payload["env_summary"]
+        assert "FOLDAGENT_ALPHAFOLD2_DATA_DIR" in payload["env_summary"]
+        assert "FOLDAGENT_ALPHAFOLD3_MODEL_DIR" in payload["env_summary"]
 
 
 # ===========================================================================
@@ -595,7 +595,7 @@ class TestEnvSummaryInDiagnostics:
 # without editing shells.py.
 #
 # PROPOSED FIX: Allow runtime extension via a register function:
-#   shells.register_env_path("alphafold3_local", ("NEOVAX_AF3_CUSTOM_WEIGHTS", "custom_weights"))
+#   shells.register_env_path("alphafold3_local", ("FOLDAGENT_AF3_CUSTOM_WEIGHTS", "custom_weights"))
 # This lets deployment configs specify additional path probes without code changes.
 
 
@@ -622,7 +622,7 @@ class TestExistingBehaviorPreserved:
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
         data_dir = tmp_path / "normal_dir"
         data_dir.mkdir()
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(data_dir))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
         payload = shells.list_alphafold_shell_statuses()
         entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
@@ -668,10 +668,10 @@ class TestExistingBehaviorPreserved:
         """_configured_path_checks should return dict of dicts with expected keys."""
         data_dir = tmp_path / "af2data"
         data_dir.mkdir()
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD2_DATA_DIR", str(data_dir))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
         result = _configured_path_checks(
-            [("NEOVAX_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")]
+            [("FOLDAGENT_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")]
         )
         assert "alphafold2_data_dir" in result
         entry = result["alphafold2_data_dir"]
@@ -705,8 +705,8 @@ class TestExistingBehaviorPreserved:
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
         missing_dir = tmp_path / "no_such_dir"
         missing_model = tmp_path / "no_such_model"
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD3_MODEL_DIR", str(missing_model))
-        monkeypatch.setenv("NEOVAX_ALPHAFOLD3_DB_DIR", str(missing_dir))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD3_MODEL_DIR", str(missing_model))
+        monkeypatch.setenv("FOLDAGENT_ALPHAFOLD3_DB_DIR", str(missing_dir))
 
         payload = shells.list_alphafold_shell_statuses()
         af3 = payload["alphafold3_local"]

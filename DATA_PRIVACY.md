@@ -1,8 +1,8 @@
-# NeoVax-Agent Data Privacy Policy
+# FoldAgent Data Privacy Policy
 
 ## Local-First Default
 
-NeoVax-Agent is designed to be local-first. All data processing, storage, and
+FoldAgent is designed to be local-first. All data processing, storage, and
 computation happens on the user's machine by default. No data leaves the local
 system unless the user explicitly enables and confirms it.
 
@@ -12,7 +12,7 @@ system unless the user explicitly enables and confirms it.
    Server, external APIs) are disabled by default. Enabling them requires
    informed acknowledgment of what data will be uploaded.
 
-2. **No training on user data** -- NeoVax-Agent does not train models on user
+2. **No training on user data** -- FoldAgent does not train models on user
    data. No genomic data, case data, or derived data is used for model
    training or shared with third parties for that purpose.
 
@@ -28,6 +28,7 @@ system unless the user explicitly enables and confirms it.
 ## Data Handling
 
 ### Data We Store
+
 - Case metadata (diagnosis, species, mode)
 - Sample metadata (type, source lab, checksums)
 - Pipeline run manifests (tool versions, parameters, timing)
@@ -38,11 +39,13 @@ system unless the user explicitly enables and confirms it.
 - Report exports
 
 ### Data We Do NOT Store
+
 - Raw FASTQ files (metadata only)
 - Raw BAM files (metadata only, until explicitly processed)
 - Any data the user does not register in the system
 
 ### Data Retention
+
 - Local data is retained until the user deletes it
 - A data deletion workflow is available (post-MVP: automated)
 - Audit logs are retained per configured policy
@@ -61,6 +64,7 @@ When a user enables a cloud-connected feature (e.g., AlphaFold Server):
 ## Redaction
 
 Reports can be exported with redaction levels:
+
 - **Full**: All identifiers included
 - **Anonymized**: Subject names and direct identifiers removed
 - **Minimal**: Only aggregate statistics, no individual data

@@ -405,7 +405,7 @@ class TestGenerateCompassionateUseDoc:
         return generate_compassionate_use_doc(
             species="canine",
             condition="osteosarcoma",
-            treatment_summary="Personalized mRNA neoantigen vaccine (NeoVax platform)",
+            treatment_summary="Personalized mRNA neoantigen vaccine (FoldAgent platform)",
             vet_name="Dr. Jane Smith",
             vet_license="DVM-CA-12345",
             owner_name="John Doe",

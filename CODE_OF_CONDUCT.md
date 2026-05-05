@@ -1,4 +1,4 @@
-# NeoVax-Agent Code of Conduct
+# FoldAgent Code of Conduct
 
 ## Our Pledge
 

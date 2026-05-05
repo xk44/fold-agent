@@ -2325,7 +2325,7 @@
   },
   "info": {
     "description": "Local-first, safety-gated research coordination platform for personalized cancer-vaccine exploration under licensed professional supervision.",
-    "title": "NeoVax-Agent",
+    "title": "FoldAgent",
     "version": "0.1.0-alpha"
   },
   "openapi": "3.1.0",
@@ -2494,7 +2494,7 @@
     },
     "/alphafold/backends/{backend_name}/run": {
       "post": {
-        "description": "Run one of NeoVax's AlphaFold-family backends with backend-specific payload validation. Examples include ColabFold/local_colabfold sequence runs, alphafold3_local JSON runs, alphafold_server remote submissions with external-upload acknowledgement, and alphafold_db accession lookups.",
+        "description": "Run one of FoldAgent's AlphaFold-family backends with backend-specific payload validation. Examples include ColabFold/local_colabfold sequence runs, alphafold3_local JSON runs, alphafold_server remote submissions with external-upload acknowledgement, and alphafold_db accession lookups.",
         "operationId": "alphafold_backend_run_alphafold_backends__backend_name__run_post",
         "parameters": [
           {

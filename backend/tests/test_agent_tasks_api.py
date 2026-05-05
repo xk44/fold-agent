@@ -60,7 +60,7 @@ def test_agent_tasks_global_routes_support_case_optional_records(client: TestCli
         json={
             "case_id": case_id,
             "framework": "hermes",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "status": "pending",
         },
     )
@@ -144,7 +144,7 @@ def test_human_case_agent_task_create_blocked_by_sequence_gate(client: TestClien
         json={
             "case_id": case_id,
             "framework": "hermes",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "status": "pending",
         },
     )
@@ -165,7 +165,7 @@ def test_human_case_agent_task_dry_run_blocked_by_sequence_gate(client: TestClie
         json={
             "case_id": case_id,
             "framework": "claude_code",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "status": "pending",
         },
     )
@@ -185,7 +185,7 @@ def test_agent_skills_endpoint_lists_repo_skill_inventory(client: TestClient) ->
     payload = response.json()
     assert isinstance(payload, list)
     assert len(payload) >= 27
-    assert any(item["skill_name"] == "run_full_neovax_case_review" for item in payload)
+    assert any(item["skill_name"] == "run_full_foldagent_case_review" for item in payload)
     frameworks = {item["framework"] for item in payload}
     assert {"claude_code", "openclaw", "hermes"}.issubset(frameworks)
     first = payload[0]
@@ -196,10 +196,10 @@ def test_agent_skills_endpoint_lists_repo_skill_inventory(client: TestClient) ->
     assert "safety_boundaries" in first
     assert "required_api_endpoints" in first
 
-    neovax_skill = next(item for item in payload if item["skill_name"] == "run_full_neovax_case_review")
-    assert "research coordination under professional oversight" in neovax_skill["description"].lower()
-    assert any("not administerable" in item.lower() for item in neovax_skill["safety_boundaries"])
-    assert any(endpoint == "POST /safety/preflight" for endpoint in neovax_skill["required_api_endpoints"])
+    foldagent_skill = next(item for item in payload if item["skill_name"] == "run_full_foldagent_case_review")
+    assert "research coordination under professional oversight" in foldagent_skill["description"].lower()
+    assert any("not administerable" in item.lower() for item in foldagent_skill["safety_boundaries"])
+    assert any(endpoint == "POST /safety/preflight" for endpoint in foldagent_skill["required_api_endpoints"])
 
 
 
@@ -215,7 +215,7 @@ def test_agent_task_dry_run_returns_preview_without_persisting(client: TestClien
         json={
             "case_id": case_id,
             "framework": "claude_code",
-            "skill_name": "run_full_neovax_case_review",
+            "skill_name": "run_full_foldagent_case_review",
             "status": "pending",
         },
     )
@@ -225,7 +225,7 @@ def test_agent_task_dry_run_returns_preview_without_persisting(client: TestClien
     assert payload["dry_run"] is True
     assert payload["case_exists"] is True
     assert payload["framework"] == "claude_code"
-    assert payload["skill_name"] == "run_full_neovax_case_review"
+    assert payload["skill_name"] == "run_full_foldagent_case_review"
     assert payload["skill_available"] is True
 
     list_tasks = client.get(f"/cases/{case_id}/agent-tasks")
@@ -246,7 +246,7 @@ def test_agent_events_sse_stream_lists_recent_audit_events(client: TestClient) -
     )
     client.post(
         f"/cases/{case_id}/agent-tasks",
-        json={"framework": "hermes", "skill_name": "run_full_neovax_case_review", "status": "pending"},
+        json={"framework": "hermes", "skill_name": "run_full_foldagent_case_review", "status": "pending"},
     )
     client.post(f"/cases/{case_id}/reports/candidate-review")
 

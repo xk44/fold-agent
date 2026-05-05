@@ -1,6 +1,6 @@
 ---
 name: monitor_case_progress
-description: Summarize NeoVax operational progress, blockers, and next steps for a case without changing scientific conclusions.
+description: Summarize FoldAgent operational progress, blockers, and next steps for a case without changing scientific conclusions.
 version: 0.2.0
 license: Apache-2.0
 framework: OpenClaw
@@ -8,7 +8,7 @@ install_path: ~/.openclaw/skills/<skill_name>
 memory_seed_template: default
 audit_log_integration: required
 tags:
-  - neovax-agent
+  - foldagent
   - ops-monitoring
   - case-progress
   - safety-gated
@@ -18,12 +18,12 @@ tags:
 
 ## When to Use
 
-Use this skill when an operator needs a current-status snapshot of one NeoVax case across tasks, jobs, reports, and audit activity. It is the operational monitoring skill for identifying blockers and next actions. This skill does NOT alter scientific results or make treatment recommendations.
+Use this skill when an operator needs a current-status snapshot of one FoldAgent case across tasks, jobs, reports, and audit activity. It is the operational monitoring skill for identifying blockers and next actions. This skill does NOT alter scientific results or make treatment recommendations.
 
 ## When NOT to Use
 
 - Do NOT provide treatment, dosing, administration, or manufacturing instructions.
-- Do NOT bypass NeoVax safety preflight or expert approval requirements.
+- Do NOT bypass FoldAgent safety preflight or expert approval requirements.
 - Do NOT treat research outputs as clinical validation.
 
 ## Safety Boundaries
@@ -34,7 +34,7 @@ Use this skill when an operator needs a current-status snapshot of one NeoVax ca
 
 See also: `skills/shared/safety_policy.md`
 
-## Required NeoVax API Endpoints
+## Required FoldAgent API Endpoints
 
 - `GET /cases/{case_id}` — Retrieve high-level case metadata
 - `GET /cases/{case_id}/tasks` — Inspect coordination tasks
@@ -87,7 +87,7 @@ A structured output package containing:
 
 ## Audit Log Integration Notes
 
-- Treat the NeoVax audit trail as the source of truth for actions taken.
+- Treat the FoldAgent audit trail as the source of truth for actions taken.
 - Prefer endpoints that already emit audit events over ad hoc side channels.
 - When blocked, preserve the exact structured reason instead of paraphrasing it into something weaker.
 

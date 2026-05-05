@@ -1,4 +1,4 @@
-"""Tests for NeoVax-Agent security module and RBAC (Phase 19)."""
+"""Tests for FoldAgent security module and RBAC (Phase 19)."""
 from __future__ import annotations
 
 import json
@@ -28,7 +28,7 @@ class TestSBOM:
         assert sbom["bomFormat"] == "CycloneDX-lite"
         assert "components" in sbom
         assert "metadata" in sbom
-        assert sbom["metadata"]["component"]["name"] == "neovax-agent"
+        assert sbom["metadata"]["component"]["name"] == "foldagent"
 
     def test_sbom_has_components(self) -> None:
         sbom = generate_sbom()

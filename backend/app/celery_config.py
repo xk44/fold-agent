@@ -1,4 +1,4 @@
-"""NeoVax-Agent Celery Configuration — Infrastructure Stubs
+"""FoldAgent Celery Configuration — Infrastructure Stubs
 
 Config/registry scaffold. Actual Celery app creation is deferred.
 """

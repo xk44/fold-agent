@@ -1,4 +1,4 @@
-"""Focused render helpers for NeoVax dashboard operator surfaces.
+"""Focused render helpers for FoldAgent dashboard operator surfaces.
 
 This module extracts the large operator UI surfaces from dashboard.py into
 reusable render functions.  Each function encapsulates one logical panel:
@@ -54,7 +54,7 @@ from frontend.app.dashboard_helpers import normalize_table_rows
 
 if TYPE_CHECKING:
     from skills.shared.event_stream_client import SSEEvent
-    from skills.shared.neovax_client import NeoVaxClient
+    from skills.shared.foldagent_client import FoldAgentClient
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ def render_job_status_summary(
 
 def render_job_retry_panel(
     enriched_cards: list[dict],
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     safe_call,
     render_api_error,
 ) -> None:
@@ -182,7 +182,7 @@ def render_job_retry_panel(
 
     Args:
         enriched_cards: Job cards enriched with retry/cancel info.
-        client: NeoVaxClient instance for API calls.
+        client: FoldAgentClient instance for API calls.
         safe_call: The dashboard's ``safe_call`` wrapper.
         render_api_error: The dashboard's ``render_api_error`` helper.
     """
@@ -259,7 +259,7 @@ def render_job_retry_panel(
 def render_job_detail_drilldown(
     enriched_cards: list[dict],
     live_events: list[SSEEvent],
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     safe_call,
     render_api_error,
 ) -> None:
@@ -268,7 +268,7 @@ def render_job_detail_drilldown(
     Args:
         enriched_cards: Enriched job cards (with retry info).
         live_events: Current live events from the feed buffer.
-        client: NeoVaxClient instance for API calls.
+        client: FoldAgentClient instance for API calls.
         safe_call: The dashboard's ``safe_call`` wrapper.
         render_api_error: The dashboard's ``render_api_error`` helper.
     """
@@ -371,7 +371,7 @@ def render_job_detail_drilldown(
 def _render_action_chips(
     action_chips: list[dict],
     selected_job_id: str,
-    client: NeoVaxClient,
+    client: FoldAgentClient,
     safe_call,
     render_api_error,
 ) -> None:

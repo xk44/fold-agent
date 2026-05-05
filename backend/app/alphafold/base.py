@@ -1,4 +1,4 @@
-"""NeoVax-Agent AlphaFold Backend Abstraction
+"""FoldAgent AlphaFold Backend Abstraction
 
 Defines the AlphaFoldBackend abstract class, metadata-only backend descriptors,
 and MockAlphaFoldBackend for testing.
@@ -163,7 +163,7 @@ class StaticMetadataBackend(AlphaFoldBackend):
         return False
 
     async def run_structure_prediction(self, manifest: StructureInputManifest) -> StructureResult:
-        raise RuntimeError(f"Backend {self.name} is metadata-only in current NeoVax phase")
+        raise RuntimeError(f"Backend {self.name} is metadata-only in current FoldAgent phase")
 
     async def estimate_cost(self, manifest: StructureInputManifest) -> Optional[float]:
         return None

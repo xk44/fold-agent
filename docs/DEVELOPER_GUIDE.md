@@ -1,6 +1,6 @@
 # Developer Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
@@ -18,7 +18,7 @@
 ```bash
 # Clone and enter the repo
 git clone <repo-url>
-cd neovax
+cd foldagent
 
 # Install core + dev + frontend dependencies
 pip install -e ".[dev,frontend]"
@@ -36,7 +36,7 @@ Copy the example config and customize if needed:
 cp config.example.yaml config.yaml
 ```
 
-Environment variables override all config values. The prefix for all settings is `NEOVAX_` (see `backend/app/config.py`).
+Environment variables override all config values. The prefix for all settings is `FOLDAGENT_` (see `backend/app/config.py`).
 
 ---
 
@@ -51,10 +51,10 @@ The API will be available at `http://127.0.0.1:8010`. Interactive docs at `http:
 
 Default settings used on first run:
 
-- `NEOVAX_SPECIES_MODE=demo`
-- `NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock`
-- `NEOVAX_PIPELINE_MODE=mock`
-- `NEOVAX_DATABASE_URL=sqlite:///./neovax.db`
+- `FOLDAGENT_SPECIES_MODE=demo`
+- `FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock`
+- `FOLDAGENT_PIPELINE_MODE=mock`
+- `FOLDAGENT_DATABASE_URL=sqlite:///./foldagent.db`
 
 ---
 
@@ -62,7 +62,7 @@ Default settings used on first run:
 
 ```bash
 make dashboard
-# Equivalent: NEOVAX_API_URL=http://127.0.0.1:8010 streamlit run frontend/app/dashboard.py \
+# Equivalent: FOLDAGENT_API_URL=http://127.0.0.1:8010 streamlit run frontend/app/dashboard.py \
 #   --server.address 127.0.0.1 --server.port 8502
 ```
 
@@ -107,11 +107,11 @@ Tests use an in-memory SQLite database via the `conftest.py` fixtures in `backen
 ## Project Structure
 
 ```
-neovax/
+foldagent/
   backend/
     app/
       main.py              — FastAPI app, all route definitions
-      config.py            — Settings (pydantic-settings, NEOVAX_ prefix)
+      config.py            — Settings (pydantic-settings, FOLDAGENT_ prefix)
       models.py            — SQLAlchemy ORM models
       schemas.py           — Pydantic request/response schemas
       db.py                — Engine, session factory, init/migration logic
@@ -190,7 +190,7 @@ neovax/
    make migrate
    ```
 
-4. For development without migrations, `NEOVAX_DB_INIT_MODE=create_all` will auto-create tables at startup (bypasses Alembic — not for production).
+4. For development without migrations, `FOLDAGENT_DB_INIT_MODE=create_all` will auto-create tables at startup (bypasses Alembic — not for production).
 
 ---
 
@@ -206,7 +206,7 @@ make makemigration MSG="describe what changed"
 # Equivalent: alembic revision --autogenerate -m "describe what changed"
 ```
 
-`NEOVAX_DB_INIT_MODE` controls startup behavior:
+`FOLDAGENT_DB_INIT_MODE` controls startup behavior:
 
 - `create_all` — dev default; calls `Base.metadata.create_all()`, bypasses Alembic
 - `validate` — asserts all ORM tables exist; raises on schema drift; use in production
@@ -234,14 +234,14 @@ make ci
 ## Environment Variables Quick Reference
 
 ```bash
-NEOVAX_SPECIES_MODE=demo          # demo | dog | human
-NEOVAX_DATABASE_URL=sqlite:///./neovax.db
-NEOVAX_DB_INIT_MODE=create_all    # create_all | validate | alembic
-NEOVAX_API_PORT=8010
-NEOVAX_DASHBOARD_PORT=8502
-NEOVAX_ALPHAFOLD_DEFAULT_BACKEND=mock
-NEOVAX_PIPELINE_MODE=mock         # mock | real
-NEOVAX_SAFETY_PREFLIGHT_ENABLED=true
-NEOVAX_LOG_LEVEL=INFO
-NEOVAX_SECRET_KEY=changeme-set-a-real-secret-key
+FOLDAGENT_SPECIES_MODE=demo          # demo | dog | human
+FOLDAGENT_DATABASE_URL=sqlite:///./foldagent.db
+FOLDAGENT_DB_INIT_MODE=create_all    # create_all | validate | alembic
+FOLDAGENT_API_PORT=8010
+FOLDAGENT_DASHBOARD_PORT=8502
+FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND=mock
+FOLDAGENT_PIPELINE_MODE=mock         # mock | real
+FOLDAGENT_SAFETY_PREFLIGHT_ENABLED=true
+FOLDAGENT_LOG_LEVEL=INFO
+FOLDAGENT_SECRET_KEY=changeme-set-a-real-secret-key
 ```

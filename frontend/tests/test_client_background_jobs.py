@@ -1,4 +1,4 @@
-"""Tests for NeoVaxClient background job methods — retry, list, get, cancel.
+"""Tests for FoldAgentClient background job methods — retry, list, get, cancel.
 
 These test only the client-side request construction, not the backend logic.
 Uses httpx mocking to avoid needing a live server.
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.neovax_client import NeoVaxClient
+from skills.shared.foldagent_client import FoldAgentClient
 
 
 def _mock_response(json_data=None, status_code=200):
@@ -32,7 +32,7 @@ class TestRetryBackgroundJob:
     """Test that retry_background_job POSTs to the correct endpoint."""
 
     def test_retry_sends_post_to_correct_path(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response({"id": "abc-123", "status": "pending", "attempt": 2})
         with patch.object(client.client, "post", return_value=mock_resp) as mock_post:
             result = client.retry_background_job("abc-123")
@@ -46,7 +46,7 @@ class TestRetryBackgroundJob:
     def test_retry_propagates_http_error(self):
         """When API returns 409 (conflict), client should raise."""
         import httpx
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         error_resp = MagicMock()
         error_resp.status_code = 409
         error_resp.json.return_value = {"detail": "Job has exceeded max retries"}
@@ -66,7 +66,7 @@ class TestListBackgroundJobs:
     """Test that list_background_jobs GETs /jobs with optional filters."""
 
     def test_list_jobs_no_filters(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response([{"id": "j1"}, {"id": "j2"}])
         with patch.object(client.client, "get", return_value=mock_resp) as mock_get:
             result = client.list_background_jobs()
@@ -77,7 +77,7 @@ class TestListBackgroundJobs:
             assert len(result) == 2
 
     def test_list_jobs_with_status_filter(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response([{"id": "j1", "status": "failed"}])
         with patch.object(client.client, "get", return_value=mock_resp) as mock_get:
             result = client.list_background_jobs(status="failed")
@@ -85,7 +85,7 @@ class TestListBackgroundJobs:
             assert call_args[1]["params"]["status"] == "failed"
 
     def test_list_jobs_with_case_id_filter(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response([{"id": "j1", "case_id": "c1"}])
         with patch.object(client.client, "get", return_value=mock_resp) as mock_get:
             result = client.list_background_jobs(case_id="c1")
@@ -97,7 +97,7 @@ class TestGetBackgroundJob:
     """Test that get_background_job GETs /jobs/{job_id}."""
 
     def test_get_job(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response({"id": "abc-123", "status": "failed"})
         with patch.object(client.client, "get", return_value=mock_resp) as mock_get:
             result = client.get_background_job("abc-123")
@@ -110,7 +110,7 @@ class TestCancelBackgroundJob:
     """Test that cancel_background_job POSTs to /jobs/{job_id}/cancel."""
 
     def test_cancel_job(self):
-        client = NeoVaxClient(base_url="http://localhost:8000")
+        client = FoldAgentClient(base_url="http://localhost:8000")
         mock_resp = _mock_response({"id": "abc-123", "status": "cancelled"})
         with patch.object(client.client, "post", return_value=mock_resp):
             result = client.cancel_background_job("abc-123")

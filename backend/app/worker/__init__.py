@@ -1,4 +1,4 @@
-"""Celery worker package for NeoVax-Agent.
+"""Celery worker package for FoldAgent.
 
 Run with:
     celery -A backend.app.worker worker --loglevel=info
@@ -21,7 +21,7 @@ if not _celery_broker:
         _celery_broker = _redis_url
     else:
         raise SystemExit(
-            "Neither NEOVAX_CELERY_BROKER_URL nor NEOVAX_REDIS_URL is set. "
+            "Neither FOLDAGENT_CELERY_BROKER_URL nor FOLDAGENT_REDIS_URL is set. "
             "The worker requires a message broker to function. "
             "See .env.example for configuration options."
         )
@@ -40,7 +40,7 @@ except ImportError:
     ) from None
 
 app = Celery(
-    "neovax",
+    "foldagent",
     broker=_celery_broker,
     backend=_celery_backend,
 )

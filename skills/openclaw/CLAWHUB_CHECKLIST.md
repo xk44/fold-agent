@@ -1,11 +1,11 @@
 ---
-title: ClawHub Publication Checklist — neovax-openclaw
+title: ClawHub Publication Checklist — foldagent-openclaw
 framework: OpenClaw
-skill: neovax-openclaw
+skill: foldagent-openclaw
 version: 1.0.0
 ---
 
-# ClawHub Publication Checklist: neovax-openclaw
+# ClawHub Publication Checklist: foldagent-openclaw
 
 Complete every item before publishing this skill pack to ClawHub or any other
 public skill registry.
@@ -42,10 +42,10 @@ public skill registry.
 
 ## 4. API Compatibility
 
-- [ ] All endpoint paths in task YAML files match the current NeoVax API
+- [ ] All endpoint paths in task YAML files match the current FoldAgent API
       (verify against `skills/shared/openapi.json` or live `/openapi.json`)
 - [ ] `version` field in each task YAML is updated to match the current release
-- [ ] The skill is tested against the NeoVax API version it targets
+- [ ] The skill is tested against the FoldAgent API version it targets
       (document the target version in `SKILL.md` or a `CHANGELOG`)
 
 ## 5. Tests
@@ -65,7 +65,7 @@ public skill registry.
 - [ ] `license: Apache-2.0` is set in `SKILL.md` and all task YAML files
 - [ ] No task file incorporates code or content from a more restrictive license
 - [ ] Contribution from third parties (if any) is attributed per the
-      `CONTRIBUTING.md` policy in the NeoVax project root
+      `CONTRIBUTING.md` policy in the FoldAgent project root
 
 ## 8. Final Checks
 

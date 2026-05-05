@@ -1,4 +1,4 @@
-"""Tests for OpenClaw NeoVax skill pack.
+"""Tests for OpenClaw FoldAgent skill pack.
 
 Validates YAML task files parse correctly, reference valid API endpoints,
 and that the OPSEC checklist covers required security items.
@@ -87,7 +87,7 @@ def test_task_file_required_fields(filename: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 4: Task files reference valid NeoVax API endpoints
+# Test 4: Task files reference valid FoldAgent API endpoints
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("endpoint", REQUIRED_ENDPOINTS)
 def test_required_endpoints_in_tasks(endpoint: str) -> None:

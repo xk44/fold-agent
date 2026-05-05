@@ -1,4 +1,4 @@
-"""NeoVax-Agent SQLAlchemy Models
+"""FoldAgent SQLAlchemy Models
 
 Core data model for the local-first research coordination platform.
 All entities include audit trail fields and safety gate tracking.

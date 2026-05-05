@@ -565,7 +565,7 @@ class TestOperatorFocusStore:
     def test_default_focus_path_is_under_home(self):
         path = default_focus_path()
         assert str(path).endswith("operator_focus.json")
-        assert ".neovax" in str(path)
+        assert ".foldagent" in str(path)
 
 
 class TestConstantsIntegrity:

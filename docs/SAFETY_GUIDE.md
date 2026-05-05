@@ -1,6 +1,6 @@
 # Safety Guide
 
-> **NeoVax-Agent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
+> **FoldAgent is a research coordination tool only. It does not provide medical advice, treatment instructions, or administerable outputs.**
 
 ---
 
@@ -96,7 +96,7 @@ Expert mode must be set per-request. There is no global session flag. Set it onl
 
 ## Species-Based Restrictions
 
-The `species_mode` setting (configured via `NEOVAX_SPECIES_MODE`) controls baseline safety posture:
+The `species_mode` setting (configured via `FOLDAGENT_SPECIES_MODE`) controls baseline safety posture:
 
 | Mode    | Restriction level | Notes                                                              |
 | ------- | ----------------- | ------------------------------------------------------------------ |
@@ -140,14 +140,14 @@ Audit logs are append-only. Use `GET /audit` or the export utilities in `privacy
 
 ## Safety Configuration
 
-Set via environment variables (prefix `NEOVAX_`):
+Set via environment variables (prefix `FOLDAGENT_`):
 
 | Variable                                | Default | Description                                 |
 | --------------------------------------- | ------- | ------------------------------------------- |
-| `NEOVAX_SAFETY_PREFLIGHT_ENABLED`       | `true`  | Master switch for preflight                 |
-| `NEOVAX_UNSAFE_TEXT_SCANNER_ENABLED`    | `true`  | Enable text pattern scanner                 |
-| `NEOVAX_REQUIRE_PROFESSIONAL_OVERSIGHT` | `true`  | Attach oversight requirement to all outputs |
-| `NEOVAX_SPECIES_MODE`                   | `demo`  | Operating mode                              |
+| `FOLDAGENT_SAFETY_PREFLIGHT_ENABLED`       | `true`  | Master switch for preflight                 |
+| `FOLDAGENT_UNSAFE_TEXT_SCANNER_ENABLED`    | `true`  | Enable text pattern scanner                 |
+| `FOLDAGENT_REQUIRE_PROFESSIONAL_OVERSIGHT` | `true`  | Attach oversight requirement to all outputs |
+| `FOLDAGENT_SPECIES_MODE`                   | `demo`  | Operating mode                              |
 
 Do not disable preflight in production.
 

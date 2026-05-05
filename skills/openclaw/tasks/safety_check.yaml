@@ -1,7 +1,7 @@
 name: safety_check
 version: "1.0.0"
 description: >
-  Run NeoVax safety preflight, mRNA safety gate, false-positive risk
+  Run FoldAgent safety preflight, mRNA safety gate, false-positive risk
   assessment, privacy checks, and evidence review for a case. This task
   is self-gating and does not require a prior preflight call. All other
   tasks must call this first.
@@ -17,7 +17,7 @@ safety_disclaimer: >
 inputs:
   case_id:
     type: string
-    description: UUID of the NeoVax case to assess.
+    description: UUID of the FoldAgent case to assess.
     required: true
   intended_action:
     type: string
