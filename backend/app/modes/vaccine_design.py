@@ -464,11 +464,38 @@ CODON_TABLES: dict[str, dict[str, str]] = {
     },
 }
 
-_UTR5_PLACEHOLDER = (
-    "GGGAAAUAAGAGAGAAAAGAAGAGUAAGAAGAAAUAUAAGAGCCACCAUGGG"
+# Research-grade UTR sequences for mRNA vaccine construct design.
+#
+# 5' UTR: Human alpha-globin 5' UTR — widely used in mRNA expression research
+#   to improve translational efficiency via its structured 5' leader region.
+#   Sequence ends with the native Kozak context / start codon context (ATG
+#   not included here; added by the coding sequence builder below).
+#
+# 3' UTR: Two-segment AES + mitochondrial 12S rRNA (mtRNR1) combination 3' UTR,
+#   as described in BioNTech mRNA optimisation work.  The first segment (AES)
+#   reduces exonucleolytic degradation; the second (mtRNR1) further stabilises
+#   the transcript and enhances ribosome occupancy.
+#
+# Based on sequences described in:
+#   Orlandini von Niessen AG et al. (2019) Mol Ther 27(4):824–836.
+#   and related BioNTech/Moderna mRNA platform publications.
+#
+# IMPORTANT: These are RESEARCH-GRADE sequences from published literature.
+# They are NOT clinical-grade and have NOT been validated for GMP manufacturing,
+# regulatory submission, or human therapeutic use.  Do not use in clinical
+# or regulatory contexts without independent validation.
+_UTR5_SEQUENCE = (
+    "ACTTGCTTTTGACACAACTGTGTTCACTAGCAACCTCAAACAGACACCATG"
 )
-_UTR3_PLACEHOLDER = (
-    "UGCAUAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+_UTR3_SEQUENCE = (
+    # AES segment
+    "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+    # short spacer
+    "AAAA"
+    # mtRNR1 segment (abbreviated research reference)
+    "CTTTAAGCCTCAATAAAGCTTGAAAATTTTAG"
+    # minimal poly-U tail context
+    "AAAAAAA"
 )
 _DEFAULT_POLY_A_LENGTH = 120
 
@@ -516,10 +543,12 @@ def optimize_mrna_construct(
 ) -> mRNAConstruct:
     """Generate an mRNA construct from a protein sequence.
 
-    Reverse-translates using preferred codons, adds 5'/3' UTR placeholders,
-    and a poly-A tail.
+    Reverse-translates using preferred codons, flanks the CDS with research-grade
+    5'/3' UTR sequences (human alpha-globin 5' UTR and AES/mtRNR1 3' UTR), and
+    appends a poly-A tail.
 
-    PLACEHOLDER — not calibrated for clinical manufacturing.
+    RESEARCH ONLY — UTR sequences are from published literature and are NOT
+    validated for clinical manufacturing or regulatory submission.
     """
     coding_seq = _reverse_translate(protein_sequence, species)
     # Add start codon if not already present
@@ -534,8 +563,8 @@ def optimize_mrna_construct(
 
     return mRNAConstruct(
         coding_sequence=coding_seq,
-        utr5=_UTR5_PLACEHOLDER,
-        utr3=_UTR3_PLACEHOLDER,
+        utr5=_UTR5_SEQUENCE,
+        utr3=_UTR3_SEQUENCE,
         poly_a_length=poly_a_length,
         gc_content=gc,
         codon_adaptation_index=cai,

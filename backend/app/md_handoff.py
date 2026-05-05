@@ -22,6 +22,12 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 
+try:
+    import numpy as _np
+    _NUMPY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _NUMPY_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -372,7 +378,52 @@ def validate_structure_for_md(pdb_data: str) -> dict:
     # Chain break heuristic: flag if REMARK mentions chain breaks
     chain_break_remarks = any("CHAIN BREAK" in l.upper() or "MISSING" in l.upper() for l in lines)
 
-    passed = has_atoms and not missing_heavy_atoms and not chain_break_remarks
+    # Steric clash detection: parse atom coordinates and check pairwise distances.
+    # A clash is flagged when two non-bonded heavy atoms are closer than 2.0 Å.
+    # Bonded pairs (same residue, sequential serial numbers) are excluded.
+    steric_clashes = False
+    if has_atoms and _NUMPY_AVAILABLE:
+        coords: list[tuple[float, float, float]] = []
+        atom_serial: list[int] = []
+        atom_res_key: list[tuple[str, str]] = []  # (chain_id, res_seq)
+        for ln in atom_lines:
+            if len(ln) < 54:
+                continue
+            try:
+                x = float(ln[30:38])
+                y = float(ln[38:46])
+                z = float(ln[46:54])
+                serial = int(ln[6:11].strip()) if len(ln) >= 11 else 0
+                chain_id = ln[21] if len(ln) > 21 else " "
+                res_seq = ln[22:26].strip()
+            except ValueError:
+                continue
+            coords.append((x, y, z))
+            atom_serial.append(serial)
+            atom_res_key.append((chain_id, res_seq))
+
+        if len(coords) >= 2:
+            xyz = _np.array(coords, dtype=_np.float64)
+            clash_threshold_sq = 2.0 ** 2  # 4.0 Å²
+            n = len(coords)
+            # Iterate over inter-residue pairs only; stop at first clash
+            for i in range(n):
+                if steric_clashes:
+                    break
+                # Compute distances from atom i to all atoms j > i at once
+                diffs = xyz[i + 1:] - xyz[i]                          # (n-i-1, 3)
+                d2 = (diffs * diffs).sum(axis=1)                       # (n-i-1,)
+                close_mask = d2 < clash_threshold_sq                   # potential clashes
+                if not close_mask.any():
+                    continue
+                # Check that close atoms are not in the same residue
+                for offset in _np.where(close_mask)[0]:
+                    j = i + 1 + int(offset)
+                    if atom_res_key[i] != atom_res_key[j]:
+                        steric_clashes = True
+                        break
+
+    passed = has_atoms and not missing_heavy_atoms and not chain_break_remarks and not steric_clashes
 
     warnings: list[str] = []
     if not has_atoms:
@@ -381,13 +432,17 @@ def validate_structure_for_md(pdb_data: str) -> dict:
         warnings.append("Possible missing heavy atoms (< 3 atoms per residue on average).")
     if chain_break_remarks:
         warnings.append("REMARK lines suggest missing residues or chain breaks.")
+    if steric_clashes:
+        warnings.append("Steric clashes detected: non-bonded atom pair(s) closer than 2.0 Å.")
+    if not _NUMPY_AVAILABLE:
+        warnings.append("numpy not available; steric clash check skipped.")
 
     return {
         "passed": passed,
         "has_atoms": has_atoms,
         "missing_heavy_atoms": missing_heavy_atoms,
         "chain_breaks_detected": chain_break_remarks,
-        "steric_clashes": False,  # stub — full check requires distance matrix
+        "steric_clashes": steric_clashes,
         "n_residues": n_residues,
         "n_chains": n_chains,
         "warnings": warnings,

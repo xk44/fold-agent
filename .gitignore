@@ -69,3 +69,5 @@ artifacts/
 # Experiment logs (local)
 experiment_log.json*.db-shm
 *.db-wal
+*.db-shm
+*.db-wal

@@ -318,7 +318,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501", "http://localhost:3000"],
+    allow_origins=["http://localhost:8502", "http://127.0.0.1:8502", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -6681,6 +6681,16 @@ def agent_task_dry_run(payload: _AgentTaskDryRunRequest, db: Session = Depends(g
         case = db.get(Case, payload.case_id)
         case_exists = case is not None
     skill_available = _is_known_skill(payload.skill_name)
+    log_action(
+        db,
+        case_id=payload.case_id,
+        actor="api",
+        action="agent_task.dry_run",
+        inputs={"skill_name": payload.skill_name, "framework": payload.framework},
+        outputs={"skill_available": skill_available, "case_exists": case_exists},
+        safety_gate_result="pass",
+    )
+    db.commit()
     return {
         "dry_run": True,
         "case_id": payload.case_id,
@@ -6786,28 +6796,30 @@ def agent_events_stream(
             return Response(content="", media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
         raise
 
+    # Apply after_event_id cursor: drop all entries up to and including the cursor
+    if after_event_id:
+        cursor_idx = next((i for i, e in enumerate(entries) if e.id == after_event_id), None)
+        if cursor_idx is not None:
+            entries = entries[cursor_idx + 1:]
+
     prefixes_filter = None
     if prefix:
         prefixes_filter = tuple(prefix.split(","))
 
     def _generate():
-        yielded = False
         for entry in entries:
             event_name = entry.action or "event"
             if prefixes_filter and not any(event_name.startswith(p) for p in prefixes_filter):
                 continue
             data = {
-                "id": entry.id,
+                "log_id": entry.id,
                 "case_id": entry.case_id,
                 "action": entry.action,
                 "actor": entry.actor,
                 "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
                 "details": entry.details,
             }
-            yield f"event: {event_name}\ndata: {json.dumps(data)}\n\n"
-            yielded = True
-        if yielded:
-            yield "event: end\ndata: {\"action\": \"stream.end\"}\n\n"
+            yield f"id: {entry.id}\nevent: {event_name}\ndata: {json.dumps(data)}\n\n"
 
     return StreamingResponse(
         _generate(),

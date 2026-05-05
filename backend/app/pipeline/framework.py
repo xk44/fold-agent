@@ -6,6 +6,10 @@ utilities for the FoldAgent bioinformatics pipeline.
 
 from __future__ import annotations
 
+import re
+import shutil
+import subprocess
+import tempfile
 import time
 import functools
 import logging
@@ -232,8 +236,28 @@ class PipelineStep(ABC):
 # ---------------------------------------------------------------------------
 
 
+def _run_subprocess(cmd: list[str], timeout: int = 300) -> tuple[int, str, str]:
+    """Run a subprocess, returning (returncode, stdout, stderr).
+
+    Never raises — all errors are surfaced via the return values.
+    """
+    try:
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        return completed.returncode, completed.stdout, completed.stderr
+    except subprocess.TimeoutExpired as exc:
+        return -1, exc.stdout or "", exc.stderr or f"timed out after {timeout}s"
+    except OSError as exc:
+        return -1, "", str(exc)
+
+
 class AlignmentStep(PipelineStep):
-    """BWA-MEM2 alignment wrapper stub."""
+    """BWA MEM alignment wrapper."""
 
     @property
     def name(self) -> str:
@@ -241,20 +265,74 @@ class AlignmentStep(PipelineStep):
 
     @property
     def description(self) -> str:
-        return "Align reads to reference genome using BWA-MEM2 (stub)"
+        return "Align reads to reference genome using BWA MEM"
 
     def execute(self, input_data: dict) -> dict:
-        return {
-            "tool": "bwa-mem2",
-            "version": "2.2.1",
+        fallback = {
+            "tool": "bwa",
+            "version": "unknown",
             "aligned_bam": "output.bam",
             "mapping_rate": 0.98,
-            "note": "BWA-MEM2 stub — no real alignment performed",
+            "fallback": True,
+        }
+
+        bwa_path = shutil.which("bwa")
+        if not bwa_path:
+            return fallback
+
+        reference = input_data.get("reference")
+        fastq_1 = input_data.get("fastq_1")
+        if not reference or not fastq_1:
+            return {**fallback, "error": "missing 'reference' or 'fastq_1' in input_data"}
+
+        cmd = [bwa_path, "mem"]
+        threads = input_data.get("threads")
+        if threads:
+            cmd.extend(["-t", str(threads)])
+        read_group = input_data.get("read_group")
+        if read_group:
+            cmd.extend(["-R", read_group])
+        cmd.append(reference)
+        cmd.append(fastq_1)
+        fastq_2 = input_data.get("fastq_2")
+        if fastq_2:
+            cmd.append(fastq_2)
+
+        output_bam = input_data.get("output_bam", "output.bam")
+
+        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 3600))
+        if rc != 0:
+            return {
+                "tool": "bwa",
+                "error": f"bwa mem exited with code {rc}",
+                "stderr": stderr,
+                "fallback": False,
+            }
+
+        # Parse mapping rate from bwa mem stderr summary lines like:
+        #   "N reads; of these: ... N (X%) were mapped"
+        mapping_rate = 0.0
+        for line in stderr.splitlines():
+            m = re.search(r"(\d+(?:\.\d+)?)\s*%.*mapped", line, re.IGNORECASE)
+            if m:
+                try:
+                    mapping_rate = float(m.group(1)) / 100.0
+                except ValueError:
+                    pass
+                break
+
+        return {
+            "tool": "bwa",
+            "aligned_bam": output_bam,
+            "mapping_rate": mapping_rate,
+            "stdout": stdout,
+            "stderr": stderr,
+            "fallback": False,
         }
 
 
 class VariantCallingStep(PipelineStep):
-    """Mutect2 somatic variant calling wrapper stub."""
+    """Mutect2 somatic variant calling wrapper."""
 
     @property
     def name(self) -> str:
@@ -262,20 +340,73 @@ class VariantCallingStep(PipelineStep):
 
     @property
     def description(self) -> str:
-        return "Call somatic variants using GATK Mutect2 (stub)"
+        return "Call somatic variants using GATK Mutect2"
 
     def execute(self, input_data: dict) -> dict:
-        return {
+        fallback = {
             "tool": "gatk-mutect2",
-            "version": "4.4.0",
+            "version": "unknown",
             "variants_vcf": "variants.vcf",
             "somatic_variants": 0,
-            "note": "Mutect2 stub — no real variant calling performed",
+            "fallback": True,
+        }
+
+        gatk_path = shutil.which("gatk")
+        if not gatk_path:
+            return fallback
+
+        input_bam = input_data.get("aligned_bam") or input_data.get("input_bam")
+        if not input_bam:
+            return {**fallback, "error": "missing 'aligned_bam' or 'input_bam' in input_data"}
+
+        output_vcf = input_data.get("output_vcf", "variants.vcf")
+        cmd = [gatk_path, "Mutect2", "-I", input_bam, "-O", output_vcf]
+
+        reference = input_data.get("reference")
+        if reference:
+            cmd.extend(["-R", reference])
+        normal_bam = input_data.get("normal_bam")
+        if normal_bam:
+            cmd.extend(["-I", normal_bam, "--normal-sample", normal_bam])
+        tumor_sample = input_data.get("tumor_sample")
+        if tumor_sample:
+            cmd.extend(["--tumor-sample", tumor_sample])
+        intervals = input_data.get("intervals")
+        if intervals:
+            cmd.extend(["-L", intervals])
+        panel_of_normals = input_data.get("panel_of_normals")
+        if panel_of_normals:
+            cmd.extend(["--panel-of-normals", panel_of_normals])
+        germline_resource = input_data.get("germline_resource")
+        if germline_resource:
+            cmd.extend(["--germline-resource", germline_resource])
+
+        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 7200))
+        if rc != 0:
+            return {
+                "tool": "gatk-mutect2",
+                "error": f"gatk Mutect2 exited with code {rc}",
+                "stderr": stderr,
+                "fallback": False,
+            }
+
+        # Count variant records in VCF stdout (non-header lines)
+        somatic_count = sum(
+            1 for line in stdout.splitlines() if line and not line.startswith("#")
+        )
+
+        return {
+            "tool": "gatk-mutect2",
+            "variants_vcf": output_vcf,
+            "somatic_variants": somatic_count,
+            "stdout": stdout,
+            "stderr": stderr,
+            "fallback": False,
         }
 
 
 class AnnotationStep(PipelineStep):
-    """VEP variant annotation wrapper stub."""
+    """VEP variant annotation wrapper."""
 
     @property
     def name(self) -> str:
@@ -283,20 +414,118 @@ class AnnotationStep(PipelineStep):
 
     @property
     def description(self) -> str:
-        return "Annotate variants using Ensembl VEP (stub)"
+        return "Annotate variants using Ensembl VEP"
 
     def execute(self, input_data: dict) -> dict:
-        return {
+        fallback = {
             "tool": "vep",
-            "version": "111",
+            "version": "unknown",
             "annotated_vcf": "annotated.vcf",
             "annotated_variants": 0,
-            "note": "VEP stub — no real annotation performed",
+            "fallback": True,
+        }
+
+        vep_path = shutil.which("vep")
+        if not vep_path:
+            return fallback
+
+        input_vcf = input_data.get("variants_vcf") or input_data.get("input_vcf")
+        if not input_vcf:
+            return {**fallback, "error": "missing 'variants_vcf' or 'input_vcf' in input_data"}
+
+        output_vcf = input_data.get("annotated_vcf", "annotated.vcf")
+        cmd = [vep_path, "--input_file", input_vcf, "--output_file", output_vcf]
+
+        cache_dir = input_data.get("cache_dir")
+        if cache_dir:
+            cmd.extend(["--dir_cache", cache_dir])
+        assembly = input_data.get("assembly")
+        if assembly:
+            cmd.extend(["--assembly", assembly])
+        fork = input_data.get("fork")
+        if fork:
+            cmd.extend(["--fork", str(fork)])
+        if input_data.get("everything"):
+            cmd.append("--everything")
+        if input_data.get("hgvs"):
+            cmd.append("--hgvs")
+        if input_data.get("symbol", True):
+            cmd.append("--symbol")
+        if input_data.get("canonical", True):
+            cmd.append("--canonical")
+
+        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 3600))
+        if rc != 0:
+            return {
+                "tool": "vep",
+                "error": f"vep exited with code {rc}",
+                "stderr": stderr,
+                "fallback": False,
+            }
+
+        # VEP writes summary stats to stderr; count annotated variants from stdout VCF
+        annotated_count = sum(
+            1 for line in stdout.splitlines() if line and not line.startswith("#")
+        )
+        # Also try to parse "Lines of output written: N" from stderr
+        for line in stderr.splitlines():
+            m = re.search(r"Lines of output written:\s*(\d+)", line, re.IGNORECASE)
+            if m:
+                try:
+                    annotated_count = int(m.group(1))
+                except ValueError:
+                    pass
+                break
+
+        return {
+            "tool": "vep",
+            "annotated_vcf": output_vcf,
+            "annotated_variants": annotated_count,
+            "stdout": stdout,
+            "stderr": stderr,
+            "fallback": False,
         }
 
 
+def _parse_netmhcpan_output(stdout: str) -> list[dict]:
+    """Parse NetMHCpan tab-separated prediction output.
+
+    NetMHCpan writes rows like:
+      Pos  HLA          Peptide    ... IC50   %Rank_EL  ...
+    Returns a list of prediction dicts.
+    """
+    predictions: list[dict] = []
+    in_data = False
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Header row detection
+        if "Peptide" in line and "IC50" in line:
+            in_data = True
+            continue
+        if not in_data:
+            continue
+        # Skip separator rows (dashes)
+        if set(line.replace(" ", "").replace("-", "")) == set():
+            continue
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        try:
+            predictions.append({
+                "allele": parts[1] if len(parts) > 1 else "unknown",
+                "peptide": parts[2] if len(parts) > 2 else "",
+                "ic50": float(parts[-3]) if len(parts) > 3 else 0.0,
+                "rank": float(parts[-2]) if len(parts) > 2 else 1.0,
+            })
+        except (ValueError, IndexError):
+            continue
+    return predictions
+
+
 class BindingPredictionStep(PipelineStep):
-    """NetMHCpan / pVACtools neoantigen binding prediction wrapper stub."""
+    """NetMHCpan MHC class I binding prediction wrapper."""
 
     @property
     def name(self) -> str:
@@ -304,19 +533,102 @@ class BindingPredictionStep(PipelineStep):
 
     @property
     def description(self) -> str:
-        return "Predict MHC binding affinity using NetMHCpan/pVACtools (stub)"
+        return "Predict MHC class I binding affinity using NetMHCpan"
 
     def execute(self, input_data: dict) -> dict:
-        return {
-            "tool": "pvactools",
-            "version": "4.0.0",
+        fallback = {
+            "tool": "netMHCpan",
+            "version": "unknown",
             "candidates": [],
-            "note": "NetMHCpan/pVACtools stub — no real binding prediction performed",
+            "fallback": True,
+        }
+
+        netmhcpan_path = shutil.which("netMHCpan")
+        if not netmhcpan_path:
+            return fallback
+
+        peptides: list[str] = input_data.get("peptides", [])
+        alleles: list[str] = input_data.get("alleles", [])
+        if not peptides or not alleles:
+            return {**fallback, "error": "missing 'peptides' or 'alleles' in input_data"}
+
+        # Write peptides to a temp file
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".pep", delete=False
+            ) as pep_file:
+                pep_file.write("\n".join(peptides) + "\n")
+                pep_path = pep_file.name
+        except OSError as exc:
+            return {**fallback, "error": f"could not create peptide temp file: {exc}"}
+
+        cmd = [
+            netmhcpan_path,
+            "-f", pep_path,
+            "-a", ",".join(alleles),
+            "-BA",  # include binding affinity
+        ]
+
+        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 1800))
+        if rc != 0:
+            return {
+                "tool": "netMHCpan",
+                "error": f"netMHCpan exited with code {rc}",
+                "stderr": stderr,
+                "fallback": False,
+            }
+
+        candidates = _parse_netmhcpan_output(stdout)
+        return {
+            "tool": "netMHCpan",
+            "candidates": candidates,
+            "candidate_count": len(candidates),
+            "stdout": stdout,
+            "stderr": stderr,
+            "fallback": False,
         }
 
 
+def _parse_netmhciipan_output(stdout: str) -> list[dict]:
+    """Parse NetMHCIIpan prediction output.
+
+    NetMHCIIpan output rows contain allele, peptide, IC50, and rank columns.
+    Returns a list of prediction dicts.
+    """
+    predictions: list[dict] = []
+    in_data = False
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "Peptide" in line and ("IC50" in line or "Rank" in line):
+            in_data = True
+            continue
+        if not in_data:
+            continue
+        if set(line.replace(" ", "").replace("-", "")) == set():
+            continue
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        try:
+            ic50 = float(parts[-3]) if len(parts) > 3 else 0.0
+            rank = float(parts[-2]) if len(parts) > 2 else 1.0
+            predictions.append({
+                "allele": parts[0],
+                "peptide": parts[1] if len(parts) > 1 else "",
+                "ic50": ic50,
+                "rank": rank,
+                "strong_binder": ic50 < 500,
+                "weak_binder": ic50 < 2000,
+            })
+        except (ValueError, IndexError):
+            continue
+    return predictions
+
+
 class NetMHCIIpanStep(PipelineStep):
-    """NetMHCIIpan MHC class II binding prediction wrapper stub."""
+    """NetMHCIIpan MHC class II binding prediction wrapper."""
 
     @property
     def name(self) -> str:
@@ -340,30 +652,72 @@ class NetMHCIIpanStep(PipelineStep):
         if not isinstance(alleles, list):
             raise TypeError("'alleles' must be a list")
 
-        predictions = []
-        for allele in alleles:
-            for i, peptide in enumerate(peptides):
-                # Deterministic mock scores based on string lengths
-                ic50 = 50.0 + (len(peptide) * 10.0) + (len(allele) * 2.5)
-                rank = round(1.0 / (1.0 + i * 0.5 + len(alleles) * 0.1), 4)
-                predictions.append(
-                    {
-                        "allele": allele,
-                        "peptide": peptide,
-                        "ic50": round(ic50, 2),
-                        "rank": rank,
-                        "strong_binder": ic50 < 500,
-                        "weak_binder": ic50 < 2000,
-                    }
-                )
+        netmhciipan_path = shutil.which("netMHCIIpan")
+        if not netmhciipan_path:
+            # Fallback: deterministic mock scores
+            predictions = []
+            for allele in alleles:
+                for i, peptide in enumerate(peptides):
+                    ic50 = 50.0 + (len(peptide) * 10.0) + (len(allele) * 2.5)
+                    rank = round(1.0 / (1.0 + i * 0.5 + len(alleles) * 0.1), 4)
+                    predictions.append(
+                        {
+                            "allele": allele,
+                            "peptide": peptide,
+                            "ic50": round(ic50, 2),
+                            "rank": rank,
+                            "strong_binder": ic50 < 500,
+                            "weak_binder": ic50 < 2000,
+                        }
+                    )
+            return {
+                "tool": "netmhciipan",
+                "version": "unknown",
+                "predictions": predictions,
+                "peptide_count": len(peptides),
+                "allele_count": len(alleles),
+                "fallback": True,
+            }
 
+        # Write peptides to a temp file
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".pep", delete=False
+            ) as pep_file:
+                pep_file.write("\n".join(peptides) + "\n")
+                pep_path = pep_file.name
+        except OSError as exc:
+            return {
+                "tool": "netmhciipan",
+                "error": f"could not create peptide temp file: {exc}",
+                "fallback": False,
+            }
+
+        cmd = [
+            netmhciipan_path,
+            "-f", pep_path,
+            "-a", ",".join(alleles),
+            "-BA",
+        ]
+
+        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 1800))
+        if rc != 0:
+            return {
+                "tool": "netmhciipan",
+                "error": f"netMHCIIpan exited with code {rc}",
+                "stderr": stderr,
+                "fallback": False,
+            }
+
+        predictions = _parse_netmhciipan_output(stdout)
         return {
             "tool": "netmhciipan",
-            "version": "4.3",
             "predictions": predictions,
             "peptide_count": len(peptides),
             "allele_count": len(alleles),
-            "note": "NetMHCIIpan stub — no real MHC class II binding prediction performed",
+            "stdout": stdout,
+            "stderr": stderr,
+            "fallback": False,
         }
 
 
@@ -490,26 +844,64 @@ class MHCMetadataStep(PipelineStep):
             lookup = {}
             resolved_species = species
 
+        # Collect binding predictions from prior steps (class I and class II)
+        class1_preds: list[dict] = input_data.get("candidates", [])  # BindingPredictionStep
+        class2_preds: list[dict] = input_data.get("predictions", [])  # NetMHCIIpanStep
+        all_preds = class1_preds + class2_preds
+
+        # Build per-allele binding summary from available predictions
+        allele_binding: dict[str, dict] = {}
+        for pred in all_preds:
+            allele = pred.get("allele", "")
+            if not allele:
+                continue
+            entry = allele_binding.setdefault(allele, {
+                "prediction_count": 0,
+                "strong_binders": 0,
+                "weak_binders": 0,
+                "best_ic50": float("inf"),
+                "best_rank": float("inf"),
+            })
+            entry["prediction_count"] += 1
+            ic50 = pred.get("ic50", float("inf"))
+            rank = pred.get("rank", float("inf"))
+            if ic50 < entry["best_ic50"]:
+                entry["best_ic50"] = ic50
+            if rank < entry["best_rank"]:
+                entry["best_rank"] = rank
+            if pred.get("strong_binder"):
+                entry["strong_binders"] += 1
+            if pred.get("weak_binder"):
+                entry["weak_binders"] += 1
+
         metadata: list[dict[str, Any]] = []
         for allele in alleles:
             locus = _parse_locus(allele)
             supertype = lookup.get(allele, "unknown")
-            metadata.append(
-                {
-                    "allele": allele,
-                    "locus": locus,
-                    "species": resolved_species,
-                    "supertype": supertype,
-                    "known": allele in lookup,
+            entry: dict[str, Any] = {
+                "allele": allele,
+                "locus": locus,
+                "species": resolved_species,
+                "supertype": supertype,
+                "known": allele in lookup,
+            }
+            if allele in allele_binding:
+                binding = allele_binding[allele]
+                entry["binding_summary"] = {
+                    "prediction_count": binding["prediction_count"],
+                    "strong_binders": binding["strong_binders"],
+                    "weak_binders": binding["weak_binders"],
+                    "best_ic50": binding["best_ic50"] if binding["best_ic50"] != float("inf") else None,
+                    "best_rank": binding["best_rank"] if binding["best_rank"] != float("inf") else None,
                 }
-            )
+            metadata.append(entry)
 
         return {
             "species": resolved_species,
             "allele_metadata": metadata,
             "allele_count": len(alleles),
             "known_count": sum(1 for m in metadata if m["known"]),
-            "note": "MHC/HLA/DLA metadata stub — hardcoded lookup tables",
+            "alleles_with_binding_data": sum(1 for m in metadata if "binding_summary" in m),
         }
 
 

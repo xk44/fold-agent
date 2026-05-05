@@ -16,7 +16,7 @@ class AlphaFoldValidationError(Exception):
         super().__init__(payload.get("detail") or "AlphaFold backend validation failed")
 
 
-DEFAULT_BASE_URL = "http://localhost:8000"
+DEFAULT_BASE_URL = "http://localhost:8010"
 
 
 class FoldAgentClient:

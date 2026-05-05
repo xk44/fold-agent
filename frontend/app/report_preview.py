@@ -449,6 +449,31 @@ def format_structure_job_preview(structure_job_payload: dict) -> str:
     )
 
 
+def format_candidate_review_operator_summary(summary: dict) -> str:
+    lines = ["## Candidate Review Operator Summary"]
+    lines.append(
+        f"candidates={summary.get('candidate_count', 0)} | "
+        f"top_gene={summary.get('top_candidate_gene', 'n/a')} | "
+        f"review_status={summary.get('review_status', 'unknown')}"
+    )
+    lines.append(
+        f"structure={summary.get('structure_status', 'n/a')} | "
+        f"backend={summary.get('structure_backend', 'n/a')}"
+    )
+    attention = []
+    if summary.get("needs_review_attention"):
+        attention.append("review needs attention")
+    if summary.get("needs_structure_attention"):
+        attention.append("structure needs attention")
+    if summary.get("missing_data_count", 0) > 0:
+        attention.append(f"{summary['missing_data_count']} missing data items")
+    if summary.get("safety_label_count", 0) > 0:
+        attention.append(f"{summary['safety_label_count']} safety warnings")
+    if attention:
+        lines.append(f"Attention: {'; '.join(attention)}")
+    return "\n".join(lines)
+
+
 def format_report_preview(report_payload: dict) -> str:
     report_type = report_payload.get("report_type") or "report"
     content = report_payload.get("content_json") or {}
