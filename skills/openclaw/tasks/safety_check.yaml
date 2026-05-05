@@ -1,0 +1,146 @@
+name: safety_check
+version: "1.0.0"
+description: >
+  Run NeoVax safety preflight, mRNA safety gate, false-positive risk
+  assessment, privacy checks, and evidence review for a case. This task
+  is self-gating and does not require a prior preflight call. All other
+  tasks must call this first.
+framework: OpenClaw
+safety_gate: self
+audit_log_integration: required
+
+safety_disclaimer: >
+  Safety checks are computational screens only. A passed preflight does NOT
+  constitute clinical clearance. All findings require review by the named
+  supervising professional before any real-world action.
+
+inputs:
+  case_id:
+    type: string
+    description: UUID of the NeoVax case to assess.
+    required: true
+  intended_action:
+    type: string
+    description: >
+      The downstream action being gated (e.g., 'pipeline.run',
+      'report.generate', 'candidate.review', 'data.export').
+    required: true
+  run_mrna_gate:
+    type: boolean
+    default: false
+    description: >
+      Set to true when assessing a case for mRNA vaccine design to run the
+      sequence-level mRNA safety gate.
+  check_privacy:
+    type: boolean
+    default: true
+    description: Run privacy and cloud-upload checks before data sharing.
+
+steps:
+  - id: general_preflight
+    description: Run the general pre-action safety gate.
+    method: POST
+    endpoint: /safety/preflight
+    body:
+      action: "{{ inputs.intended_action }}"
+      case_id: "{{ inputs.case_id }}"
+    outputs:
+      preflight_status: "{{ response.status }}"
+      preflight_reason: "{{ response.reason }}"
+    on_blocked:
+      action: stop
+      message: >
+        Safety preflight blocked '{{ inputs.intended_action }}' for case
+        {{ inputs.case_id }}. Reason: {{ response.reason }}
+    on_requires_approval:
+      action: request_confirmation
+      message: >
+        Action '{{ inputs.intended_action }}' requires approval:
+        {{ response.reason }}
+
+  - id: mrna_gate
+    description: mRNA-specific safety gate for vaccine design contexts.
+    condition: "{{ inputs.run_mrna_gate == true }}"
+    method: POST
+    endpoint: /safety/mrna-gate
+    body:
+      action: "{{ inputs.intended_action }}"
+      case_id: "{{ inputs.case_id }}"
+    outputs:
+      mrna_status: "{{ response.status }}"
+      mrna_reason: "{{ response.reason }}"
+    on_blocked:
+      action: stop
+      message: "mRNA safety gate blocked. Reason: {{ response.reason }}. Escalate to supervising professional."
+
+  - id: false_positive_risk
+    description: Retrieve per-candidate false-positive risk scores.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/false-positive-risk
+    outputs:
+      fp_risk: "{{ response }}"
+
+  - id: evidence_check
+    description: Verify supporting evidence is available for candidates.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/evidence
+    outputs:
+      evidence: "{{ response }}"
+
+  - id: citations_check
+    description: Retrieve literature citations for evidence review.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/report/citations
+    outputs:
+      citations: "{{ response }}"
+
+  - id: privacy_check
+    description: Check case data privacy posture.
+    condition: "{{ inputs.check_privacy == true }}"
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/privacy
+    outputs:
+      privacy_status: "{{ response }}"
+
+  - id: cloud_upload_check
+    description: Verify cloud upload safety before any external data transfer.
+    condition: "{{ inputs.check_privacy == true }}"
+    method: GET
+    endpoint: /privacy/cloud-upload-check
+    outputs:
+      cloud_safe: "{{ response.safe }}"
+    on_unsafe:
+      action: stop
+      message: "Cloud upload check failed. Do not upload case data. Reason: {{ response.reason }}"
+
+  - id: audit_review
+    description: Surface prior safety events from the case audit trail.
+    method: GET
+    endpoint: /audit/{{ inputs.case_id }}
+    outputs:
+      audit_events: "{{ response }}"
+
+outputs:
+  preflight_status: "{{ steps.general_preflight.outputs.preflight_status }}"
+  preflight_reason: "{{ steps.general_preflight.outputs.preflight_reason }}"
+  mrna_status: "{{ steps.mrna_gate.outputs.mrna_status }}"
+  false_positive_risk: "{{ steps.false_positive_risk.outputs.fp_risk }}"
+  evidence: "{{ steps.evidence_check.outputs.evidence }}"
+  citations: "{{ steps.citations_check.outputs.citations }}"
+  privacy_status: "{{ steps.privacy_check.outputs.privacy_status }}"
+  cloud_safe: "{{ steps.cloud_upload_check.outputs.cloud_safe }}"
+  prior_safety_events: "{{ steps.audit_review.outputs.audit_events }}"
+
+error_handling:
+  - condition: general_preflight.blocked
+    action: stop
+  - condition: mrna_gate.blocked
+    action: stop
+  - condition: cloud_upload_check.unsafe
+    action: stop
+  - condition: false_positive_risk.error
+    action: warn
+    message: "False-positive risk endpoint unavailable. Do not suppress this warning."
+  - condition: evidence_check.error
+    action: warn
+    message: "Evidence endpoint unavailable. Manual evidence review required."

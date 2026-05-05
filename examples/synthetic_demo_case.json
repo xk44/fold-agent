@@ -1,0 +1,34 @@
+{
+  "case": {
+    "species": "demo",
+    "diagnosis_summary": "DEMO CASE: Synthetic osteosarcoma case for pipeline demonstration. No real patient data.",
+    "supervising_professional": "Demo Veterinarian (synthetic)",
+    "consent_status": "demo",
+    "review_status": "unreviewed"
+  },
+  "subject": {
+    "anonymized_display_name": "DemoDog_001",
+    "metadata": {
+      "species": "Canis familiaris",
+      "breed": "Golden Retriever (synthetic)",
+      "age_years": 9,
+      "weight_kg": 32,
+      "diagnosis": "appendicular osteosarcoma (synthetic)"
+    }
+  },
+  "samples": [
+    {
+      "sample_type": "tumor",
+      "file_paths": {"fastq_r1": "demo_data/demo_tumor_R1.fastq.gz", "fastq_r2": "demo_data/demo_tumor_R2.fastq.gz"},
+      "checksum": "demo_sha256_tumor_placeholder",
+      "source_lab": "Demo Sequencing Lab (synthetic)"
+    },
+    {
+      "sample_type": "normal",
+      "file_paths": {"fastq_r1": "demo_data/demo_normal_R1.fastq.gz", "fastq_r2": "demo_data/demo_normal_R2.fastq.gz"},
+      "checksum": "demo_sha256_normal_placeholder",
+      "source_lab": "Demo Sequencing Lab (synthetic)"
+    }
+  ],
+  "_disclaimer": "ALL DATA IN THIS FILE IS SYNTHETIC. This is a demo case for pipeline demonstration only. No real patient or animal data. No treatment claims. No clinical validity. Professional review is always required."
+}

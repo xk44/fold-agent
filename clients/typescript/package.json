@@ -1,0 +1,20 @@
+{
+  "name": "neovax-client",
+  "version": "0.1.0",
+  "description": "TypeScript client for NeoVax-Agent API",
+  "main": "dist/neovax-client.js",
+  "types": "dist/neovax-client.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "neovax",
+    "bioinformatics",
+    "neoantigen"
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

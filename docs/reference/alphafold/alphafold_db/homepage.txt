@@ -1,0 +1,218 @@
+AlphaFold Protein Structure Database 
+
+ EMBL-EBI 
+
+ About us 
+
+ Training 
+
+ Research 
+
+ Services 
+
+ EMBL-EBI home 
+
+ AlphaFold Protein Structure Database 
+
+ AlphaFold 
+ Protein Structure Database 
+
+ Home 
+
+ About 
+
+ FAQs 
+
+ Downloads 
+
+ API 
+
+ Collaborators 
+
+ AlphaFold 
+ Protein Structure Database 
+
+ Developed by Google DeepMind and EMBL-EBI 
+
+ Search 
+ Search 
+
+ Examples: MENFQKVEKIGEGTYGV... Free fatty acid receptor 2 At1g58602 Q9I1F6 E. coli 
+
+ See search help Go to online course See our updates – March 2026 
+
+ AlphaFold DB provides open access to over 200 million protein structure predictions to accelerate scientific research. 
+
+ Background 
+
+ AlphaFold is an AI system developed by Google DeepMind that predicts a protein’s 3D structure from its amino acid sequence. It regularly achieves accuracy competitive with experiment. 
+
+ Google DeepMind and EMBL’s European Bioinformatics Institute ( EMBL-EBI ) have partnered to create AlphaFold DB to make these predictions freely available to the scientific community. The latest database release contains over 200 million entries, providing broad coverage of UniProt (the standard repository of protein sequences and annotations). We provide individual downloads for the human proteome and for the proteomes of 47 other key organisms important in research and global health. We also provide a download for the manually curated subset of UniProt ( Swiss-Prot ). 
+
+ Q8I3H7: May protect the malaria parasite against attack by the immune system. Mean pLDDT 85.57. 
+
+ View protein 
+
+ In CASP14 , AlphaFold was the top-ranked protein structure prediction method by a large margin, producing predictions with high accuracy . While the system still has some limitations , the CASP results suggest AlphaFold has immediate potential to help us understand the structure of proteins and advance biological research. 
+
+ Let us know how the AlphaFold Protein Structure Database has been useful in your research, or if you have questions not answered in the FAQs, at alphafold@deepmind.com . 
+
+ If your use case isn't covered by the database, you can generate your own AlphaFold predictions using this open source code , which also supports multimer prediction. 
+
+ Q8W3K0: A potential plant disease resistance protein. Mean pLDDT 82.24. 
+
+ View protein 
+
+ Find out more 
+
+ Methodology Human proteome predictions Downloads Online training course 
+
+ About AlphaFold DB Google DeepMind EMBL-EBI 
+
+ What’s new? 
+
+ Protein complexes - March 2026 
+
+ A new collaboration between EMBL’s European Bioinformatics Institute (EMBL-EBI), Google DeepMind, NVIDIA, and Seoul National University has made millions of AI-predicted protein complex structures openly available through the AlphaFold Database. This is the largest dataset of protein complex predictions currently available. 
+
+ To maximise global health impact, the dataset prioritises proteins important for understanding human health and disease, focusing on 20 of the most studied species, including humans, as well as the World Health Organization’s priority pathogens list. 
+
+ Browse all protein complexes 
+
+ Read full article on EMBL-EBI site 
+
+ AF-0000000066503175: Homodimer of Transcription elongation factor Eaf N-terminal domain-containing protein 
+
+ View protein 
+
+ What’s next? 
+
+ We plan to continue updating the database with structures for newly discovered protein sequences, and to improve features and functionality in response to user feedback. Please follow Google DeepMind 's and EMBL-EBI ’s social channels for updates. 
+
+ Licence and attributions 
+
+ Data is available for academic and commercial use, under a CC-BY-4.0 licence. 
+
+ EMBL-EBI expects attribution (e.g., in publications, services, or products) for any of its online services, databases, or software in accordance with good scientific practice. 
+
+ If you use this resource, please cite the following papers: 
+
+ Fleming J. et al. AlphaFold Protein Structure Database and 3D-Beacons: New Data and Capabilities. Journal of Molecular Biology, (2025) 
+
+ Note: A given structure may be associated with further publications. For authoritative information regarding the relevant publication(s), please consult the dataset collection or the structure metadata provided on the entry page. 
+
+ If you use data from AlphaMissense in your work, please cite the following paper: 
+
+ Cheng, J et al. Accurate proteome-wide missense variant effect prediction with AlphaMissense. Science (2023). 
+
+ AlphaFold Data Provided by GDM: 
+
+ AlphaFold Data Copyright (2022) DeepMind Technologies Limited. 
+
+ For AlphaFold Data provided by third party data providers: 
+
+ Kinetoplastid data copyright (2025) Wheeler Lab 
+ Wheeler RJ. A resource for improved predictions of Trypanosoma and Leishmania protein three-dimensional structure. PLoS One (2021) 
+
+ AllTheBacteria data copyright (2025) AllTheBacteria Consortium 
+ Hunt M, Lima L, Anderson D, Bouras G, Hall M, Hawkey J, Schwengers O, Shen W, Lees JA, Zamin Iqbal Z. BioRXiV (2025) 
+
+ A BFVD Data Copyright (2025) The BFVD Development Team 
+ Kim, RS et al. BFVD—a large repository of predicted viral protein structures. NAR (2024) 
+
+ Viro3D dataset (2025) 
+ Litvin, U et al. Viro3D: a comprehensive database of virus protein structure predictions. Mol Syst Biol (2025) 
+
+ AlphaMissense Copyright (2023) DeepMind Technologies Limited. 
+
+ FAQs 
+
+ View all frequently asked questions 
+
+ EMBL-EBI training 
+
+ On-demand training 
+
+ Live training 
+
+ Recorded webinar 
+
+ Accessing and interpreting predicted protein structures from AlphaFold database 
+
+ AlphaFold database (AlphaFold DB) provides open access to over 200 million protein structure predictions to accelerate scientific research. This... 
+
+ Online tutorial 
+
+ AlphaFold 
+
+ Proteins are essential components of life, predicting their 3D structure enables researchers to get an insight into its function and role. AlphaFold... 
+
+ View all on-demand training 
+
+ Developed by 
+
+ EMBL-EBI 
+
+ About us 
+
+ Training 
+
+ Research 
+
+ Services 
+
+ EMBL-EBI home 
+
+ EMBL-EBI is the home for big data in biology. We help scientists exploit complex information to make discoveries that benefit humankind. 
+
+ Services 
+
+ Data resources and tools 
+
+ Data submission 
+
+ Support and feedback 
+
+ Licensing 
+
+ Research 
+
+ Publications 
+
+ Research groups 
+
+ Postdocs and PhDs 
+
+ Training 
+
+ Live training 
+
+ On-demand training 
+
+ Support for trainers 
+
+ Contact organisers 
+
+ Industry 
+
+ Members Area 
+
+ Contact Industry team 
+
+ About 
+
+ Contact us 
+
+ Events 
+
+ Jobs 
+
+ News 
+
+ People and groups 
+
+ Intranet for staff 
+
+ EMBL-EBI, Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SD, UK. Tel: +44 (0)1223 49 44 44 Full contact details 
+
+ Copyright © EMBL 2023 EMBL-EBI is part of the European Molecular Biology Laboratory Terms of use

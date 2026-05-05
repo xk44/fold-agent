@@ -1,0 +1,70 @@
+# NeoVax-Agent
+
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+
+# Environment
+.env
+.env.local
+
+# Database
+*.db
+neovax.db
+
+# Logs
+audit_logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Node (for frontend)
+node_modules/
+
+# Data directories (user case data should NOT be committed)
+case_data/
+data/
+uploads/
+alphafold_cache/
+artifacts/
+
+# Secrets
+*.pem
+*.key
+
+# Stray pip artifacts
+=*
+
+# Experiment logs (local)
+experiment_log.json

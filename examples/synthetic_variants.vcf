@@ -1,0 +1,10 @@
+##fileformat=VCFv4.2
+##DEMO_DATA=This is a synthetic demo VCF for pipeline demonstration only. No real variant data.
+##WARNING=This file contains NO clinically valid variants. Professional review is always required.
+##source=NeoVax-Agent Mock Pipeline v0.1.0
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr17	7579472	rs28934578	C	T	999	PASS	 gene=TP53;protein_change=p.R175H;annotation=missense_variant;prediction_score=0.92;SIFT=deleterious;PolyPhen=probably_damaging;DEMO_ONLY=true;UNCERTAINTY=No expression validation data available
+chr12	25398284	rs121913529	C	A	999	PASS	 gene=KRAS;protein_change=p.G12D;annotation=missense_variant;prediction_score=0.88;SIFT=deleterious;PolyPhen=probably_damaging;DEMO_ONLY=true;UNCERTAINTY=DLA typing not performed; MHC context is predicted only
+chr7	55259515	rs121913422	T	G	999	PASS	 gene=EGFR;protein_change=p.L858R;annotation=missense_variant;prediction_score=0.85;SIFT=deleterious;PolyPhen=possibly_damaging;DEMO_ONLY=true;UNCERTAINTY=No RNA-seq expression confirmation
+chr2	215378137	rs104894226	G	A	999	PASS	 gene=IDH1;protein_change=p.R132H;annotation=missense_variant;prediction_score=0.78;SIFT=tolerated;PolyPhen=possibly_damaging;DEMO_ONLY=true;UNCERTAINTY=Low prediction confidence
+chr9	21975490	rs28933388	C	T	999	PASS	 gene=CDKN2A;protein_change=p.R80*;annotation=stop_gained;prediction_score=0.75;DEMO_ONLY=true;UNCERTAINTY=Loss of function variant; neoantigen potential uncertain

@@ -1,0 +1,77 @@
+# NeoVax-Agent Dockerignore
+# Exclude large/unnecessary paths from Docker build context.
+
+# Virtual environments (installed fresh inside container)
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*$py.class
+
+# Distribution artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files (passed via env_file or env vars)
+.env
+.env.local
+
+# Database files (created at runtime inside data/ volume)
+*.db
+neovax.db
+
+# Logs
+audit_logs/
+*.log
+
+# Data directories (mounted as volumes)
+case_data/
+uploads/
+alphafold_cache/
+artifacts/
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+docs/
+
+# Skills framework (agent skill definitions, not runtime)
+skills/
+
+# Docker overrides
+docker-compose.override.yml
+
+# Git
+.git/
+.gitignore
+
+# Other project files not needed in container
+*.md
+LICENSE
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+ETHICS.md
+SAFETY_POLICY.md
+DATA_PRIVACY.md

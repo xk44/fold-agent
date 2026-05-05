@@ -1,0 +1,67 @@
+# NeoVax-Agent Configuration Example
+
+# === Species Mode ===
+# Determines which restrictions and templates are active
+# Options: demo | dog | human
+# DEFAULT: demo (safest mode, synthetic data only)
+species_mode: demo
+
+# === Database ===
+# SQLite for local-first development
+# PostgreSQL for production
+database_url: "sqlite:///./neovax.db"
+
+# === Optional worker stack ===
+# Enable only when async background workers are needed.
+# redis_url: "redis://localhost:6379/0"
+# celery_broker_url: "redis://localhost:6379/0"
+# celery_result_backend: "redis://localhost:6379/1"
+
+# === AlphaFold ===
+alphafold:
+  default_backend: mock
+  allowed_backends:
+    - mock
+    - colabfold
+    - local_colabfold
+    - alphafold2_local
+    - alphafold3_local
+    - alphafold_server
+  cloud_upload_confirmation_required: true
+  cache_outputs: true
+  store_confidence_metrics: true
+
+# === Cloud Upload ===
+# Local-first: cloud uploads are disabled by default
+cloud_upload_enabled: false
+# When enabled, require explicit confirmation before any external upload
+cloud_upload_confirmation_required: true
+
+# === Encryption ===
+encryption_at_rest_enabled: false
+# encryption_key: "set-via-env-var"
+
+# === Logging ===
+log_level: INFO
+structured_logs: true
+audit_log_path: "./audit_logs"
+
+# === Safety ===
+safety_preflight_enabled: true
+unsafe_text_scanner_enabled: true
+require_professional_oversight: true
+
+# === Pipeline ===
+pipeline:
+  mode: mock # Options: mock | real
+  capture_tool_versions: true
+  capture_command_manifest: true
+  concurrent_local_workers: 2
+  retry_max_attempts: 3
+
+# === Reports ===
+reports:
+  default_format: markdown # Options: markdown | json | pdf
+  research_only_label: true
+  require_review_status: true
+  unsafe_pattern_block: true

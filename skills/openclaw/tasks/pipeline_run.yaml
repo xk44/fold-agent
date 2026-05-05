@@ -1,0 +1,127 @@
+name: pipeline_run
+version: "1.0.0"
+description: >
+  Execute the NeoVax bioinformatics pipeline (BWA, Mutect2, VEP, NetMHCpan)
+  for a case. Supports synchronous and async execution modes with real-time
+  WebSocket status streaming. Safety-gated — preflight must pass before run.
+framework: OpenClaw
+safety_gate: required
+audit_log_integration: required
+
+# Safety disclaimer — must be surfaced in agent output
+safety_disclaimer: >
+  Research use only. Pipeline outputs are computational predictions and do NOT
+  constitute clinical validation. All results require review by a licensed
+  professional before any real-world action.
+
+inputs:
+  case_id:
+    type: string
+    description: UUID of the NeoVax case to run the pipeline for.
+    required: true
+  execution_mode:
+    type: string
+    enum: [sync, async]
+    default: async
+    description: >
+      Use 'sync' for demo/short runs. Use 'async' for production or
+      long-running pipeline jobs.
+  adapter_name:
+    type: string
+    required: false
+    description: Optional specific adapter to run (e.g., 'bwa', 'mutect2').
+
+steps:
+  - id: safety_preflight
+    description: Mandatory safety gate before pipeline execution.
+    method: POST
+    endpoint: /safety/preflight
+    body:
+      action: pipeline.run
+      case_id: "{{ inputs.case_id }}"
+    on_blocked:
+      action: stop
+      message: "Safety preflight blocked pipeline execution. Reason: {{ response.reason }}"
+    on_requires_approval:
+      action: request_confirmation
+      message: "Pipeline execution requires approval: {{ response.reason }}"
+
+  - id: verify_case
+    description: Confirm case exists and has a supervising professional.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}
+    on_not_found:
+      action: stop
+      message: "Case {{ inputs.case_id }} not found. Verify the case ID."
+
+  - id: check_data_completeness
+    description: Confirm required input files are present before running.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/data/missing
+    on_missing_files:
+      action: warn
+      message: "Missing files detected: {{ response.missing }}. Pipeline may fail."
+
+  - id: run_pipeline_sync
+    description: Run pipeline synchronously (demo/short runs).
+    condition: "{{ inputs.execution_mode == 'sync' }}"
+    method: POST
+    endpoint: /cases/{{ inputs.case_id }}/pipeline/run
+    outputs:
+      pipeline_run_id: "{{ response.id }}"
+      status: "{{ response.status }}"
+
+  - id: run_pipeline_async
+    description: Dispatch async background pipeline job (production).
+    condition: "{{ inputs.execution_mode == 'async' }}"
+    method: POST
+    endpoint: /cases/{{ inputs.case_id }}/pipeline/run-async
+    outputs:
+      job_id: "{{ response.id }}"
+
+  - id: stream_events
+    description: Stream real-time pipeline status via WebSocket.
+    condition: "{{ inputs.execution_mode == 'async' }}"
+    type: websocket
+    endpoint: /agent/events/ws
+    query_params:
+      prefix: pipeline
+    on_message:
+      filter_event_types:
+        [pipeline.step.completed, pipeline.step.failed, pipeline.completed]
+    poll_fallback:
+      endpoint: /jobs/{{ steps.run_pipeline_async.outputs.job_id }}
+      interval_seconds: 10
+      until: "{{ response.status in ['completed', 'failed', 'cancelled'] }}"
+
+  - id: inspect_executions
+    description: Retrieve per-step execution artifacts after completion.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/executions
+
+outputs:
+  pipeline_run_id: "{{ steps.run_pipeline_sync.outputs.pipeline_run_id }}"
+  job_id: "{{ steps.run_pipeline_async.outputs.job_id }}"
+  status: "{{ steps.run_pipeline_sync.outputs.status }}"
+  executions: "{{ steps.inspect_executions.response }}"
+
+error_handling:
+  - condition: safety_preflight.blocked
+    action: stop
+  - condition: verify_case.not_found
+    action: stop
+  - condition: run_pipeline_sync.error or run_pipeline_async.error
+    action: surface_error
+    message: "Pipeline start failed: {{ error.detail }}"
+  - condition: stream_events.job_failed
+    action: surface_error
+    message: "Pipeline job failed. Check /cases/{{ inputs.case_id }}/pipeline/history for details."
+
+retry:
+  endpoint: /jobs/{{ outputs.job_id }}/retry
+  requires_confirmation: true
+  max_attempts: 2
+
+cancel:
+  endpoint: /jobs/{{ outputs.job_id }}/cancel
+  requires_confirmation: true

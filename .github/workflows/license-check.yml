@@ -1,0 +1,98 @@
+name: license-check
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  license-check:
+    name: Dependency license audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies + pip-licenses
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev,frontend,worker]'
+          pip install pip-licenses
+
+      - name: Generate license report (JSON)
+        run: |
+          pip-licenses \
+            --format=json \
+            --with-urls \
+            --with-description \
+            --output-file=license-report.json
+          pip-licenses --format=plain-vertical
+
+      - name: Enforce allowlist (Apache-2.0 / MIT / BSD / PSF / ISC / MPL-2.0 / LGPL-2.1)
+        run: |
+          python - <<'EOF'
+          import json, sys
+
+          ALLOWED = {
+              "Apache Software License",
+              "Apache-2.0",
+              "MIT License",
+              "MIT",
+              "BSD License",
+              "BSD-2-Clause",
+              "BSD-3-Clause",
+              "BSD 3-Clause",
+              "BSD 2-Clause",
+              "Python Software Foundation License",
+              "PSF",
+              "ISC License",
+              "ISC",
+              "Mozilla Public License 2.0 (MPL 2.0)",
+              "MPL-2.0",
+              "GNU Lesser General Public License v2 or later (LGPLv2+)",
+              "LGPL-2.1",
+              "Historical Permission Notice and Disclaimer (HPND)",
+              "Public Domain",
+              "UNKNOWN",  # built-in / stdlib stubs; review manually if unexpected
+          }
+
+          with open("license-report.json") as f:
+              packages = json.load(f)
+
+          violations = []
+          for pkg in packages:
+              name = pkg.get("Name", "?")
+              lic = pkg.get("License", "UNKNOWN")
+              # Accept if any token of the license string is in allowlist
+              if not any(a.lower() in lic.lower() for a in ALLOWED):
+                  violations.append(f"  {name}: {lic}")
+
+          if violations:
+              print("LICENSE VIOLATIONS DETECTED:")
+              print("\n".join(violations))
+              sys.exit(1)
+          else:
+              print(f"All {len(packages)} package licenses are allowlist-compatible.")
+          EOF
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: license-report.json
+          retention-days: 90

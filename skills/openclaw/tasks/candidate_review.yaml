@@ -1,0 +1,134 @@
+name: candidate_review
+version: "1.0.0"
+description: >
+  Retrieve, rank, and annotate neoantigen candidates after NeoVax pipeline
+  execution. Supports evidence retrieval, false-positive risk assessment,
+  and writing expert review flags via PATCH endpoints.
+framework: OpenClaw
+safety_gate: required
+audit_log_integration: required
+
+safety_disclaimer: >
+  Research use only. Candidate rankings are computational predictions and do
+  NOT constitute immunogenicity guarantees or treatment readiness. All
+  candidates require licensed professional review before any action.
+
+inputs:
+  case_id:
+    type: string
+    description: UUID of the NeoVax case to review candidates for.
+    required: true
+  write_review_flags:
+    type: boolean
+    default: false
+    description: >
+      Set to true to write expert review decisions back to the API via
+      PATCH /candidates/{candidate_id}/review. Requires user confirmation
+      and safety preflight.
+  candidate_decisions:
+    type: array
+    required: false
+    description: >
+      List of {candidate_id, decision, notes} objects when write_review_flags
+      is true.
+    items:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        decision:
+          type: string
+          enum: [approved, rejected, pending]
+        notes:
+          type: string
+
+steps:
+  - id: confirm_pipeline_complete
+    description: Verify pipeline ran successfully before reviewing candidates.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/pipeline/status
+    on_status_not_completed:
+      action: stop
+      message: >
+        Pipeline status is '{{ response.status }}' — candidates are not
+        available. Run the pipeline first using the pipeline_run task.
+
+  - id: get_candidates
+    description: Retrieve ranked candidate antigen list.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/candidates
+    outputs:
+      candidates: "{{ response }}"
+
+  - id: get_variants
+    description: Retrieve source variant annotations for candidates.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/variants
+    outputs:
+      variants: "{{ response }}"
+
+  - id: get_false_positive_risk
+    description: Retrieve false-positive risk scores per candidate.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/false-positive-risk
+    outputs:
+      fp_risk: "{{ response }}"
+
+  - id: get_evidence
+    description: Retrieve supporting evidence for candidates.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/evidence
+    outputs:
+      evidence: "{{ response }}"
+
+  - id: get_citations
+    description: Retrieve literature citations supporting candidates.
+    method: GET
+    endpoint: /cases/{{ inputs.case_id }}/report/citations
+    outputs:
+      citations: "{{ response }}"
+
+  - id: safety_preflight_write
+    description: Safety gate before writing review flags (only if write_review_flags=true).
+    condition: "{{ inputs.write_review_flags == true }}"
+    method: POST
+    endpoint: /safety/preflight
+    body:
+      action: candidate.review
+      case_id: "{{ inputs.case_id }}"
+    on_blocked:
+      action: stop
+      message: "Safety preflight blocked candidate review write. Reason: {{ response.reason }}"
+
+  - id: write_review_flags
+    description: Write expert review decisions for each candidate.
+    condition: "{{ inputs.write_review_flags == true }}"
+    type: loop
+    over: "{{ inputs.candidate_decisions }}"
+    method: PATCH
+    endpoint: /candidates/{{ item.candidate_id }}/review
+    body:
+      decision: "{{ item.decision }}"
+      notes: "{{ item.notes }}"
+    requires_confirmation: true
+
+outputs:
+  candidates: "{{ steps.get_candidates.outputs.candidates }}"
+  variants: "{{ steps.get_variants.outputs.variants }}"
+  false_positive_risk: "{{ steps.get_false_positive_risk.outputs.fp_risk }}"
+  evidence: "{{ steps.get_evidence.outputs.evidence }}"
+  citations: "{{ steps.get_citations.outputs.citations }}"
+
+error_handling:
+  - condition: confirm_pipeline_complete.not_completed
+    action: stop
+  - condition: get_candidates.empty
+    action: warn
+    message: >
+      No candidates found for case {{ inputs.case_id }}. Confirm pipeline
+      ran successfully and variant calling produced results.
+  - condition: write_review_flags.not_found
+    action: surface_error
+    message: "Candidate not found: {{ item.candidate_id }}. Verify ID from candidate list."
+  - condition: safety_preflight_write.blocked
+    action: stop

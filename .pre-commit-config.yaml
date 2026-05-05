@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
+      - id: ruff-format
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
+        additional_dependencies:
+          - pydantic>=2.5.0
+          - pydantic-settings>=2.1.0
+          - sqlalchemy>=2.0.0
+          - types-PyYAML
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py|\.github/workflows/ci.yml|\.pre-commit-config.yaml|Makefile)$
+      - id: trailing-whitespace
+        files: ^(neovax/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py|\.github/workflows/ci.yml|\.pre-commit-config.yaml|Makefile)$
+      - id: check-yaml
+        args: [--unsafe]
+        files: ^(neovax/)?(\.github/workflows/ci.yml|\.pre-commit-config.yaml)$
