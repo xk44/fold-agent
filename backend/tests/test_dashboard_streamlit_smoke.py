@@ -298,12 +298,12 @@ def test_dashboard_streamlit_smoke_renders_live_case_without_exception(
     assert not at.exception, at.exception[0].value
     assert at.title[0].value == "FoldAgent"
     assert any(widget.value == "API health" for widget in at.subheader)
-    assert any(widget.value == "Safety preflight" for widget in at.subheader)
+    assert any(widget.value == "Safety preflight check" for widget in at.subheader)
     assert any(
         payload.get("status") == "ok" and payload.get("version") == "0.1.0-alpha"
         for payload in _json_payloads(at)
     )
-    case_selector = _find_widget_by_label(at.selectbox, "Select case")
+    case_selector = _find_widget_by_label(at.selectbox, "Case")
     assert any(
         created_case["diagnosis_summary"] in option and created_case["id"][:8] in option
         for option in case_selector.options
@@ -439,7 +439,7 @@ def test_dashboard_streamlit_smoke_can_create_case_and_block_preflight(
     created_case = next(
         case for case in cases_response.json() if case["diagnosis_summary"] == "Created from AppTest"
     )
-    case_selector = _find_widget_by_label(at.selectbox, "Select case")
+    case_selector = _find_widget_by_label(at.selectbox, "Case")
     assert any(
         created_case["diagnosis_summary"] in option and created_case["id"][:8] in option
         for option in case_selector.options
