@@ -1,321 +1,326 @@
 # FoldAgent
 
-**AI-assisted protein science and structural biology research coordination platform.**
+**Local-first, safety-gated AI agent platform for protein science and structural biology research.**
 
-> **SAFETY DISCLAIMER — READ BEFORE USE**
+---
+
+> **SAFETY DISCLAIMER**
 >
-> FoldAgent is **not medical advice**, not veterinary advice, not a vaccine manufacturing tool, and not a treatment app.
-> Every output is research-only and requires review by a licensed physician or veterinary oncologist.
-> No output should be used as dosing, injection, formulation, manufacturing, or administration guidance.
+> FoldAgent is **research software only**. It is not medical advice, not veterinary advice, not a vaccine manufacturing tool, and not a treatment application. Every output is a research candidate that requires review by a licensed physician, veterinary oncologist, or qualified researcher before any real-world action. No output constitutes dosing, injection, formulation, manufacturing, or administration guidance.
 
-## Inspiration
-
-FoldAgent was inspired by Paul Conyngham's public story of using AI and AlphaFold to help coordinate a research approach for his dog Rosie's cancer treatment.
-
-- Paul on X: <https://x.com/paul_conyngham>
-- UNSW article: <https://news.unsw.edu.au/en/meet-the-man-who-designed-a-cancer-vaccine-for-his-dog>
-- Source registry: [docs/source_registry.md](docs/source_registry.md)
-
-> Note: Paul's public GitHub repo is an autologous tumor-lysate protocol, not the exact mRNA neoantigen pipeline. FoldAgent does not reproduce manufacturing, dosing, formulation, or administration details from any source.
+---
 
 ## Features
 
-- Case management — organize subjects, samples, variants, and candidates per case
-- Pipeline — BWA alignment → Mutect2 somatic variant calling → VEP annotation → NetMHCpan binding prediction
-- AlphaFold structure prediction — ColabFold, LocalColabFold, AF2/AF3 local, AlphaFold Server (gated), AlphaFold DB
-- Safety gates — preflight checks block prohibited outputs before any write or export
-- Audit logging — every action recorded; exportable for professional review
-- Ethics package — consent templates, privacy notices, IRB/veterinary-oversight checklists
-- Agent skills — Claude Code, OpenClaw, and Hermes skill packs for AI-assisted workflows
-- Local-first by default — no data leaves your machine unless you explicitly enable a cloud backend
+**Research pipeline**
 
-## Architecture
+- Full bioinformatics pipeline: BWA alignment → Mutect2 somatic variant calling → VEP annotation → NetMHCpan binding prediction
+- 9 specialized research modes covering the full spectrum of structural biology use cases
+- 14 structure prediction backends (mock through production AlphaFold3)
+- Event-driven job dispatch with SSE streaming and WebSocket support
 
-```
-  Browser / CLI
-       │
-       ▼
-  Streamlit Dashboard  (frontend/)
-       │
-       ▼  REST / SSE / WebSocket
-  FastAPI Backend      (backend/)
-   ├─ Safety Preflight
-   ├─ Audit Logger
-   ├─ Case / Report APIs
-       │
-       ▼
-  Pipeline Framework   (backend/pipeline/)
-   ├─ BWA  ──► Mutect2  ──► VEP  ──► NetMHCpan
-       │
-       ▼
-  AlphaFold Backends   (backend/alphafold/)
-   ├─ mock / colabfold / local_colabfold
-   └─ alphafold2_local / alphafold3_local / alphafold_server / alphafold_db
-```
+**Safety and compliance**
 
-## Current status
+- Preflight safety gates block prohibited outputs before any write or export
+- mRNA safety gates with automatic redaction of unsafe output patterns
+- Audit logging on every action, exportable for professional review
+- Ethics package generation: consent templates, privacy notices, IRB/oversight checklists
+- RBAC, encryption-at-rest support, artifact integrity hashing
 
-Current implemented stack includes:
+**Infrastructure**
 
-- FastAPI backend with audit logging, safety preflight, case/sample/variant/candidate APIs
-- Streamlit dashboard with readable previews for reports, bundles, and structure jobs
-- AlphaFold-family backend routing for:
-  - `colabfold`
-  - `local_colabfold`
-  - `alphafold2_local`
-  - `alphafold3_local`
-  - `alphafold_server` (gated remote submission surface)
-  - `alphafold_db` (reference lookup backend)
-- Rich candidate-review and ethics-package report generation + markdown/json export
-- AlphaFold artifact harvesting for model CIF and summary-confidence outputs
-- Shared Python client in `skills/shared/foldagent_client.py`
+- Local-first by default — no data leaves the machine unless cloud backends are explicitly enabled
+- SQLite (dev) or PostgreSQL (production) via SQLAlchemy + Alembic migrations
+- Optional Celery + Redis worker stack for distributed background execution; falls back to thread pool automatically
+- Docker Compose with worker profile
+- Streamlit dashboard with 3D structure viewer (py3Dmol)
+- TypeScript client SDK (`clients/typescript/`)
+- Multi-agent skill system with Claude Code, Hermes, and OpenClaw integrations
 
-## What it does
+---
 
-- Organizes research cases and sequencing metadata for demo, dog, and human workflows
-- Coordinates mock-first bioinformatics execution and provenance tracking
-- Connects to AlphaFold-family backends and records structure evidence
-- Stores enriched structure metadata such as ranking score, pTM, ipTM, model/source references
-- Produces candidate-review reports with candidate tables, missing-data checklist, tool versions, and safety labels
-- Produces ethics-package reports with consent/privacy/risk/oversight/jurisdiction sections
-- Exports reports and bundles as markdown/json and stores artifacts with integrity metadata
-- Surfaces readable previews in the local dashboard for reports, bundles, and structure jobs
+## Research Modes
 
-## What it does not do
+| #   | Mode                      | Description                                                 |
+| --- | ------------------------- | ----------------------------------------------------------- |
+| 1   | **Vaccine Design**        | Neoantigen candidate pipeline, mRNA construct optimization  |
+| 2   | **Antibody Design**       | Therapeutic antibody engineering, paratope/epitope modeling |
+| 3   | **Drug Discovery**        | Small molecule / protein target interaction modeling        |
+| 4   | **Gene Therapy**          | Vector design with structural validation                    |
+| 5   | **Enzyme Engineering**    | Enzyme-substrate modeling, activity prediction              |
+| 6   | **TCR-pMHC**              | T-cell receptor / peptide-MHC ternary complex modeling      |
+| 7   | **PPI Mapping**           | Protein-protein interaction analysis                        |
+| 8   | **Protein Misfolding**    | Aggregation and amyloid pathology research                  |
+| 9   | **Variant Pathogenicity** | Structural impact prediction for genetic variants           |
 
-- DIY vaccine manufacturing instructions
-- Injection or dosing instructions
-- LNP formulation instructions
-- Medical recommendations
-- Claims of clinical validity without professional review
+Each mode enforces its own safety restrictions and report templates. The `species_mode` setting (`demo` / `dog` / `human`) applies an additional layer of restrictions on top of mode-specific rules.
 
-## Modes
+---
 
-| Mode  | Purpose                                   | Restrictions                                             |
-| ----- | ----------------------------------------- | -------------------------------------------------------- |
-| Demo  | Synthetic-data testing                    | No real-patient treatment claims                         |
-| Dog   | Veterinary oncology research coordination | Requires veterinary oversight                            |
-| Human | Human clinical research coordination      | Most restrictive; requires physician/IRB style oversight |
+## Structure Prediction Backends
 
-## Quickstart
+| Backend            | Status                   | Notes                                                                |
+| ------------------ | ------------------------ | -------------------------------------------------------------------- |
+| `mock`             | Working                  | Synthetic outputs for testing; no external tools required            |
+| `boltz1`           | Working                  | Local Boltz-1 execution                                              |
+| `boltz2`           | Working                  | Local Boltz-2 execution                                              |
+| `esmfold`          | Working                  | Local ESMFold execution                                              |
+| `rfdiffusion`      | Working                  | RFdiffusion backbone design                                          |
+| `proteinmpnn`      | Working                  | ProteinMPNN sequence design                                          |
+| `colabfold`        | Available when installed | Remote ColabFold API                                                 |
+| `local_colabfold`  | Available when installed | Local ColabFold CLI                                                  |
+| `alphafold2_local` | Available when installed | Local AlphaFold 2                                                    |
+| `alphafold3_local` | Available when installed | Local AlphaFold 3 (JSON/input-dir style)                             |
+| `alphafold_server` | Available when installed | AlphaFold Server HTTP API (requires explicit upload acknowledgement) |
+| `alphafold_db`     | Available when installed | EBI AlphaFold DB REST lookup by accession                            |
+| `openfold`         | Available when installed | OpenFold local execution                                             |
+| `chai1`            | Available when installed | Chai-1 structure prediction                                          |
+
+Harvested artifact types: `alphafold_model_cif`, `alphafold_summary_confidences`. Confidence metrics (ranking score, pTM, ipTM, chain-pair ipTM) are stored per job when `FOLDAGENT_ALPHAFOLD_STORE_CONFIDENCE_METRICS=true`.
+
+---
+
+## Quick Start
 
 ```bash
-# enter repo
-cd foldagent
+git clone <repo-url> fold-agent
+cd fold-agent
 
-# setup
+python -m venv .venv
+source .venv/bin/activate
+
 cp .env.example .env
 make install
 
-# run API (SQLite, mock pipeline, mock/default AlphaFold flows)
-make dev                 # defaults to http://127.0.0.1:8010
+# Start API (SQLite, mock pipeline, mock AlphaFold backend)
+make dev                  # http://127.0.0.1:8010
 
-# seed demo data
+# Seed demo data
 make seed-demo
 
-# open dashboard
-make dashboard           # points at $(FOLDAGENT_API_URL) / defaults to http://127.0.0.1:8010
+# Start dashboard
+make dashboard            # http://127.0.0.1:8502
 ```
 
-You can override ports/URL without editing files:
+Port overrides without editing files:
 
 ```bash
 make dev API_PORT=18010
 make dashboard API_PORT=18010 DASHBOARD_PORT=18501
-# or explicitly
-make dashboard FOLDAGENT_API_URL=http://127.0.0.1:18010 DASHBOARD_PORT=18501
 ```
 
-Once running:
+API endpoints once running:
 
-- API docs: `http://127.0.0.1:8010/api/docs` (or your `API_PORT`)
-- ReDoc: `http://127.0.0.1:8010/api/redoc` (or your `API_PORT`)
-- OpenAPI JSON: `http://127.0.0.1:8010/api/openapi.json` (or your `API_PORT`)
-- Dashboard: usually `http://127.0.0.1:8502` (or your `DASHBOARD_PORT`)
+- Swagger UI: `http://127.0.0.1:8010/api/docs`
+- ReDoc: `http://127.0.0.1:8010/api/redoc`
+- OpenAPI JSON: `http://127.0.0.1:8010/api/openapi.json`
+- Dashboard: `http://127.0.0.1:8502`
 
-## AlphaFold support
-
-Current backend surfaces:
-
-- `colabfold` / `local_colabfold`
-  - typed request validation
-  - dry-run and run routes
-  - support for host-url and common CLI flags in command generation
-- `alphafold2_local`
-  - local command builder
-- `alphafold3_local`
-  - JSON/input-dir style request validation
-  - output-dir parsing for `*_model.cif` and `*_summary_confidences.json`
-- `alphafold_server`
-  - explicit external-upload acknowledgement gate
-- `alphafold_db`
-  - lookup/reference backend using accession-based structure evidence
-
-Harvested execution artifact types:
-
-- `alphafold_model_cif`
-- `alphafold_summary_confidences`
-
-## Reports and previews
-
-Candidate-review report payloads can include:
-
-- candidate table
-- missing-data checklist
-- tool versions
-- safety labels
-- review status
-- structure backend/status
-- model/source/output-format references
-- ranking score / pTM / ipTM / chain-pair ipTM
-
-Ethics-package report payloads can include:
-
-- consent templates
-- privacy notices
-- risk/benefit summary
-- professional oversight checklist
-- jurisdiction warning
-
-Dashboard readable preview helpers:
-
-- `frontend/app/report_preview.py`
+---
 
 ## Architecture
 
-```text
-/backend   FastAPI + SQLAlchemy + audit/safety/report logic
-/frontend  Streamlit dashboard
-/skills    shared client + agent-oriented integration surfaces
-/docs      source registry + API/reference snapshots + operator guide
-/examples  synthetic demo data and mock expert-review example
+```
+Browser / CLI
+     │
+     ▼
+Streamlit Dashboard      frontend/
+     │
+     ▼  REST / SSE / WebSocket
+FastAPI Backend          backend/app/
+  ├─ Safety Preflight
+  ├─ Audit Logger
+  ├─ RBAC / Encryption
+  ├─ Case / Sample / Variant / Candidate APIs
+  ├─ Report & Ethics Package Generation
+     │
+     ▼
+Research Modes           backend/app/modes/
+  vaccine_design | antibody_design | drug_discovery | gene_therapy
+  enzyme_engineering | tcr_pmhc | ppi_mapping | protein_misfolding
+  variant_pathogenicity
+     │
+     ▼
+Pipeline Framework       backend/app/pipeline/
+  BWA ──► Mutect2 ──► VEP ──► NetMHCpan
+     │
+     ▼
+Structure Prediction     backend/app/alphafold/
+  mock / boltz1 / boltz2 / esmfold / rfdiffusion / proteinmpnn
+  colabfold / local_colabfold / alphafold2_local / alphafold3_local
+  alphafold_server / alphafold_db / openfold / chai1
+     │
+     ▼
+Background Jobs          backend/app/worker/
+  Thread pool (default) or Celery + Redis (opt-in)
 ```
 
-## Worker stack (opt-in)
+Directory layout:
 
-FoldAgent supports an optional Celery + Redis worker stack for distributed
-background-job processing. By default, background jobs (pipeline runs,
-AlphaFold structure predictions) run in an in-process thread-pool — no
-additional infrastructure required.
-
-When the worker stack is enabled, these jobs are dispatched to Celery workers
-instead, giving you horizontal scalability and asynchronous execution with
-result persistence in Redis.
-
-### Quick start (local dev — threadpool, no Redis needed)
-
-```bash
-cp .env.example .env
-make install
-make dev        # background jobs use the built-in threadpool
+```
+/backend       FastAPI + SQLAlchemy + safety/audit/report logic
+/frontend      Streamlit dashboard + py3Dmol structure viewer
+/clients       TypeScript SDK (clients/typescript/)
+/skills        Agent skill packs (claude-code / hermes / openclaw / shared)
+/research_modes  Autoresearch workflow support
+/docs          Operator guides, API references, safety docs
+/examples      Synthetic demo data, mock expert-review examples
+/scripts       Utility and seeding scripts
 ```
 
-### Enabling the worker stack
+---
 
-1. **Uncomment the broker variables** in `.env`:
+## Configuration
+
+All settings use the `FOLDAGENT_` environment variable prefix. Copy `config.example.yaml` and `.env.example` as starting points.
+
+Key environment variables:
+
+| Variable                                       | Default                    | Description                                       |
+| ---------------------------------------------- | -------------------------- | ------------------------------------------------- |
+| `FOLDAGENT_SPECIES_MODE`                       | `demo`                     | Operating mode: `demo` / `dog` / `human`          |
+| `FOLDAGENT_DATABASE_URL`                       | `sqlite:///./foldagent.db` | SQLAlchemy database URL                           |
+| `FOLDAGENT_DB_INIT_MODE`                       | `create_all`               | `create_all` / `validate` / `alembic`             |
+| `FOLDAGENT_API_PORT`                           | `8010`                     | API listen port                                   |
+| `FOLDAGENT_DASHBOARD_PORT`                     | `8502`                     | Streamlit listen port                             |
+| `FOLDAGENT_ALPHAFOLD_DEFAULT_BACKEND`          | `mock`                     | Default structure prediction backend              |
+| `FOLDAGENT_ALPHAFOLD_ALLOWED_BACKENDS`         | _(all)_                    | Comma-separated list of enabled backends          |
+| `FOLDAGENT_ALPHAFOLD_STORE_CONFIDENCE_METRICS` | `true`                     | Store pTM / ipTM per job                          |
+| `FOLDAGENT_SAFETY_PREFLIGHT_ENABLED`           | `true`                     | Enable preflight safety checks                    |
+| `FOLDAGENT_UNSAFE_TEXT_SCANNER_ENABLED`        | `true`                     | Scan outputs for prohibited patterns              |
+| `FOLDAGENT_REQUIRE_PROFESSIONAL_OVERSIGHT`     | `true`                     | Block outputs without oversight flag              |
+| `FOLDAGENT_CLOUD_UPLOAD_ENABLED`               | `false`                    | Allow external cloud backend calls                |
+| `FOLDAGENT_CLOUD_UPLOAD_CONFIRMATION_REQUIRED` | `true`                     | Require explicit ACK before upload                |
+| `FOLDAGENT_ENCRYPTION_AT_REST_ENABLED`         | `false`                    | Encrypt stored artifacts                          |
+| `FOLDAGENT_ENCRYPTION_KEY`                     | _(none)_                   | Encryption key (set via env, not config file)     |
+| `FOLDAGENT_PIPELINE_MODE`                      | `mock`                     | `mock` or `real`                                  |
+| `FOLDAGENT_PIPELINE_BWA_REFERENCE`             | `/data/reference/hg38.fa`  | BWA reference genome path                         |
+| `FOLDAGENT_PIPELINE_GATK_REFERENCE`            | `/data/reference/hg38.fa`  | GATK reference genome path                        |
+| `FOLDAGENT_PIPELINE_VEP_CACHE_DIR`             | `/data/vep_cache`          | VEP cache directory                               |
+| `FOLDAGENT_PIPELINE_VEP_ASSEMBLY`              | `GRCh38`                   | Reference assembly                                |
+| `FOLDAGENT_REDIS_URL`                          | _(none)_                   | Redis URL for worker stack                        |
+| `FOLDAGENT_CELERY_BROKER_URL`                  | _(none)_                   | Celery broker URL                                 |
+| `FOLDAGENT_CELERY_RESULT_BACKEND`              | _(none)_                   | Celery result backend URL                         |
+| `FOLDAGENT_BACKGROUND_JOB_BACKEND`             | `auto`                     | `auto` / `threadpool` / `celery`                  |
+| `FOLDAGENT_AUDIT_LOG_PATH`                     | `./audit_logs`             | Audit log output directory                        |
+| `FOLDAGENT_LOG_LEVEL`                          | `INFO`                     | Log level                                         |
+| `FOLDAGENT_SECRET_KEY`                         | _(changeme)_               | Application secret key — **change in production** |
+
+---
+
+## Testing
 
 ```bash
-FOLDAGENT_REDIS_URL=redis://localhost:6379/0
-FOLDAGENT_CELERY_BROKER_URL=redis://localhost:6379/0
-FOLDAGENT_CELERY_RESULT_BACKEND=redis://localhost:6379/1
+# Run full test suite
+make test
+
+# Run with coverage
+make test-cov
+
+# Run a specific test file
+pytest backend/tests/test_vaccine_design.py -v
 ```
 
-2. **Install the worker extras**:
+The test suite covers 1,455 test files spanning all research modes, pipeline adapters, AlphaFold backends, safety enforcement, audit logging, report generation, agent events, worker dispatch, and Streamlit smoke tests. Tests run against mock backends by default; no external tools or credentials are required.
+
+---
+
+## Docker Deployment
 
 ```bash
-pip install -e ".[worker]"   # or: make install-worker
-```
+# API only (thread pool, no Redis)
+docker compose up app
 
-3. **Start Redis + the worker** — either locally or via Docker Compose:
-
-```bash
-# Docker Compose (recommended)
+# API + Redis + Celery worker
 docker compose --profile worker up
 
-# Or start just the worker services:
+# Worker services only
 docker compose --profile worker up redis worker
 ```
 
-The app container detects the broker URL at dispatch time. If it can reach
-Redis and `FOLDAGENT_BACKGROUND_JOB_BACKEND` is `auto` (the default), jobs are
-routed to Celery automatically. If Redis is unavailable, jobs fall back to the
-threadpool — no restart required.
+The `auto` job backend detects Redis availability at dispatch time. If Redis is unreachable, jobs fall back to the thread pool without a restart.
 
-### Disabling the worker stack
+For production, set `FOLDAGENT_DB_INIT_MODE=alembic` and supply a PostgreSQL `DATABASE_URL`. Run `alembic upgrade head` before starting the container, or set `db_init_mode: alembic` to auto-migrate on startup.
 
-Comment out (or remove) the broker variables in `.env`, or set:
+---
 
-```bash
-FOLDAGENT_BACKGROUND_JOB_BACKEND=threadpool
-```
+## Agent Skills
 
-The app will always use the threadpool executor regardless of whether broker
-URLs are present.
+FoldAgent ships three agent skill packs for AI-assisted research workflows.
 
-## Safety
+| Pack          | Location                            | Description                                                                |
+| ------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| Claude Code   | `skills/claude-code/`               | Claude Code skill pack for structure prediction and pipeline orchestration |
+| Hermes        | `skills/hermes/`                    | Hermes skill pack for report generation and ethics workflows               |
+| OpenClaw      | `skills/openclaw/`                  | OpenClaw integration for candidate review and data extraction              |
+| Shared client | `skills/shared/foldagent_client.py` | Python client shared across all skill packs                                |
 
-- Every export is labeled `Research candidate only — not administerable`
-- Every write/export action is audit-logged
-- Expert review is required before real-world action
-- AlphaFold Server style external uploads require explicit acknowledgement
-- Unsafe output patterns are automatically blocked
-- Artifact integrity is tracked with hashes
+Skills communicate with the FoldAgent API over REST/SSE using the shared client. See the skill-specific install guides in `docs/`.
 
-See:
+Installation guides:
+
+- `docs/AGENT_SKILLS_GUIDE.md` — overview and architecture
+- `docs/CLAUDE_CODE_INSTALL_GUIDE.md`
+- `docs/HERMES_INSTALL_GUIDE.md`
+- `docs/OPENCLAW_INSTALL_GUIDE.md`
+- `docs/AUTORESEARCH_SAFE_USE_GUIDE.md`
+
+---
+
+## Safety and Ethics
+
+FoldAgent is designed around the principle that AI-assisted structural biology research requires explicit safety boundaries at every layer.
+
+**Enforcement layers:**
+
+1. **Preflight checks** — every write and export operation passes through a preflight gate that evaluates the output against a prohibited-pattern list
+2. **mRNA safety gate** — mRNA-specific outputs are scanned for unsafe construction patterns before export
+3. **Audit trail** — every action (create, update, export, structure job, pipeline run) is logged with timestamp, user context, and payload hash
+4. **Professional oversight requirement** — outputs are labeled `Research candidate only — not administerable` and the oversight flag must be set before export
+5. **External upload acknowledgement** — any backend that submits data to an external service (AlphaFold Server) requires an explicit ACK field in the request
+
+**What FoldAgent will not produce:**
+
+- DIY vaccine manufacturing instructions
+- Injection, dosing, or formulation instructions
+- LNP formulation protocols
+- Clinical validity claims without professional review
+
+**Governance documents:**
 
 - `SAFETY_POLICY.md`
 - `ETHICS.md`
 - `DATA_PRIVACY.md`
-- `docs/reference/api/ALPHAFOLD_AND_REPORT_EXAMPLES.md`
-- `docs/reference/api/openapi.json`
+- `docs/SAFETY_GUIDE.md`
+- `docs/PRIVACY_GUIDE.md`
+- `docs/THREAT_MODEL.md`
+- `docs/ETHICS_PACKAGE_GUIDE.md`
 
-## Operator docs
-
-Start with:
-
-- `docs/VERIFICATION_WALKTHROUGH.md` — step-by-step runbook to verify a local stack
-- `docs/OPERATOR_GUIDE.md` — full operator reference
-- `docs/reference/api/README.md`
-- `docs/reference/api/ALPHAFOLD_AND_REPORT_EXAMPLES.md`
-
-## FAQ
-
-Is this medical advice? No.
-
-Can this make a vaccine? No.
-
-Can I treat my dog/human with this? No. Professional review is required.
-
-Does AlphaFold validate efficacy? No. Structure predictions are theoretical modeling only.
-
-Can I keep data local? Yes, that is the default.
-
-Can I use AlphaFold Server? Yes, but only with explicit external-upload acknowledgement.
+---
 
 ## Documentation
 
 | Guide                                                                        | Description                                  |
 | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| [docs/SAFETY_GUIDE.md](docs/SAFETY_GUIDE.md)                                 | Safety system, preflight, prohibited outputs |
-| [docs/PRIVACY_GUIDE.md](docs/PRIVACY_GUIDE.md)                               | Data privacy, local-first, deletion workflow |
-| [docs/ALPHAFOLD_BACKEND_GUIDE.md](docs/ALPHAFOLD_BACKEND_GUIDE.md)           | AlphaFold backend configuration              |
-| [docs/BIOINFORMATICS_ADAPTER_GUIDE.md](docs/BIOINFORMATICS_ADAPTER_GUIDE.md) | BWA/GATK/VEP/pVACtools adapter setup         |
-| [docs/ETHICS_PACKAGE_GUIDE.md](docs/ETHICS_PACKAGE_GUIDE.md)                 | Ethics/IRB package generation                |
-| [docs/AGENT_SKILLS_GUIDE.md](docs/AGENT_SKILLS_GUIDE.md)                     | Agent skill framework overview               |
-| [docs/CLAUDE_CODE_INSTALL_GUIDE.md](docs/CLAUDE_CODE_INSTALL_GUIDE.md)       | Installing Claude Code skills                |
-| [docs/OPENCLAW_INSTALL_GUIDE.md](docs/OPENCLAW_INSTALL_GUIDE.md)             | Installing OpenClaw skills                   |
-| [docs/HERMES_INSTALL_GUIDE.md](docs/HERMES_INSTALL_GUIDE.md)                 | Installing Hermes skills                     |
-| [docs/AUTORESEARCH_SAFE_USE_GUIDE.md](docs/AUTORESEARCH_SAFE_USE_GUIDE.md)   | Safe autoresearch usage                      |
+| [docs/OPERATOR_GUIDE.md](docs/OPERATOR_GUIDE.md)                             | Full operator reference                      |
+| [docs/VERIFICATION_WALKTHROUGH.md](docs/VERIFICATION_WALKTHROUGH.md)         | Step-by-step stack verification runbook      |
 | [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)                           | Development setup, extending the pipeline    |
 | [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)                         | Production deployment                        |
-| [docs/OPERATOR_GUIDE.md](docs/OPERATOR_GUIDE.md)                             | Operator reference                           |
-| [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)                                 | Threat model                                 |
+| [docs/ALPHAFOLD_BACKEND_GUIDE.md](docs/ALPHAFOLD_BACKEND_GUIDE.md)           | Backend configuration                        |
+| [docs/BIOINFORMATICS_ADAPTER_GUIDE.md](docs/BIOINFORMATICS_ADAPTER_GUIDE.md) | BWA/GATK/VEP/pVACtools adapter setup         |
+| [docs/SAFETY_GUIDE.md](docs/SAFETY_GUIDE.md)                                 | Safety system, preflight, prohibited outputs |
+| [docs/PRIVACY_GUIDE.md](docs/PRIVACY_GUIDE.md)                               | Data privacy, local-first, deletion workflow |
+| [docs/ETHICS_PACKAGE_GUIDE.md](docs/ETHICS_PACKAGE_GUIDE.md)                 | Ethics/IRB package generation                |
+| [docs/AGENT_SKILLS_GUIDE.md](docs/AGENT_SKILLS_GUIDE.md)                     | Agent skill framework                        |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)                           | Common issues                                |
 | [docs/FAQ.md](docs/FAQ.md)                                                   | Frequently asked questions                   |
-| [docs/source_registry.md](docs/source_registry.md)                           | Sources, references, inspirations            |
+| [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)                                 | Threat model                                 |
+| [docs/source_registry.md](docs/source_registry.md)                           | Sources and references                       |
+
+---
 
 ## License
 
-Apache-2.0 — see LICENSE file.
+Apache-2.0 — see [LICENSE](LICENSE).
 
-> External tools wrapped by FoldAgent (AlphaFold3 weights, NetMHCpan, pVACtools) have their own licenses. Review each before commercial or clinical use.
+> External tools wrapped or invoked by FoldAgent (AlphaFold 3 weights, NetMHCpan, pVACtools, ESMFold, RFdiffusion, ProteinMPNN) carry their own licenses. Review each license before commercial or clinical research use.
