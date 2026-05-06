@@ -1008,11 +1008,17 @@ class TestDirectTaskImport:
     def test_real_pipeline_run_raises_on_safety_block(self):
         """The real pipeline_run task should raise ValueError when
         preflight blocks (human mode without attestation)."""
-        with pytest.raises(ValueError, match="Pipeline worker blocked by safety preflight"):
-            self._pipeline_run_fn.run(
-                job_id="real-safety-block",
-                payload={"case_id": "case-human", "species_mode": "human"},
-            )
+        mock_case = MagicMock()
+        mock_case.species.value = "human"
+        mock_db = MagicMock()
+        mock_db.get.return_value = mock_case
+
+        with patch("backend.app.worker.tasks.SessionLocal", return_value=mock_db):
+            with pytest.raises(ValueError, match="Pipeline worker blocked by safety preflight"):
+                self._pipeline_run_fn.run(
+                    job_id="real-safety-block",
+                    payload={"case_id": "case-human"},
+                )
 
     def test_real_pipeline_run_case_id_from_explicit_arg(self):
         """Explicit case_id argument should take precedence over payload."""
