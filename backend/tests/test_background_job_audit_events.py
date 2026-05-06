@@ -10,12 +10,10 @@ import time
 
 from fastapi.testclient import TestClient
 
-from backend.app.models import BackgroundJob
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _create_demo_case(client: TestClient) -> str:
     resp = client.post("/cases", json={"species": "demo", "diagnosis_summary": "BG audit case"})
@@ -37,7 +35,9 @@ def _wait_for_job_completion(client: TestClient, job_id: str, timeout: float = 3
     return client.get(f"/jobs/{job_id}").json()
 
 
-def _poll_sse_actions(client: TestClient, required_actions: set[str], timeout: float = 3.0) -> list[str]:
+def _poll_sse_actions(
+    client: TestClient, required_actions: set[str], timeout: float = 3.0
+) -> list[str]:
     deadline = time.monotonic() + timeout
     latest_actions: list[str] = []
     while time.monotonic() < deadline:
@@ -54,7 +54,9 @@ def _poll_sse_actions(client: TestClient, required_actions: set[str], timeout: f
     return latest_actions
 
 
-def _poll_audit_actions(client: TestClient, case_id: str, required_actions: set[str], timeout: float = 3.0) -> list[str]:
+def _poll_audit_actions(
+    client: TestClient, case_id: str, required_actions: set[str], timeout: float = 3.0
+) -> list[str]:
     deadline = time.monotonic() + timeout
     latest_actions: list[str] = []
     while time.monotonic() < deadline:
@@ -70,6 +72,7 @@ def _poll_audit_actions(client: TestClient, case_id: str, required_actions: set[
 # ---------------------------------------------------------------------------
 # 1. Pipeline background job lifecycle emits audit events
 # ---------------------------------------------------------------------------
+
 
 def test_pipeline_async_job_emits_created_audit_event(client: TestClient) -> None:
     """Dispatching a pipeline background job should emit a background_job.created audit event."""
@@ -162,8 +165,7 @@ def test_pipeline_async_job_audit_events_contain_job_id(client: TestClient) -> N
     assert len(bg_events) >= 1, "Expected at least one background_job event"
     # Verify at least one event contains job_id in details
     events_with_job_id = [
-        e for e in bg_events
-        if e.get("details") and e["details"].get("job_id") == job_id
+        e for e in bg_events if e.get("details") and e["details"].get("job_id") == job_id
     ]
     assert len(events_with_job_id) >= 1, (
         f"Expected at least one event with job_id={job_id}, got: {bg_events}"
@@ -174,11 +176,11 @@ def test_pipeline_async_job_audit_events_contain_job_id(client: TestClient) -> N
 # 2. Cancelled job emits audit event
 # ---------------------------------------------------------------------------
 
+
 def test_cancelled_job_emits_audit_event(client: TestClient) -> None:
     """Cancelling a pending background job should emit background_job.cancelled."""
     from backend.app.db import SessionLocal
     from backend.app.jobs import create_job
-    from backend.app.models import BackgroundJobStatusEnum
 
     case_id = _create_demo_case(client)
 
@@ -212,11 +214,11 @@ def test_cancelled_job_emits_audit_event(client: TestClient) -> None:
 # 3. Failing job emits failed audit event (unit-level)
 # ---------------------------------------------------------------------------
 
+
 def test_failed_job_transition_emits_audit_event(client: TestClient) -> None:
     """A background job that fails should emit background_job.failed."""
     from backend.app.db import SessionLocal
     from backend.app.jobs import create_job, submit_job
-    from backend.app.models import BackgroundJobStatusEnum
 
     case_id = _create_demo_case(client)
 
@@ -256,6 +258,7 @@ def test_failed_job_transition_emits_audit_event(client: TestClient) -> None:
 # 4. SSE stream filter includes background_job. prefix
 # ---------------------------------------------------------------------------
 
+
 def test_agent_events_stream_includes_background_job_prefix(client: TestClient) -> None:
     """The /agent/events SSE stream should include events with the background_job. prefix."""
     case_id = _create_demo_case(client)
@@ -270,7 +273,9 @@ def test_agent_events_stream_includes_background_job_prefix(client: TestClient) 
     assert events_resp.status_code == 200
 
     # The stream should contain event lines with background_job. prefix
-    event_lines = [line for line in events_resp.text.splitlines() if line.startswith("event: background_job.")]
+    event_lines = [
+        line for line in events_resp.text.splitlines() if line.startswith("event: background_job.")
+    ]
     assert len(event_lines) >= 1, (
         f"Expected SSE event lines with 'background_job.' prefix, got: {events_resp.text[:500]}"
     )
@@ -279,6 +284,7 @@ def test_agent_events_stream_includes_background_job_prefix(client: TestClient) 
 # ---------------------------------------------------------------------------
 # 5. Verify audit log directly for background job transitions
 # ---------------------------------------------------------------------------
+
 
 def test_audit_log_direct_query_for_background_job_events(client: TestClient) -> None:
     """Verify audit log rows exist for background job transitions via /audit endpoint."""

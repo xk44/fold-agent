@@ -2,15 +2,20 @@
 
 Extracted from event_stream.py for modularity.
 """
+
 from __future__ import annotations
 
 from skills.shared.event_stream_client import SSEEvent
 
-
 # Canonical status values used across the dashboard
 _ALL_STATUSES: list[str] = [
-    "running", "pending", "blocked", "failed", "timed_out",
-    "cancelled", "completed",
+    "running",
+    "pending",
+    "blocked",
+    "failed",
+    "timed_out",
+    "cancelled",
+    "completed",
 ]
 
 # Sentinel for "show all" in filter selection
@@ -106,6 +111,7 @@ def apply_filters(
 
     # Filter events (status not applicable to events)
     if job_type != FILTER_ALL or case_id != FILTER_ALL:
+
         def _event_matches(evt: SSEEvent) -> bool:
             if job_type != FILTER_ALL:
                 family = (evt.event or "").split(".", 1)[0]

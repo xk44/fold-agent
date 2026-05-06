@@ -4,7 +4,6 @@ from typing import Any
 
 from frontend.app.candidate_review_table import build_candidate_linkout_targets
 
-
 _REVIEW_STATUS_OPTIONS = [
     "unreviewed",
     "needs_data",
@@ -90,7 +89,11 @@ def filter_variants(
 ) -> list[dict]:
     filtered = list(variants or [])
     if review_status != "all":
-        filtered = [variant for variant in filtered if str(variant.get("review_status") or "") == review_status]
+        filtered = [
+            variant
+            for variant in filtered
+            if str(variant.get("review_status") or "") == review_status
+        ]
     if gene_query.strip():
         gene_query_lower = gene_query.strip().lower()
         filtered = [
@@ -132,12 +135,16 @@ def sort_variants(
     if key == "created_at":
         present = [variant for variant in ordered if variant.get("created_at") is not None]
         missing = [variant for variant in ordered if variant.get("created_at") is None]
-        present = sorted(present, key=lambda variant: str(variant.get("created_at") or ""), reverse=reverse)
+        present = sorted(
+            present, key=lambda variant: str(variant.get("created_at") or ""), reverse=reverse
+        )
         return present + missing
     return sorted(ordered, key=lambda variant: _variant_sort_value(variant, key), reverse=reverse)
 
 
-def apply_variant_column_preset(rows: list[dict[str, Any]] | None, preset: str) -> list[dict[str, Any]]:
+def apply_variant_column_preset(
+    rows: list[dict[str, Any]] | None, preset: str
+) -> list[dict[str, Any]]:
     columns = _VARIANT_COLUMN_PRESETS.get(preset)
     if not columns:
         return list(rows or [])
@@ -196,7 +203,9 @@ def build_variant_linkout_targets(
     if not variant:
         return {}
     related_candidates = [
-        candidate for candidate in (candidates or []) if candidate.get("variant_id") == variant.get("id")
+        candidate
+        for candidate in (candidates or [])
+        if candidate.get("variant_id") == variant.get("id")
     ]
     if not related_candidates:
         return {"case_id": variant.get("case_id")}
@@ -243,17 +252,14 @@ def render_variant_explorer(
         return
 
     candidates: list[dict] = (
-        candidates_raw if isinstance(candidates_raw, list)
-        else candidates_raw.get("candidates", [])
+        candidates_raw if isinstance(candidates_raw, list) else candidates_raw.get("candidates", [])
     )
 
     # --- Summary metrics row ---
     total = len(candidates)
     genes = {c.get("gene") for c in candidates if c.get("gene")}
     affinities = [
-        c["binding_affinity"]
-        for c in candidates
-        if c.get("binding_affinity") is not None
+        c["binding_affinity"] for c in candidates if c.get("binding_affinity") is not None
     ]
     mean_affinity = (sum(affinities) / len(affinities)) if affinities else None
 
@@ -307,15 +313,9 @@ def render_variant_explorer(
     # --- Apply filters ---
     filtered = candidates
     if gene_filter:
-        filtered = [
-            c for c in filtered
-            if gene_filter.lower() in (c.get("gene") or "").lower()
-        ]
+        filtered = [c for c in filtered if gene_filter.lower() in (c.get("gene") or "").lower()]
     if min_affinity > 0 and affinities:
-        filtered = [
-            c for c in filtered
-            if (c.get("binding_affinity") or 0) >= min_affinity
-        ]
+        filtered = [c for c in filtered if (c.get("binding_affinity") or 0) >= min_affinity]
 
     if not filtered:
         st.info("No candidates match the current filters.")

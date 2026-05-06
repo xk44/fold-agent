@@ -177,7 +177,6 @@ def test_human_case_agent_task_dry_run_blocked_by_sequence_gate(client: TestClie
     assert "event: expert.review.required" in events
 
 
-
 def test_agent_skills_endpoint_lists_repo_skill_inventory(client: TestClient) -> None:
     response = client.get("/agent/skills")
 
@@ -196,11 +195,20 @@ def test_agent_skills_endpoint_lists_repo_skill_inventory(client: TestClient) ->
     assert "safety_boundaries" in first
     assert "required_api_endpoints" in first
 
-    foldagent_skill = next(item for item in payload if item["skill_name"] == "run_full_foldagent_case_review")
-    assert "research coordination under professional oversight" in foldagent_skill["description"].lower()
-    assert any("not administerable" in item.lower() for item in foldagent_skill["safety_boundaries"])
-    assert any(endpoint == "POST /safety/preflight" for endpoint in foldagent_skill["required_api_endpoints"])
-
+    foldagent_skill = next(
+        item for item in payload if item["skill_name"] == "run_full_foldagent_case_review"
+    )
+    assert (
+        "research coordination under professional oversight"
+        in foldagent_skill["description"].lower()
+    )
+    assert any(
+        "not administerable" in item.lower() for item in foldagent_skill["safety_boundaries"]
+    )
+    assert any(
+        endpoint == "POST /safety/preflight"
+        for endpoint in foldagent_skill["required_api_endpoints"]
+    )
 
 
 def test_agent_task_dry_run_returns_preview_without_persisting(client: TestClient) -> None:
@@ -233,7 +241,6 @@ def test_agent_task_dry_run_returns_preview_without_persisting(client: TestClien
     assert list_tasks.json() == []
 
 
-
 def test_agent_events_sse_stream_lists_recent_audit_events(client: TestClient) -> None:
     create_case = client.post(
         "/cases",
@@ -246,7 +253,11 @@ def test_agent_events_sse_stream_lists_recent_audit_events(client: TestClient) -
     )
     client.post(
         f"/cases/{case_id}/agent-tasks",
-        json={"framework": "hermes", "skill_name": "run_full_foldagent_case_review", "status": "pending"},
+        json={
+            "framework": "hermes",
+            "skill_name": "run_full_foldagent_case_review",
+            "status": "pending",
+        },
     )
     client.post(f"/cases/{case_id}/reports/candidate-review")
 
@@ -260,7 +271,6 @@ def test_agent_events_sse_stream_lists_recent_audit_events(client: TestClient) -
     assert "event: agent_task.created" in body
     assert "event: report.generated" in body
     assert f'"case_id": "{case_id}"' in body
-
 
 
 def test_shared_skill_assets_exist() -> None:

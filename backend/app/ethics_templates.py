@@ -26,29 +26,25 @@ def _is_veterinary(species: str) -> bool:
     return species.lower() not in _CLINICAL_SPECIES
 
 
-def build_uncertainty_summary(case_id: str, db: "Session") -> dict:
+def build_uncertainty_summary(case_id: str, db: Session) -> dict:
     """Return a structured summary of uncertainty sources for a case.
 
     Does not fetch live data beyond confirming the case exists.
     The uncertainty sources are standardised across all cases; case_id is
     included for traceability only.
     """
-    from backend.app.models import Case, CandidateAntigen, Sample
+    from backend.app.models import CandidateAntigen, Case, Sample
 
     case = db.get(Case, case_id)
     case_found = case is not None
     species = case.species.value if case_found else "unknown"
 
     candidates = (
-        db.query(CandidateAntigen)
-        .filter(CandidateAntigen.case_id == case_id)
-        .all()
+        db.query(CandidateAntigen).filter(CandidateAntigen.case_id == case_id).all()
         if case_found
         else []
     )
-    samples = (
-        db.query(Sample).filter(Sample.case_id == case_id).all() if case_found else []
-    )
+    samples = db.query(Sample).filter(Sample.case_id == case_id).all() if case_found else []
 
     has_rna = any(s.sample_type.value == "rna" for s in samples)
     candidate_count = len(candidates)
@@ -88,7 +84,11 @@ def build_uncertainty_summary(case_id: str, db: "Session") -> dict:
             "name": "Expression validation gaps",
             "description": (
                 "Tumour-specific expression has "
-                + ("not been confirmed by RNA-seq in this case." if not has_rna else "RNA data present but mock/unvalidated.")
+                + (
+                    "not been confirmed by RNA-seq in this case."
+                    if not has_rna
+                    else "RNA data present but mock/unvalidated."
+                )
                 + " Antigen candidates may not be expressed at levels relevant to immune recognition."
             ),
             "severity": "high" if not has_rna else "medium",
@@ -250,7 +250,11 @@ def build_compassionate_use_checklist(species: str) -> dict:
     """
     vet = _is_veterinary(species)
     professional_label = "veterinary oncologist" if vet else "medical oncologist"
-    oversight_body = "IACUC / institutional veterinary ethics committee" if vet else "IRB / institutional review board"
+    oversight_body = (
+        "IACUC / institutional veterinary ethics committee"
+        if vet
+        else "IRB / institutional review board"
+    )
     regulatory_framework = (
         "applicable veterinary regulatory authority (e.g. USDA, VMD, state licensing board)"
         if vet
@@ -273,7 +277,7 @@ def build_compassionate_use_checklist(species: str) -> dict:
         {
             "id": "cu_02",
             "category": "Eligibility",
-            "item": f"Document medical/veterinary necessity and rationale for experimental approach.",
+            "item": "Document medical/veterinary necessity and rationale for experimental approach.",
             "required_attestation": professional_label,
             "status": "[ ] Incomplete",
         },
@@ -402,7 +406,7 @@ def build_compassionate_use_checklist(species: str) -> dict:
     }
 
 
-def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
+def build_vet_oncologist_questions(case_id: str, db: Session) -> dict:
     """Return pre-populated questions for a veterinary/oncology professional consultation.
 
     Questions are populated based on available case data. Species determines
@@ -419,11 +423,7 @@ def build_vet_oncologist_questions(case_id: str, db: "Session") -> dict:
         has_pipeline_run = False
     else:
         species_val = case.species.value
-        candidates = (
-            db.query(CandidateAntigen)
-            .filter(CandidateAntigen.case_id == case_id)
-            .all()
-        )
+        candidates = db.query(CandidateAntigen).filter(CandidateAntigen.case_id == case_id).all()
         samples = db.query(Sample).filter(Sample.case_id == case_id).all()
         candidate_count = len(candidates)
         sample_types = list({s.sample_type.value for s in samples})

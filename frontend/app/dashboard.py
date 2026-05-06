@@ -42,7 +42,7 @@ from frontend.app.structure_viewer import (
 from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_API_URL = os.environ.get("FOLDAGENT_API_URL", "http://localhost:8000")
+DEFAULT_API_URL = os.environ.get("FOLDAGENT_API_URL", "http://localhost:8010")
 
 st.set_page_config(page_title="FoldAgent", layout="wide")
 
@@ -740,7 +740,11 @@ with tab_pipeline:
             if alphafold_backends_error:
                 st.error(alphafold_backends_error)
             elif alphafold_backends:
-                backend_options = sorted(alphafold_backends.keys())
+                backend_options = sorted(
+                    name
+                    for name, payload in alphafold_backends.items()
+                    if isinstance(payload, dict) and name != "env_summary"
+                )
                 default_backend = choose_default_alphafold_backend(alphafold_backends)
                 default_backend_index = (
                     backend_options.index(default_backend)

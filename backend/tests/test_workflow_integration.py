@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -263,6 +262,7 @@ def test_batch_timestamp_is_iso() -> None:
     ts = result.provenances[0].timestamp
     # Should be parseable ISO format
     from datetime import datetime
+
     dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
     assert dt is not None
 

@@ -5,11 +5,6 @@ Adds ``x-safety-level`` and ``x-agent-description`` to every endpoint.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 # ---------------------------------------------------------------------------
 # Safety-level classification rules
 # ---------------------------------------------------------------------------

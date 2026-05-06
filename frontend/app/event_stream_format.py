@@ -2,6 +2,7 @@
 
 Extracted from event_stream.py for modularity.
 """
+
 from __future__ import annotations
 
 from skills.shared.event_stream_client import SSEEvent
@@ -27,9 +28,9 @@ def format_sse_event_feed(events: list[SSEEvent], limit: int = 10) -> str:
     recent = events[-limit:] if len(events) > limit else events
     summary = format_sse_event_summary(events)
 
-    family_lines = ", ".join(
-        f"{k}:{v}" for k, v in sorted(summary["event_family_counts"].items())
-    ) or "none"
+    family_lines = (
+        ", ".join(f"{k}:{v}" for k, v in sorted(summary["event_family_counts"].items())) or "none"
+    )
 
     lines = [
         f"Live event feed — {summary['total_events']} events",
@@ -46,7 +47,9 @@ def format_sse_event_feed(events: list[SSEEvent], limit: int = 10) -> str:
         lines.append(f"  [{ts}] {action} (case={case_id})")
 
         # Show key detail fields
-        detail_keys = [k for k in ("status", "safety_gate_result", "details") if k in data and data[k]]
+        detail_keys = [
+            k for k in ("status", "safety_gate_result", "details") if k in data and data[k]
+        ]
         if detail_keys:
             detail_parts = [f"{k}={data[k]}" for k in detail_keys]
             lines.append(f"    {' | '.join(detail_parts)}")
@@ -59,12 +62,14 @@ def format_sse_event_table_rows(events: list[SSEEvent]) -> list[dict]:
     rows = []
     for evt in events:
         data = evt.data or {}
-        rows.append({
-            "event": evt.event or "message",
-            "timestamp": data.get("timestamp", ""),
-            "case_id": data.get("case_id", ""),
-            "action": data.get("action", evt.event or ""),
-            "actor": data.get("actor", ""),
-            "safety_gate_result": data.get("safety_gate_result", ""),
-        })
+        rows.append(
+            {
+                "event": evt.event or "message",
+                "timestamp": data.get("timestamp", ""),
+                "case_id": data.get("case_id", ""),
+                "action": data.get("action", evt.event or ""),
+                "actor": data.get("actor", ""),
+                "safety_gate_result": data.get("safety_gate_result", ""),
+            }
+        )
     return rows

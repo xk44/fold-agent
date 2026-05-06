@@ -129,12 +129,14 @@ def generate_sbom() -> dict:
             continue
         seen.add(name)
         license_id = _LICENSE_HINTS.get(name, "unknown")
-        components.append({
-            "type": "library",
-            "name": name,
-            "version": pkg["version"],
-            "license": license_id,
-        })
+        components.append(
+            {
+                "type": "library",
+                "name": name,
+                "version": pkg["version"],
+                "license": license_id,
+            }
+        )
 
     return {
         "bomFormat": "CycloneDX-lite",
@@ -188,9 +190,7 @@ _SECRET_PATTERNS: list[dict] = [
     },
     {
         "name": "password_in_text",
-        "pattern": re.compile(
-            r"(?i)(password|passwd|pwd)['\"\s:=]+['\"]?([^\s'\",]{8,})['\"]?"
-        ),
+        "pattern": re.compile(r"(?i)(password|passwd|pwd)['\"\s:=]+['\"]?([^\s'\",]{8,})['\"]?"),
         "severity": "high",
     },
     {
@@ -220,9 +220,7 @@ _SECRET_PATTERNS: list[dict] = [
     },
     {
         "name": "connection_string",
-        "pattern": re.compile(
-            r"(?i)(postgresql|mysql|mongodb|redis)://[^:\s]+:[^@\s]+@[^\s]+"
-        ),
+        "pattern": re.compile(r"(?i)(postgresql|mysql|mongodb|redis)://[^:\s]+:[^@\s]+@[^\s]+"),
         "severity": "critical",
     },
 ]
@@ -250,11 +248,13 @@ def scan_for_secrets(text: str) -> list[dict]:
     findings: list[dict] = []
     for spec in _SECRET_PATTERNS:
         for match in spec["pattern"].finditer(text):
-            findings.append({
-                "pattern_name": spec["name"],
-                "matched_text_preview": _preview(text, match),
-                "severity": spec["severity"],
-            })
+            findings.append(
+                {
+                    "pattern_name": spec["name"],
+                    "matched_text_preview": _preview(text, match),
+                    "severity": spec["severity"],
+                }
+            )
     return findings
 
 
@@ -286,7 +286,9 @@ def scan_skill_directory(path: str) -> dict:
     if not root.exists() or not root.is_dir():
         return {
             "safe": False,
-            "findings": [{"type": "error", "detail": f"Path does not exist or is not a directory: {path}"}],
+            "findings": [
+                {"type": "error", "detail": f"Path does not exist or is not a directory: {path}"}
+            ],
         }
 
     findings: list[dict] = []
@@ -298,18 +300,29 @@ def scan_skill_directory(path: str) -> dict:
 
         # Check executables (non-script binaries)
         if file_path.suffix not in code_extensions and file_path.suffix not in {
-            ".md", ".txt", ".json", ".yaml", ".yml", ".toml", ".cfg", ".ini",
-            ".lock", ".gitignore", ".env.example",
+            ".md",
+            ".txt",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".cfg",
+            ".ini",
+            ".lock",
+            ".gitignore",
+            ".env.example",
         }:
             try:
                 mode = file_path.stat().st_mode
                 if mode & 0o111:  # any execute bit set
-                    findings.append({
-                        "type": "executable_file",
-                        "file": str(file_path.relative_to(root)),
-                        "detail": "Unexpected executable file in skill directory",
-                        "severity": "high",
-                    })
+                    findings.append(
+                        {
+                            "type": "executable_file",
+                            "file": str(file_path.relative_to(root)),
+                            "detail": "Unexpected executable file in skill directory",
+                            "severity": "high",
+                        }
+                    )
             except OSError:
                 pass
 
@@ -324,35 +337,41 @@ def scan_skill_directory(path: str) -> dict:
             # Network calls
             for match in _NETWORK_CALL_PATTERNS.finditer(content):
                 line_no = content[: match.start()].count("\n") + 1
-                findings.append({
-                    "type": "network_call",
-                    "file": rel,
-                    "line": line_no,
-                    "detail": f"Potential network call: {match.group(0).strip()}",
-                    "severity": "medium",
-                })
+                findings.append(
+                    {
+                        "type": "network_call",
+                        "file": rel,
+                        "line": line_no,
+                        "detail": f"Potential network call: {match.group(0).strip()}",
+                        "severity": "medium",
+                    }
+                )
 
             # Hardcoded URLs
             for match in _HARDCODED_URL_PATTERN.finditer(content):
                 line_no = content[: match.start()].count("\n") + 1
-                findings.append({
-                    "type": "hardcoded_url",
-                    "file": rel,
-                    "line": line_no,
-                    "detail": f"Hardcoded URL: {match.group(0)[:80]}",
-                    "severity": "low",
-                })
+                findings.append(
+                    {
+                        "type": "hardcoded_url",
+                        "file": rel,
+                        "line": line_no,
+                        "detail": f"Hardcoded URL: {match.group(0)[:80]}",
+                        "severity": "low",
+                    }
+                )
 
             # Credential references
             for match in _CREDENTIAL_PATTERN.finditer(content):
                 line_no = content[: match.start()].count("\n") + 1
-                findings.append({
-                    "type": "credential_reference",
-                    "file": rel,
-                    "line": line_no,
-                    "detail": f"Possible hardcoded credential near: {match.group(0)[:60]}",
-                    "severity": "critical",
-                })
+                findings.append(
+                    {
+                        "type": "credential_reference",
+                        "file": rel,
+                        "line": line_no,
+                        "detail": f"Possible hardcoded credential near: {match.group(0)[:60]}",
+                        "severity": "critical",
+                    }
+                )
 
     critical_count = sum(1 for f in findings if f.get("severity") == "critical")
     high_count = sum(1 for f in findings if f.get("severity") == "high")
@@ -391,7 +410,7 @@ _CASE_LINKED_TABLES: list[tuple[str, str]] = [
 ]
 
 
-def verify_data_deletion(case_id: str, db: "Session") -> dict:
+def verify_data_deletion(case_id: str, db: Session) -> dict:
     """Verify that all records for ``case_id`` have been removed from the database.
 
     Returns ``{fully_deleted: bool, remaining_records: dict}`` where
@@ -485,7 +504,7 @@ def build_upload_confirmation(destination: str, data_summary: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def verify_audit_chain(case_id: str, db: "Session") -> dict:
+def verify_audit_chain(case_id: str, db: Session) -> dict:
     """Validate the SHA-256 hash chain of audit log entries for a case.
 
     Each audit entry's ``inputs_hash`` is expected to be a SHA-256 hex digest of
@@ -524,13 +543,15 @@ def verify_audit_chain(case_id: str, db: "Session") -> dict:
         # Basic integrity: hash should be a 64-char hex string if present
         if current_hash is not None:
             if not re.match(r"^[0-9a-fA-F]{64}$", current_hash):
-                broken_links.append({
-                    "entry_index": i,
-                    "entry_id": entry.id,
-                    "action": entry.action,
-                    "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
-                    "issue": "inputs_hash is not a valid SHA-256 hex digest",
-                })
+                broken_links.append(
+                    {
+                        "entry_index": i,
+                        "entry_id": entry.id,
+                        "action": entry.action,
+                        "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
+                        "issue": "inputs_hash is not a valid SHA-256 hex digest",
+                    }
+                )
 
         # If there is a chain link expectation (prev_hash set), validate it
         if prev_hash is not None and current_hash is not None:

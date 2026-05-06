@@ -268,27 +268,27 @@ def classify_variant_origin(variant: dict) -> str:
 # ---------------------------------------------------------------------------
 
 AMINO_ACID_PROPERTIES: dict[str, dict] = {
-    "A": {"charge": 0,  "size": "small",  "hydrophobic": True},
-    "R": {"charge": 1,  "size": "large",  "hydrophobic": False},
-    "N": {"charge": 0,  "size": "medium", "hydrophobic": False},
+    "A": {"charge": 0, "size": "small", "hydrophobic": True},
+    "R": {"charge": 1, "size": "large", "hydrophobic": False},
+    "N": {"charge": 0, "size": "medium", "hydrophobic": False},
     "D": {"charge": -1, "size": "medium", "hydrophobic": False},
-    "C": {"charge": 0,  "size": "small",  "hydrophobic": True},
-    "Q": {"charge": 0,  "size": "medium", "hydrophobic": False},
+    "C": {"charge": 0, "size": "small", "hydrophobic": True},
+    "Q": {"charge": 0, "size": "medium", "hydrophobic": False},
     "E": {"charge": -1, "size": "medium", "hydrophobic": False},
-    "G": {"charge": 0,  "size": "tiny",   "hydrophobic": False},
-    "H": {"charge": 1,  "size": "medium", "hydrophobic": False},
-    "I": {"charge": 0,  "size": "medium", "hydrophobic": True},
-    "L": {"charge": 0,  "size": "medium", "hydrophobic": True},
-    "K": {"charge": 1,  "size": "large",  "hydrophobic": False},
-    "M": {"charge": 0,  "size": "medium", "hydrophobic": True},
-    "F": {"charge": 0,  "size": "large",  "hydrophobic": True},
-    "P": {"charge": 0,  "size": "small",  "hydrophobic": False},
-    "S": {"charge": 0,  "size": "small",  "hydrophobic": False},
-    "T": {"charge": 0,  "size": "small",  "hydrophobic": False},
-    "W": {"charge": 0,  "size": "large",  "hydrophobic": True},
-    "Y": {"charge": 0,  "size": "large",  "hydrophobic": False},
-    "V": {"charge": 0,  "size": "small",  "hydrophobic": True},
-    "X": {"charge": 0,  "size": "unknown","hydrophobic": False},  # stop / unknown
+    "G": {"charge": 0, "size": "tiny", "hydrophobic": False},
+    "H": {"charge": 1, "size": "medium", "hydrophobic": False},
+    "I": {"charge": 0, "size": "medium", "hydrophobic": True},
+    "L": {"charge": 0, "size": "medium", "hydrophobic": True},
+    "K": {"charge": 1, "size": "large", "hydrophobic": False},
+    "M": {"charge": 0, "size": "medium", "hydrophobic": True},
+    "F": {"charge": 0, "size": "large", "hydrophobic": True},
+    "P": {"charge": 0, "size": "small", "hydrophobic": False},
+    "S": {"charge": 0, "size": "small", "hydrophobic": False},
+    "T": {"charge": 0, "size": "small", "hydrophobic": False},
+    "W": {"charge": 0, "size": "large", "hydrophobic": True},
+    "Y": {"charge": 0, "size": "large", "hydrophobic": False},
+    "V": {"charge": 0, "size": "small", "hydrophobic": True},
+    "X": {"charge": 0, "size": "unknown", "hydrophobic": False},  # stop / unknown
 }
 
 _SIZE_ORDER = {"tiny": 0, "small": 1, "medium": 2, "large": 3, "unknown": -1}
@@ -394,9 +394,7 @@ def build_pathogenicity_report(case_id: str, db) -> dict:
             {"id": v.id, "gene": gene, "protein_change": mutation}
         )
         stability = estimate_stability_impact(gene, mutation)
-        origin = classify_variant_origin(
-            {"vaf": (v.quality_metrics or {}).get("vaf")}
-        )
+        origin = classify_variant_origin({"vaf": (v.quality_metrics or {}).get("vaf")})
 
         if am_score:
             cls = am_score.classification

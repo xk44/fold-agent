@@ -7,11 +7,9 @@ RESEARCH USE ONLY.
 from __future__ import annotations
 
 import hashlib
-import math
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-
 
 # ===========================================================================
 # Feature 1: MSA-driven conformational ensemble
@@ -75,11 +73,13 @@ def generate_msa_subsamples(
         base_div = _seq_hash_float(sequence, salt=f"div_{i}", lo=0.1, hi=0.9)
         depth_factor = (depth - lo_depth) / max(hi_depth - lo_depth, 1)
         diversity = min(1.0, base_div * (0.5 + 0.5 * depth_factor))
-        subsamples.append(MSASubsample(
-            subsample_id=i,
-            msa_depth=depth,
-            diversity_score=round(diversity, 4),
-        ))
+        subsamples.append(
+            MSASubsample(
+                subsample_id=i,
+                msa_depth=depth,
+                diversity_score=round(diversity, 4),
+            )
+        )
     return subsamples
 
 
@@ -144,7 +144,11 @@ def cluster_msa_conformations(
         sub_ids = [s.subsample_id for s in members]
         mean_depth = sum(s.msa_depth for s in members) / len(members)
         plddt = 50.0 + _seq_hash_float(sequence, salt=f"plddt_{b}", lo=0.0, hi=40.0)
-        rmsd = 0.0 if rank == 0 else _seq_hash_float(sequence, salt=f"rmsd_{b}", lo=0.5, hi=rmsd_threshold * 2.5)
+        rmsd = (
+            0.0
+            if rank == 0
+            else _seq_hash_float(sequence, salt=f"rmsd_{b}", lo=0.5, hi=rmsd_threshold * 2.5)
+        )
         w = weights[ci]
 
         if rank == 0:
@@ -157,22 +161,24 @@ def cluster_msa_conformations(
         # Mock PDB snippet
         seq_len = len(sequence)
         pdb_lines = [f"REMARK MSA-state {rank} depth={mean_depth:.0f} pLDDT={plddt:.1f}"]
-        for j, aa in enumerate(sequence[:min(seq_len, 5)]):
+        for j, aa in enumerate(sequence[: min(seq_len, 5)]):
             pdb_lines.append(
-                f"ATOM  {j+1:5d}  CA  {aa:3s} A{j+1:4d}    "
-                f"  1.000   1.000   1.000  1.00{plddt/100:.2f}           C"
+                f"ATOM  {j + 1:5d}  CA  {aa:3s} A{j + 1:4d}    "
+                f"  1.000   1.000   1.000  1.00{plddt / 100:.2f}           C"
             )
         pdb_lines.append("END")
 
-        states.append(MSAConformationalState(
-            state_id=rank,
-            subsample_ids=sub_ids,
-            pdb_data="\n".join(pdb_lines),
-            plddt_mean=round(plddt, 2),
-            rmsd_to_consensus=round(rmsd, 3),
-            population_weight=round(w, 4),
-            structural_class=s_class,
-        ))
+        states.append(
+            MSAConformationalState(
+                state_id=rank,
+                subsample_ids=sub_ids,
+                pdb_data="\n".join(pdb_lines),
+                plddt_mean=round(plddt, 2),
+                rmsd_to_consensus=round(rmsd, 3),
+                population_weight=round(w, 4),
+                structural_class=s_class,
+            )
+        )
 
     depths = [s.msa_depth for s in subsamples]
     depth_range = (min(depths), max(depths))
@@ -289,14 +295,16 @@ def predict_dynamics(sequence: str) -> DynamicsProfile:
             dclass = "highly_flexible"
 
         backbone_flexes.append(backbone_flex)
-        residues.append(DynamicsResidue(
-            index=i,
-            residue=aa,
-            backbone_flexibility=round(backbone_flex, 4),
-            sidechain_flexibility=round(sidechain_flex, 4),
-            predicted_bfactor=round(bfactor, 2),
-            dynamics_class=dclass,
-        ))
+        residues.append(
+            DynamicsResidue(
+                index=i,
+                residue=aa,
+                backbone_flexibility=round(backbone_flex, 4),
+                sidechain_flexibility=round(sidechain_flex, 4),
+                predicted_bfactor=round(bfactor, 2),
+                dynamics_class=dclass,
+            )
+        )
 
     # Identify hinges: positions where flexibility changes abruptly (|Δflex| > 0.3)
     hinge_residues: list[int] = []
@@ -398,11 +406,11 @@ class ProteinClass(str, Enum):
 @dataclass
 class CalibrationCurve:
     protein_class: ProteinClass
-    plddt_bins: list[float]      # left edge of each bin (0, 10, 20, …, 90)
+    plddt_bins: list[float]  # left edge of each bin (0, 10, 20, …, 90)
     actual_accuracy: list[float]  # expected real-world accuracy at that pLDDT bin
     n_benchmarked: int
-    calibration_error: float     # mean absolute calibration error
-    overconfident_range: tuple[float, float] | None   # pLDDT range where model is overconfident
+    calibration_error: float  # mean absolute calibration error
+    overconfident_range: tuple[float, float] | None  # pLDDT range where model is overconfident
     underconfident_range: tuple[float, float] | None  # pLDDT range where model is underconfident
 
 
@@ -498,13 +506,19 @@ def calibrate_confidence(plddt: float, protein_class: ProteinClass) -> dict:
     adjusted_confidence = round(max(0.0, min(1.0, raw_accuracy)), 4)
 
     warning: str | None = None
-    if curve.overconfident_range and curve.overconfident_range[0] <= plddt_clamped <= curve.overconfident_range[1]:
+    if (
+        curve.overconfident_range
+        and curve.overconfident_range[0] <= plddt_clamped <= curve.overconfident_range[1]
+    ):
         warning = (
             f"pLDDT {plddt_clamped:.1f} falls in the overconfident range "
             f"{curve.overconfident_range} for {protein_class.value} proteins. "
             "Actual accuracy is substantially lower than pLDDT suggests."
         )
-    elif curve.underconfident_range and curve.underconfident_range[0] <= plddt_clamped <= curve.underconfident_range[1]:
+    elif (
+        curve.underconfident_range
+        and curve.underconfident_range[0] <= plddt_clamped <= curve.underconfident_range[1]
+    ):
         warning = (
             f"pLDDT {plddt_clamped:.1f} falls in the underconfident range "
             f"{curve.underconfident_range} for {protein_class.value} proteins. "

@@ -23,9 +23,7 @@ def reset_db() -> Generator[None, None, None]:
     # Recreate a fresh executor for the test
     from concurrent.futures import ThreadPoolExecutor
 
-    _jobs_mod._executor = ThreadPoolExecutor(
-        max_workers=4, thread_name_prefix="bg-job"
-    )
+    _jobs_mod._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="bg-job")
     # Also clear the in-memory cancel/future registries
     _jobs_mod._cancel_events.clear()
     _jobs_mod._job_futures.clear()

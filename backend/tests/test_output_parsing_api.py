@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 from backend.app.pipeline.shells import ShellExecution
 
 
-def test_vep_shell_output_parsing_updates_variant_and_report_summary(client: TestClient, monkeypatch) -> None:
+def test_vep_shell_output_parsing_updates_variant_and_report_summary(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "VEP parsed case"},
@@ -42,7 +44,11 @@ def test_vep_shell_output_parsing_updates_variant_and_report_summary(client: Tes
 
     run_response = client.post(
         "/pipeline/adapters/vep/run",
-        json={"case_id": case_id, "input_vcf": "/tmp/mock.vcf", "output_path": "/tmp/mock.vep.json"},
+        json={
+            "case_id": case_id,
+            "input_vcf": "/tmp/mock.vcf",
+            "output_path": "/tmp/mock.vep.json",
+        },
     )
     assert run_response.status_code == 200
 
@@ -58,7 +64,9 @@ def test_vep_shell_output_parsing_updates_variant_and_report_summary(client: Tes
     assert report["content_json"]["top_candidate_gene"] == "BRAF"
 
 
-def test_pvactools_shell_output_parsing_updates_candidate_scores(client: TestClient, monkeypatch) -> None:
+def test_pvactools_shell_output_parsing_updates_candidate_scores(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "pVAC parsed case"},

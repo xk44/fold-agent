@@ -6,7 +6,9 @@ from fastapi.testclient import TestClient
 from backend.app.alphafold.shells import AlphaFoldExecution
 
 
-def test_alphafold_run_harvests_model_and_summary_artifacts(client: TestClient, monkeypatch, tmp_path: Path) -> None:
+def test_alphafold_run_harvests_model_and_summary_artifacts(
+    client: TestClient, monkeypatch, tmp_path: Path
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Artifact harvest case"},
@@ -19,7 +21,9 @@ def test_alphafold_run_harvests_model_and_summary_artifacts(client: TestClient, 
     model_cif = output_dir / "harvest_case_model.cif"
     summary_json = output_dir / "harvest_case_summary_confidences.json"
     model_cif.write_text("data_harvest\n", encoding="utf-8")
-    summary_json.write_text(json.dumps({"ptm": 0.66, "iptm": 0.84, "ranking_score": 0.89}), encoding="utf-8")
+    summary_json.write_text(
+        json.dumps({"ptm": 0.66, "iptm": 0.84, "ranking_score": 0.89}), encoding="utf-8"
+    )
 
     def fake_execute_alphafold_backend(backend_name: str, payload: dict) -> AlphaFoldExecution:
         return AlphaFoldExecution(
@@ -36,7 +40,9 @@ def test_alphafold_run_harvests_model_and_summary_artifacts(client: TestClient, 
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run = client.post(
         "/alphafold/backends/alphafold3_local/run",
@@ -56,8 +62,16 @@ def test_alphafold_run_harvests_model_and_summary_artifacts(client: TestClient, 
     assert "alphafold_model_cif" in artifact_types
     assert "alphafold_summary_confidences" in artifact_types
 
-    harvested_model = next(artifact for artifact in execution["artifacts"] if artifact["artifact_type"] == "alphafold_model_cif")
-    harvested_summary = next(artifact for artifact in execution["artifacts"] if artifact["artifact_type"] == "alphafold_summary_confidences")
+    harvested_model = next(
+        artifact
+        for artifact in execution["artifacts"]
+        if artifact["artifact_type"] == "alphafold_model_cif"
+    )
+    harvested_summary = next(
+        artifact
+        for artifact in execution["artifacts"]
+        if artifact["artifact_type"] == "alphafold_summary_confidences"
+    )
     assert harvested_model["path"].endswith(model_cif.name)
     assert harvested_summary["path"].endswith(summary_json.name)
 

@@ -3,16 +3,15 @@ structure linkback, and terminal state. Pure functions, no Streamlit dependency.
 
 Extracted from event_stream.py for modularity.
 """
+
 from __future__ import annotations
 
-from skills.shared.event_stream_client import SSEEvent
-
 from frontend.app.event_stream_job_detail import (
-    derive_job_detail,
     _format_payload_preview,
+    derive_job_detail,
 )
 from frontend.app.event_stream_job_status import _severity_for_status
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Timeline row types
@@ -73,13 +72,15 @@ def derive_operator_timeline(
     job_id = detail.get("job_id") or "?"
     short_id = job_id[:8] if len(job_id) >= 8 else job_id
     case_id = detail.get("case_id") or ""
-    timeline.append({
-        "type": _TL_CREATED,
-        "timestamp": created_at,
-        "label": f"{job_type} {short_id} created",
-        "detail": f"case={case_id}" if case_id else "",
-        "severity": "info",
-    })
+    timeline.append(
+        {
+            "type": _TL_CREATED,
+            "timestamp": created_at,
+            "label": f"{job_type} {short_id} created",
+            "detail": f"case={case_id}" if case_id else "",
+            "severity": "info",
+        }
+    )
 
     # --- 2. Status + lifecycle events (merged into timeline) ---
     lifecycle_events = detail.get("lifecycle_events") or []
@@ -96,26 +97,30 @@ def derive_operator_timeline(
         # Skip creation-duplicate events (the 'created' row already covers it)
         if action.endswith(".created") or action == "job_created":
             continue
-        timeline.append({
-            "type": _TL_LIFECYCLE,
-            "timestamp": ts,
-            "label": action,
-            "detail": ev_detail,
-            "severity": ev_severity,
-        })
+        timeline.append(
+            {
+                "type": _TL_LIFECYCLE,
+                "timestamp": ts,
+                "label": action,
+                "detail": ev_detail,
+                "severity": ev_severity,
+            }
+        )
 
     # --- 3. Retry milestone ---
     attempt = detail.get("attempt")
     max_retries = detail.get("max_retries")
     if attempt is not None and attempt > 1:
         limit = (max_retries + 1) if max_retries is not None else "?"
-        timeline.append({
-            "type": _TL_RETRY,
-            "timestamp": "",
-            "label": f"Attempt {attempt}/{limit}",
-            "detail": f"max_retries={max_retries}" if max_retries is not None else "",
-            "severity": "warning",
-        })
+        timeline.append(
+            {
+                "type": _TL_RETRY,
+                "timestamp": "",
+                "label": f"Attempt {attempt}/{limit}",
+                "detail": f"max_retries={max_retries}" if max_retries is not None else "",
+                "severity": "warning",
+            }
+        )
 
     # --- 4. Structure linkback milestone ---
     linkback = detail.get("structure_linkback")
@@ -126,13 +131,15 @@ def derive_operator_timeline(
             link_parts.append(f"case={linkback['case_id']}")
         if linkback.get("structure_job_id"):
             link_parts.append(f"struct={linkback['structure_job_id'][:8]}")
-        timeline.append({
-            "type": _TL_LINKBACK,
-            "timestamp": "",
-            "label": lbl,
-            "detail": " | ".join(link_parts),
-            "severity": "info",
-        })
+        timeline.append(
+            {
+                "type": _TL_LINKBACK,
+                "timestamp": "",
+                "label": lbl,
+                "detail": " | ".join(link_parts),
+                "severity": "info",
+            }
+        )
 
     # --- 5. Result / error terminal state ---
     error = detail.get("error")
@@ -142,23 +149,27 @@ def derive_operator_timeline(
         error_str = str(error)
         if len(error_str) > 200:
             error_str = error_str[:197] + "..."
-        timeline.append({
-            "type": _TL_ERROR,
-            "timestamp": "",
-            "label": f"Failed: {status}",
-            "detail": error_str,
-            "severity": "error",
-        })
+        timeline.append(
+            {
+                "type": _TL_ERROR,
+                "timestamp": "",
+                "label": f"Failed: {status}",
+                "detail": error_str,
+                "severity": "error",
+            }
+        )
     elif result and isinstance(result, dict):
         result_status = result.get("status", "")
         result_preview = _format_payload_preview(result, max_len=140)
-        timeline.append({
-            "type": _TL_RESULT,
-            "timestamp": "",
-            "label": f"Result: {result_status or status}",
-            "detail": result_preview,
-            "severity": "ok" if result_status in ("completed", "ok") else "info",
-        })
+        timeline.append(
+            {
+                "type": _TL_RESULT,
+                "timestamp": "",
+                "label": f"Result: {result_status or status}",
+                "detail": result_preview,
+                "severity": "ok" if result_status in ("completed", "ok") else "info",
+            }
+        )
 
     # Sort by timestamp (empty strings sort last to keep order stable for
     # synthetic entries without timestamps)
@@ -222,12 +233,14 @@ def build_operator_timeline_rows(timeline: list[dict]) -> list[dict]:
     rows: list[dict] = []
     for row in timeline:
         rtype = row.get("type", "info")
-        rows.append({
-            "type": rtype,
-            "type_label": _TL_TYPE_LABELS.get(rtype, rtype),
-            "timestamp": row.get("timestamp", ""),
-            "label": row.get("label", ""),
-            "detail": row.get("detail", ""),
-            "severity": row.get("severity", "info"),
-        })
+        rows.append(
+            {
+                "type": rtype,
+                "type_label": _TL_TYPE_LABELS.get(rtype, rtype),
+                "timestamp": row.get("timestamp", ""),
+                "label": row.get("label", ""),
+                "detail": row.get("detail", ""),
+                "severity": row.get("severity", "info"),
+            }
+        )
     return rows

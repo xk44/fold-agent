@@ -1,16 +1,15 @@
 """FoldAgent Pipeline Module"""
 
-
 from backend.app.pipeline.base import (
+    MOCK_PIPELINE_STEPS,
+    MockAlignmentStep,
+    MockAnnotationStep,
+    MockCandidatePrioritizationStep,
+    MockVariantCallingStep,
     PipelineStep,
     StepResult,
     StepStatus,
-    MockAlignmentStep,
-    MockVariantCallingStep,
-    MockAnnotationStep,
-    MockCandidatePrioritizationStep,
     run_mock_pipeline,
-    MOCK_PIPELINE_STEPS,
 )
 
 __all__ = [

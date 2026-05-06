@@ -11,7 +11,7 @@ Provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Misfolding disease map
@@ -150,18 +150,50 @@ def assess_misfolding_risk(
 
 # Kyte-Doolittle hydrophobicity scale
 HYDROPHOBICITY: dict[str, float] = {
-    "A": 1.8, "R": -4.5, "N": -3.5, "D": -3.5, "C": 2.5,
-    "Q": -3.5, "E": -3.5, "G": -0.4, "H": -3.2, "I": 4.5,
-    "L": 3.8, "K": -3.9, "M": 1.9, "F": 2.8, "P": -1.6,
-    "S": -0.8, "T": -0.7, "W": -0.9, "Y": -1.3, "V": 4.2,
+    "A": 1.8,
+    "R": -4.5,
+    "N": -3.5,
+    "D": -3.5,
+    "C": 2.5,
+    "Q": -3.5,
+    "E": -3.5,
+    "G": -0.4,
+    "H": -3.2,
+    "I": 4.5,
+    "L": 3.8,
+    "K": -3.9,
+    "M": 1.9,
+    "F": 2.8,
+    "P": -1.6,
+    "S": -0.8,
+    "T": -0.7,
+    "W": -0.9,
+    "Y": -1.3,
+    "V": 4.2,
 }
 
 # Chou-Fasman beta-sheet propensity
 BETA_PROPENSITY: dict[str, float] = {
-    "A": 0.83, "R": 0.93, "N": 0.89, "D": 0.54, "C": 1.19,
-    "Q": 1.10, "E": 0.37, "G": 0.75, "H": 0.87, "I": 1.60,
-    "L": 1.30, "K": 0.74, "M": 1.05, "F": 1.38, "P": 0.55,
-    "S": 0.75, "T": 1.19, "W": 1.37, "Y": 1.47, "V": 1.70,
+    "A": 0.83,
+    "R": 0.93,
+    "N": 0.89,
+    "D": 0.54,
+    "C": 1.19,
+    "Q": 1.10,
+    "E": 0.37,
+    "G": 0.75,
+    "H": 0.87,
+    "I": 1.60,
+    "L": 1.30,
+    "K": 0.74,
+    "M": 1.05,
+    "F": 1.38,
+    "P": 0.55,
+    "S": 0.75,
+    "T": 1.19,
+    "W": 1.37,
+    "Y": 1.47,
+    "V": 1.70,
 }
 
 _WINDOW = 7
@@ -441,7 +473,13 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Gaucher disease",
         enzyme_deficiency="β-glucocerebrosidase (GCase)",
         substrate_accumulation="glucocerebroside",
-        available_therapies=["imiglucerase (Cerezyme)", "velaglucerase alfa (VPRIV)", "taliglucerase alfa (Elelyso)", "miglustat (Zavesca)", "eliglustat (Cerdelga)"],
+        available_therapies=[
+            "imiglucerase (Cerezyme)",
+            "velaglucerase alfa (VPRIV)",
+            "taliglucerase alfa (Elelyso)",
+            "miglustat (Zavesca)",
+            "eliglustat (Cerdelga)",
+        ],
         therapy_type="ERT",
     ),
     "GLA": LSDAnalysis(
@@ -449,7 +487,11 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Fabry disease",
         enzyme_deficiency="α-galactosidase A",
         substrate_accumulation="globotriaosylceramide (Gb3)",
-        available_therapies=["agalsidase alfa (Replagal)", "agalsidase beta (Fabrazyme)", "migalastat (Galafold)"],
+        available_therapies=[
+            "agalsidase alfa (Replagal)",
+            "agalsidase beta (Fabrazyme)",
+            "migalastat (Galafold)",
+        ],
         therapy_type="ERT",
     ),
     "GAA": LSDAnalysis(
@@ -457,7 +499,11 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Pompe disease (GSD-II)",
         enzyme_deficiency="acid α-glucosidase",
         substrate_accumulation="glycogen",
-        available_therapies=["alglucosidase alfa (Myozyme/Lumizyme)", "avalglucosidase alfa (Nexviazyme)", "cipaglucosidase alfa + miglustat"],
+        available_therapies=[
+            "alglucosidase alfa (Myozyme/Lumizyme)",
+            "avalglucosidase alfa (Nexviazyme)",
+            "cipaglucosidase alfa + miglustat",
+        ],
         therapy_type="ERT",
     ),
     "IDUA": LSDAnalysis(
@@ -481,7 +527,10 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Sanfilippo syndrome type A (MPS IIIA)",
         enzyme_deficiency="heparan N-sulfatase",
         substrate_accumulation="heparan sulfate",
-        available_therapies=["gene therapy (investigational)", "substrate reduction (investigational)"],
+        available_therapies=[
+            "gene therapy (investigational)",
+            "substrate reduction (investigational)",
+        ],
         therapy_type="gene_therapy",
     ),
     "SMPD1": LSDAnalysis(
@@ -505,7 +554,10 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Metachromatic leukodystrophy (MLD)",
         enzyme_deficiency="arylsulfatase A",
         substrate_accumulation="sulfatide",
-        available_therapies=["atidarsagene autotemcel (Libmeldy)", "hematopoietic stem cell transplant"],
+        available_therapies=[
+            "atidarsagene autotemcel (Libmeldy)",
+            "hematopoietic stem cell transplant",
+        ],
         therapy_type="gene_therapy",
     ),
     "HEXA": LSDAnalysis(
@@ -513,7 +565,10 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Tay-Sachs disease",
         enzyme_deficiency="β-hexosaminidase A (α-subunit)",
         substrate_accumulation="GM2 ganglioside",
-        available_therapies=["gene therapy (investigational)", "substrate reduction (miglustat, investigational)"],
+        available_therapies=[
+            "gene therapy (investigational)",
+            "substrate reduction (miglustat, investigational)",
+        ],
         therapy_type="gene_therapy",
     ),
     "HEXB": LSDAnalysis(
@@ -521,7 +576,10 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Sandhoff disease",
         enzyme_deficiency="β-hexosaminidase A and B (β-subunit)",
         substrate_accumulation="GM2 ganglioside, globoside",
-        available_therapies=["gene therapy (investigational)", "substrate reduction (investigational)"],
+        available_therapies=[
+            "gene therapy (investigational)",
+            "substrate reduction (investigational)",
+        ],
         therapy_type="gene_therapy",
     ),
     "CLN3": LSDAnalysis(
@@ -529,7 +587,10 @@ LYSOSOMAL_STORAGE_DISORDERS: dict[str, LSDAnalysis] = {
         disease_name="Batten disease (CLN3/juvenile NCL)",
         enzyme_deficiency="CLN3 (battenin) — lysosomal transmembrane protein",
         substrate_accumulation="ceroid lipofuscin (subunit c of ATP synthase)",
-        available_therapies=["cerliponase alfa (Brineura, CLN2)", "gene therapy (investigational for CLN3)"],
+        available_therapies=[
+            "cerliponase alfa (Brineura, CLN2)",
+            "gene therapy (investigational for CLN3)",
+        ],
         therapy_type="gene_therapy",
     ),
 }
@@ -564,7 +625,13 @@ _NEURODEG_DB: dict[str, NeurodegAnalysis] = {
             "peptides that form oligomers → protofibrils → amyloid plaques; "
             "hyperphosphorylated tau forms neurofibrillary tangles"
         ),
-        known_mutations=["APP V717I", "APP K670N/M671L", "PSEN1 M146L", "PSEN1 L166P", "PSEN2 N141I"],
+        known_mutations=[
+            "APP V717I",
+            "APP K670N/M671L",
+            "PSEN1 M146L",
+            "PSEN1 L166P",
+            "PSEN2 N141I",
+        ],
         therapeutic_strategies=[
             "β-secretase (BACE1) inhibitors",
             "γ-secretase modulators",
@@ -587,7 +654,14 @@ _NEURODEG_DB: dict[str, NeurodegAnalysis] = {
             "amyloid fibrils; Lewy body formation; NAC region (residues 61-95) drives "
             "aggregation nucleation"
         ),
-        known_mutations=["SNCA A53T", "SNCA A30P", "SNCA E46K", "SNCA G51D", "LRRK2 G2019S", "PARKIN exon 3 deletion"],
+        known_mutations=[
+            "SNCA A53T",
+            "SNCA A30P",
+            "SNCA E46K",
+            "SNCA G51D",
+            "LRRK2 G2019S",
+            "PARKIN exon 3 deletion",
+        ],
         therapeutic_strategies=[
             "α-synuclein aggregation inhibitors (ANLE138b)",
             "anti-α-synuclein immunotherapy (prasinezumab)",
@@ -610,7 +684,14 @@ _NEURODEG_DB: dict[str, NeurodegAnalysis] = {
             "TDP-43 (TARDBP) mislocalizes from nucleus to cytoplasm forming stress granule-seeded "
             "aggregates; FUS follows similar prion-like aggregation"
         ),
-        known_mutations=["SOD1 A4V", "SOD1 G93A", "SOD1 H46R", "TARDBP A315T", "FUS R521C", "C9orf72 GGGGCC repeat"],
+        known_mutations=[
+            "SOD1 A4V",
+            "SOD1 G93A",
+            "SOD1 H46R",
+            "TARDBP A315T",
+            "FUS R521C",
+            "C9orf72 GGGGCC repeat",
+        ],
         therapeutic_strategies=[
             "SOD1 antisense oligonucleotides (tofersen)",
             "TDP-43 nuclear retention strategies",
@@ -633,7 +714,11 @@ _NEURODEG_DB: dict[str, NeurodegAnalysis] = {
             "polyglutamine (polyQ) tract; polyQ >40 leads to misfolding, intranuclear inclusions, "
             "and transcriptional dysregulation"
         ),
-        known_mutations=["HTT polyQ>36 (reduced penetrance)", "HTT polyQ>40 (full penetrance)", "HTT polyQ>60 (juvenile onset)"],
+        known_mutations=[
+            "HTT polyQ>36 (reduced penetrance)",
+            "HTT polyQ>40 (full penetrance)",
+            "HTT polyQ>60 (juvenile onset)",
+        ],
         therapeutic_strategies=[
             "HTT-lowering ASOs (tominersen)",
             "RNAi/siRNA HTT silencing",
@@ -655,7 +740,13 @@ _NEURODEG_DB: dict[str, NeurodegAnalysis] = {
             "to PrP^Sc (β-sheet-rich scrapie form); PrP^Sc acts as a template propagating "
             "misfolding in a self-catalytic prion mechanism"
         ),
-        known_mutations=["PRNP D178N (FFI)", "PRNP E200K (sCJD)", "PRNP P102L (GSS)", "PRNP V210I", "PRNP Q212P"],
+        known_mutations=[
+            "PRNP D178N (FFI)",
+            "PRNP E200K (sCJD)",
+            "PRNP P102L (GSS)",
+            "PRNP V210I",
+            "PRNP Q212P",
+        ],
         therapeutic_strategies=[
             "PrP^C expression reduction (ASOs, RNAi)",
             "anti-PrP immunotherapy",

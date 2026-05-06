@@ -8,6 +8,7 @@ Covers:
   - Thread-safety smoke test
   - Backward-compatibility: existing test suite behaviour preserved
 """
+
 from __future__ import annotations
 
 import queue
@@ -17,9 +18,9 @@ from typing import Any
 import pytest
 
 from backend.app.event_stream import (
+    _BACKEND_REGISTRY,
     EventBackend,
     InMemoryEventBackend,
-    _BACKEND_REGISTRY,
     configure_backend,
     get_backend,
     publish_event,
@@ -27,10 +28,10 @@ from backend.app.event_stream import (
     subscribe,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _reset_global_backend():
@@ -43,6 +44,7 @@ def _reset_global_backend():
 # ---------------------------------------------------------------------------
 # InMemoryEventBackend – core behaviour
 # ---------------------------------------------------------------------------
+
 
 class TestInMemoryEventBackend:
     """Direct tests on the InMemoryEventBackend class."""
@@ -129,6 +131,7 @@ class TestInMemoryEventBackend:
 # Public facade – backward compatibility
 # ---------------------------------------------------------------------------
 
+
 class TestPublicFacade:
     """publish_event / subscribe should still work as before."""
 
@@ -162,8 +165,8 @@ class TestPublicFacade:
 # Backend registry & factory
 # ---------------------------------------------------------------------------
 
-class TestBackendRegistry:
 
+class TestBackendRegistry:
     def test_default_registry_contains_memory(self) -> None:
         assert "memory" in _BACKEND_REGISTRY
 
@@ -171,10 +174,15 @@ class TestBackendRegistry:
         class StubBackend(EventBackend):
             def publish(self, event_name: str, payload: dict[str, Any]) -> None:
                 pass
+
             def subscribe(self, max_queue_size: int = 100, prefixes: tuple[str, ...] | None = None):
                 class _CM:
-                    def __enter__(self_): return queue.Queue()
-                    def __exit__(self_, *a): pass
+                    def __enter__(self_):
+                        return queue.Queue()
+
+                    def __exit__(self_, *a):
+                        pass
+
                 return _CM()
 
         register_event_backend("stub", StubBackend)
@@ -209,8 +217,8 @@ class TestBackendRegistry:
 # Thread-safety smoke test
 # ---------------------------------------------------------------------------
 
-class TestThreadSafety:
 
+class TestThreadSafety:
     def test_concurrent_publish_subscribe(self) -> None:
         backend = InMemoryEventBackend()
         results: list[str] = []
@@ -252,7 +260,7 @@ class TestThreadSafety:
             barrier.wait()
             try:
                 with backend.subscribe() as q:
-                    #Publish from within subscriber context
+                    # Publish from within subscriber context
                     backend.publish("thread.test", {"src": threading.current_thread().name})
                     try:
                         envelope = q.get(timeout=1)
@@ -276,8 +284,8 @@ class TestThreadSafety:
 # Integration: facade + backend switching
 # ---------------------------------------------------------------------------
 
-class TestBackendSwitchingIntegration:
 
+class TestBackendSwitchingIntegration:
     def test_switching_backend_mid_flow_publishes_to_new(self) -> None:
         original = InMemoryEventBackend()
         configure_backend(backend=original)

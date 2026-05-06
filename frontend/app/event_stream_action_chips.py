@@ -6,15 +6,15 @@ Extracted from event_stream.py for modularity.  This module depends on
 :mod:`event_stream_job_detail` (for ``derive_structure_linkback``) and
 :mod:`event_stream_job_retry` (for ``is_retry_eligible``).
 """
+
 from __future__ import annotations
 
-from frontend.app.event_stream_job_detail import derive_structure_linkback
-from frontend.app.event_stream_job_retry import is_retry_eligible
 from frontend.app.event_stream_context import (
     _CTX_PREFOCUS_ARTIFACT_KEY,
     _CTX_PREFOCUS_AUTO_OPEN_KEY,
 )
-
+from frontend.app.event_stream_job_detail import derive_structure_linkback
+from frontend.app.event_stream_job_retry import is_retry_eligible
 
 # ---------------------------------------------------------------------------
 # Chip action types
@@ -137,9 +137,8 @@ def derive_macro_focus_bundle(
     payload = detail.get("payload") or {}
 
     # --- Report dimension ---
-    report_id = (
-        (result.get("report_id") if isinstance(result, dict) else None)
-        or (payload.get("report_id") if isinstance(payload, dict) else None)
+    report_id = (result.get("report_id") if isinstance(result, dict) else None) or (
+        payload.get("report_id") if isinstance(payload, dict) else None
     )
     if not report_id and isinstance(result, dict):
         nested_report = result.get("report") or {}
@@ -191,9 +190,8 @@ def derive_macro_focus_bundle(
         "shell_execution",
     }
     status = detail.get("status", "unknown")
-    has_artifacts = (
-        len(artifact_paths) > 0
-        or (status == "completed" and job_type in artifact_producing_types)
+    has_artifacts = len(artifact_paths) > 0 or (
+        status == "completed" and job_type in artifact_producing_types
     )
 
     # --- Dimensions count ---
@@ -277,6 +275,7 @@ def derive_macro_focus_prefocus(bundle: dict | None) -> dict | None:
 # ---------------------------------------------------------------------------
 # Exact-open metadata — decide whether artifact content should auto-load
 # ---------------------------------------------------------------------------
+
 
 def derive_exact_open_metadata(bundle: dict | None) -> dict | None:
     """Derive exact-open metadata from a macro-focus bundle.
@@ -363,47 +362,54 @@ def derive_job_detail_actions(
         attempt = detail.get("attempt", 1) or 1
         max_retries = detail.get("max_retries", 0) or 0
         retries_remaining = (max_retries + 1) - attempt
-        chips.append({
-            "action": CHIP_RETRY,
-            "label": "Retry",
-            "description": f"Re-dispatch this failed job ({retries_remaining} attempt(s) remaining)",
-            "enabled": True,
-            "data": {
-                "job_id": job_id,
-                "job_type": job_type,
-                "attempt": attempt,
-                "max_retries": max_retries,
-            },
-        })
+        chips.append(
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": f"Re-dispatch this failed job ({retries_remaining} attempt(s) remaining)",
+                "enabled": True,
+                "data": {
+                    "job_id": job_id,
+                    "job_type": job_type,
+                    "attempt": attempt,
+                    "max_retries": max_retries,
+                },
+            }
+        )
 
     # --- View structure chip ---
     linkback = derive_structure_linkback(job_card, api_job=api_job)
     if linkback:
-        chips.append({
-            "action": CHIP_VIEW_STRUCTURE,
-            "label": linkback.get("label", "View structure"),
-            "description": (
-                f"Open structure job explorer for case {linkback.get('case_id', '?')}"
-                + (f", structure {linkback['structure_job_id'][:8]}" if linkback.get("structure_job_id") else "")
-            ),
-            "enabled": True,
-            "data": {
-                "job_id": job_id,
-                "case_id": linkback.get("case_id", case_id),
-                "structure_job_id": linkback.get("structure_job_id"),
-                "candidate_id": linkback.get("candidate_id"),
-                "surface": linkback.get("surface", "structure_job_explorer"),
-            },
-        })
+        chips.append(
+            {
+                "action": CHIP_VIEW_STRUCTURE,
+                "label": linkback.get("label", "View structure"),
+                "description": (
+                    f"Open structure job explorer for case {linkback.get('case_id', '?')}"
+                    + (
+                        f", structure {linkback['structure_job_id'][:8]}"
+                        if linkback.get("structure_job_id")
+                        else ""
+                    )
+                ),
+                "enabled": True,
+                "data": {
+                    "job_id": job_id,
+                    "case_id": linkback.get("case_id", case_id),
+                    "structure_job_id": linkback.get("structure_job_id"),
+                    "candidate_id": linkback.get("candidate_id"),
+                    "surface": linkback.get("surface", "structure_job_explorer"),
+                },
+            }
+        )
 
     # --- View report chip ---
     # Derivable when result has report_id, or payload references a report,
     # or the job is a completed pipeline run (which typically generates reports).
     result = detail.get("result") or {}
     payload = detail.get("payload") or {}
-    report_id = (
-        (result.get("report_id") if isinstance(result, dict) else None)
-        or (payload.get("report_id") if isinstance(payload, dict) else None)
+    report_id = (result.get("report_id") if isinstance(result, dict) else None) or (
+        payload.get("report_id") if isinstance(payload, dict) else None
     )
     # Also check for report in nested result structures
     if not report_id and isinstance(result, dict):
@@ -419,21 +425,24 @@ def derive_job_detail_actions(
     )
 
     if has_likely_report:
-        chips.append({
-            "action": CHIP_VIEW_REPORT,
-            "label": "View report",
-            "description": (
-                f"Open report {report_id[:8]}" if report_id
-                else f"Open latest report for case {case_id[:8] if case_id else '?'}"
-            ),
-            "enabled": True,
-            "data": {
-                "job_id": job_id,
-                "case_id": case_id,
-                "report_id": report_id,
-                "job_type": job_type,
-            },
-        })
+        chips.append(
+            {
+                "action": CHIP_VIEW_REPORT,
+                "label": "View report",
+                "description": (
+                    f"Open report {report_id[:8]}"
+                    if report_id
+                    else f"Open latest report for case {case_id[:8] if case_id else '?'}"
+                ),
+                "enabled": True,
+                "data": {
+                    "job_id": job_id,
+                    "case_id": case_id,
+                    "report_id": report_id,
+                    "job_type": job_type,
+                },
+            }
+        )
 
     # --- View artifacts chip ---
     # Derivable when result references artifact paths, or the job type
@@ -464,27 +473,29 @@ def derive_job_detail_actions(
         "alphafold_structure",
         "shell_execution",
     }
-    has_artifacts = (
-        len(artifact_paths) > 0
-        or (status == "completed" and job_type in artifact_producing_types)
+    has_artifacts = len(artifact_paths) > 0 or (
+        status == "completed" and job_type in artifact_producing_types
     )
 
     if has_artifacts:
-        chips.append({
-            "action": CHIP_VIEW_ARTIFACTS,
-            "label": "View artifacts",
-            "description": (
-                f"Browse {len(artifact_paths)} artifact(s)" if artifact_paths
-                else f"Browse artifacts for case {case_id[:8] if case_id else '?'}"
-            ),
-            "enabled": True,
-            "data": {
-                "job_id": job_id,
-                "case_id": case_id,
-                "artifact_paths": artifact_paths,
-                "job_type": job_type,
-            },
-        })
+        chips.append(
+            {
+                "action": CHIP_VIEW_ARTIFACTS,
+                "label": "View artifacts",
+                "description": (
+                    f"Browse {len(artifact_paths)} artifact(s)"
+                    if artifact_paths
+                    else f"Browse artifacts for case {case_id[:8] if case_id else '?'}"
+                ),
+                "enabled": True,
+                "data": {
+                    "job_id": job_id,
+                    "case_id": case_id,
+                    "artifact_paths": artifact_paths,
+                    "job_type": job_type,
+                },
+            }
+        )
 
     # --- Macro focus chip ---
     # Available when the job has enough metadata to preselect at least
@@ -498,16 +509,18 @@ def derive_job_detail_actions(
             dim_labels.append("structure")
         if macro_bundle.get("has_artifacts"):
             dim_labels.append("artifacts")
-        chips.append({
-            "action": CHIP_MACRO_FOCUS,
-            "label": "Focus all",
-            "description": (
-                f"One-click focus: {' + '.join(dim_labels)} "
-                f"for case {case_id[:8] if case_id else '?'}"
-            ),
-            "enabled": True,
-            "data": macro_bundle,
-        })
+        chips.append(
+            {
+                "action": CHIP_MACRO_FOCUS,
+                "label": "Focus all",
+                "description": (
+                    f"One-click focus: {' + '.join(dim_labels)} "
+                    f"for case {case_id[:8] if case_id else '?'}"
+                ),
+                "enabled": True,
+                "data": macro_bundle,
+            }
+        )
 
     return chips
 

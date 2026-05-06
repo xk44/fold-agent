@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from backend.app.models import AuditLog, Case, CandidateAntigen, Report, Sample, Subject, Variant
+from backend.app.models import AuditLog, CandidateAntigen, Case, Report, Sample, Subject, Variant
 from backend.app.seed_demo import seed_demo_database
 
 
@@ -27,9 +27,14 @@ def test_seed_demo_database_bootstraps_case_graph(tmp_path) -> None:
         assert db.query(Sample).filter(Sample.case_id == case.id).count() == 2
         assert db.query(Variant).filter(Variant.case_id == case.id).count() >= 1
         assert db.query(CandidateAntigen).filter(CandidateAntigen.case_id == case.id).count() >= 1
-        report_types = {report.report_type for report in db.query(Report).filter(Report.case_id == case.id).all()}
+        report_types = {
+            report.report_type
+            for report in db.query(Report).filter(Report.case_id == case.id).all()
+        }
         assert {"candidate_review", "ethics_package"}.issubset(report_types)
-        actions = [entry.action for entry in db.query(AuditLog).filter(AuditLog.case_id == case.id).all()]
+        actions = [
+            entry.action for entry in db.query(AuditLog).filter(AuditLog.case_id == case.id).all()
+        ]
         assert "demo.seeded" in actions
 
 

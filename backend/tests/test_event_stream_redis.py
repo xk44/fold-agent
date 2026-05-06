@@ -18,30 +18,29 @@ import os
 import queue
 import threading
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from backend.app.event_stream import (
-    EventBackend,
-    InMemoryEventBackend,
-    _BACKEND_REGISTRY,
-    configure_backend,
-    get_backend,
-    publish_event,
-    register_event_backend,
-    subscribe,
-)
 from backend.app.event_backends.redis_backend import (
     CHANNEL_DEFAULT,
     RedisEventBackend,
+)
+from backend.app.event_backends.redis_backend import (
     _Subscriber as _RedisSubscriber,
 )
-
+from backend.app.event_stream import (
+    _BACKEND_REGISTRY,
+    InMemoryEventBackend,
+    configure_backend,
+    publish_event,
+    subscribe,
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 class _FakePubSub:
     """Minimal mock of ``redis.client.PubSub``.
@@ -82,12 +81,14 @@ class _FakePubSub:
     def inject(self, data: str, channel: str = CHANNEL_DEFAULT) -> None:
         """Inject a message as if it arrived from Redis."""
         with self._lock:
-            self._messages.append({
-                "type": "message",
-                "channel": channel,
-                "data": data,
-                "pattern": None,
-            })
+            self._messages.append(
+                {
+                    "type": "message",
+                    "channel": channel,
+                    "data": data,
+                    "pattern": None,
+                }
+            )
 
 
 class _FakeRedis:
@@ -137,6 +138,7 @@ def _make_backend_with_mock(
 # ---------------------------------------------------------------------------
 # RedisEventBackend – local delivery
 # ---------------------------------------------------------------------------
+
 
 class TestRedisBackendLocalDelivery:
     """Local (in-process) delivery – synchronous, no Redis round-trip."""
@@ -209,6 +211,7 @@ class TestRedisBackendLocalDelivery:
 # RedisEventBackend – Redis publish
 # ---------------------------------------------------------------------------
 
+
 class TestRedisBackendPublishToRedis:
     """Verify that ``publish()`` calls ``redis.Redis.publish()``."""
 
@@ -237,6 +240,7 @@ class TestRedisBackendPublishToRedis:
 # RedisEventBackend – listener thread & cross-process delivery
 # ---------------------------------------------------------------------------
 
+
 class TestRedisBackendListener:
     """Cross-process delivery via the background listener thread."""
 
@@ -246,11 +250,13 @@ class TestRedisBackendListener:
 
         with backend.subscribe(prefixes=("remote.",)) as q:
             # Simulate a message from another process (different PID)
-            remote_envelope = json.dumps({
-                "event": "remote.update",
-                "payload": {"x": 42},
-                "_src_pid": 99999,  # different PID
-            })
+            remote_envelope = json.dumps(
+                {
+                    "event": "remote.update",
+                    "payload": {"x": 42},
+                    "_src_pid": 99999,  # different PID
+                }
+            )
             fake_pubsub.inject(remote_envelope)
 
             # Give the listener thread a moment to process
@@ -292,11 +298,13 @@ class TestRedisBackendListener:
         fake_pubsub = fake_redis._pubsub
 
         # Inject a message from a remote process
-        remote_msg = json.dumps({
-            "event": "remote.eta",
-            "payload": {"eta": 5},
-            "_src_pid": 99999,
-        })
+        remote_msg = json.dumps(
+            {
+                "event": "remote.eta",
+                "payload": {"eta": 5},
+                "_src_pid": 99999,
+            }
+        )
         fake_pubsub.inject(remote_msg)
 
         # Manually invoke one iteration of message processing
@@ -320,6 +328,7 @@ class TestRedisBackendListener:
 # ---------------------------------------------------------------------------
 # RedisEventBackend – resilience
 # ---------------------------------------------------------------------------
+
 
 class TestRedisBackendResilience:
     """Behaviour when Redis is unavailable."""
@@ -353,6 +362,7 @@ class TestRedisBackendResilience:
 # Redis subscriber matching (unit-test _Subscriber)
 # ---------------------------------------------------------------------------
 
+
 class TestRedisSubscriber:
     """Unit tests for the _Subscriber helper."""
 
@@ -372,8 +382,8 @@ class TestRedisSubscriber:
 # Backend registry integration
 # ---------------------------------------------------------------------------
 
-class TestRedisBackendRegistry:
 
+class TestRedisBackendRegistry:
     def test_redis_registered_in_registry(self) -> None:
         assert "redis" in _BACKEND_REGISTRY
         assert _BACKEND_REGISTRY["redis"] is RedisEventBackend
@@ -409,6 +419,7 @@ class TestRedisBackendRegistry:
 # ---------------------------------------------------------------------------
 # Public facade with Redis backend
 # ---------------------------------------------------------------------------
+
 
 class TestPublicFacadeWithRedis:
     """Verify publish_event / subscribe still work with Redis backend."""

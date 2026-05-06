@@ -62,9 +62,9 @@ def parse_scan_results(output: str) -> dict:
     A real implementation would parse trivy/grype JSON output.
     """
     lines = output.strip().splitlines()
-    vulnerability_lines = [l for l in lines if any(
-        sev in l.upper() for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW")
-    )]
+    vulnerability_lines = [
+        l for l in lines if any(sev in l.upper() for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"))
+    ]
     return {
         "raw_output": output,
         "vulnerability_count": len(vulnerability_lines),

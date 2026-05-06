@@ -4,9 +4,6 @@ Python client for interacting with the FoldAgent API.
 All agent skills (Claude Code, OpenClaw, Hermes) share this client.
 """
 
-from typing import Optional
-from urllib.parse import urljoin
-
 import httpx
 
 
@@ -22,7 +19,7 @@ DEFAULT_BASE_URL = "http://localhost:8010"
 class FoldAgentClient:
     """Client for the FoldAgent API with built-in safety checks."""
 
-    def __init__(self, base_url: str = DEFAULT_BASE_URL, api_key: Optional[str] = None):
+    def __init__(self, base_url: str = DEFAULT_BASE_URL, api_key: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.client = httpx.Client(base_url=self.base_url, timeout=30.0)
@@ -33,12 +30,12 @@ class FoldAgentClient:
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
-    def _post(self, path: str, json: Optional[dict] = None, params: Optional[dict] = None) -> dict:
+    def _post(self, path: str, json: dict | None = None, params: dict | None = None) -> dict:
         response = self.client.post(path, json=json, params=params, headers=self._headers())
         response.raise_for_status()
         return response.json()
 
-    def _get(self, path: str, params: Optional[dict] = None):
+    def _get(self, path: str, params: dict | None = None):
         response = self.client.get(path, params=params, headers=self._headers())
         response.raise_for_status()
         return response
@@ -55,7 +52,7 @@ class FoldAgentClient:
 
     # --- Safety Preflight ---
 
-    def safety_preflight(self, action: str, content: Optional[str] = None, **kwargs) -> dict:
+    def safety_preflight(self, action: str, content: str | None = None, **kwargs) -> dict:
         """Run safety preflight check before an action.
 
         MUST be called before any write, export, or agent action.
@@ -113,7 +110,9 @@ class FoldAgentClient:
     def register_sample(self, case_id: str, sample_type: str, **kwargs) -> dict:
         """Register a sample for a case."""
         payload = {"sample_type": sample_type, **kwargs}
-        response = self.client.post(f"/cases/{case_id}/samples", json=payload, headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/samples", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -135,7 +134,7 @@ class FoldAgentClient:
         """Start the bioinformatics pipeline for a case."""
         case = self.get_case(case_id)
         preflight = self.safety_preflight("run_pipeline", species_mode=case["species"])
-        if preflight.get("status") == "block":
+        if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")
         response = self.client.post(f"/cases/{case_id}/pipeline/run", headers=self._headers())
         response.raise_for_status()
@@ -164,7 +163,9 @@ class FoldAgentClient:
     def review_variant(self, variant_id: str, review_status: str, notes: str = "") -> dict:
         """Review a variant."""
         payload = {"review_status": review_status, "expert_review_notes": notes}
-        response = self.client.patch(f"/variants/{variant_id}/review", json=payload, headers=self._headers())
+        response = self.client.patch(
+            f"/variants/{variant_id}/review", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -179,7 +180,9 @@ class FoldAgentClient:
     def review_candidate(self, candidate_id: str, review_status: str, notes: str = "") -> dict:
         """Review a candidate antigen."""
         payload = {"review_status": review_status, "expert_review_notes": notes}
-        response = self.client.patch(f"/candidates/{candidate_id}/review", json=payload, headers=self._headers())
+        response = self.client.patch(
+            f"/candidates/{candidate_id}/review", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -216,13 +219,17 @@ class FoldAgentClient:
 
     def export_report(self, report_id: str, format: str = "markdown") -> dict:
         """Export a report as markdown or json payload."""
-        response = self.client.get(f"/reports/{report_id}/export", params={"format": format}, headers=self._headers())
+        response = self.client.get(
+            f"/reports/{report_id}/export", params={"format": format}, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
     def save_report(self, report_id: str, format: str = "markdown") -> dict:
         """Persist a report export to disk."""
-        response = self.client.post(f"/reports/{report_id}/save", params={"format": format}, headers=self._headers())
+        response = self.client.post(
+            f"/reports/{report_id}/save", params={"format": format}, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -234,13 +241,17 @@ class FoldAgentClient:
 
     def export_case_bundle(self, case_id: str, format: str = "markdown") -> dict:
         """Export a case bundle as markdown or json payload."""
-        response = self.client.get(f"/cases/{case_id}/bundle/export", params={"format": format}, headers=self._headers())
+        response = self.client.get(
+            f"/cases/{case_id}/bundle/export", params={"format": format}, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
     def save_case_bundle(self, case_id: str, format: str = "markdown") -> dict:
         """Persist a case bundle export to disk."""
-        response = self.client.post(f"/cases/{case_id}/bundle/save", params={"format": format}, headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/bundle/save", params={"format": format}, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -252,7 +263,9 @@ class FoldAgentClient:
 
     def download_artifact(self, path: str) -> bytes:
         """Download a saved artifact file."""
-        response = self.client.get("/artifacts/file", params={"path": path}, headers=self._headers())
+        response = self.client.get(
+            "/artifacts/file", params={"path": path}, headers=self._headers()
+        )
         response.raise_for_status()
         return response.content
 
@@ -303,18 +316,22 @@ class FoldAgentClient:
     def generate_candidate_review_report(self, case_id: str) -> dict:
         """Generate a candidate-antigen review report."""
         preflight = self.safety_preflight("generate_report", report_type="candidate_review")
-        if preflight.get("status") == "block":
+        if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")
-        response = self.client.post(f"/cases/{case_id}/reports/candidate-review", headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/reports/candidate-review", headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
     def generate_ethics_package(self, case_id: str) -> dict:
         """Generate an ethics/veterinary review package."""
         preflight = self.safety_preflight("generate_report", report_type="ethics_package")
-        if preflight.get("status") == "block":
+        if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")
-        response = self.client.post(f"/cases/{case_id}/reports/ethics-package", headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/reports/ethics-package", headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -323,7 +340,9 @@ class FoldAgentClient:
     def create_agent_task(self, case_id: str, framework: str, skill_name: str, **kwargs) -> dict:
         """Create an agent task."""
         payload = {"framework": framework, "skill_name": skill_name, **kwargs}
-        response = self.client.post(f"/cases/{case_id}/agent-tasks", json=payload, headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/agent-tasks", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
@@ -334,14 +353,16 @@ class FoldAgentClient:
         return response.json()
 
     def update_agent_task(self, task_id: str, **kwargs) -> dict:
-        """Update an agent task via the current /agent/tasks route."""
-        response = self.client.patch(f"/agent/tasks/{task_id}", json=kwargs, headers=self._headers())
+        """Update an agent task."""
+        response = self.client.patch(
+            f"/agent-tasks/{task_id}", json=kwargs, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
     # --- Background Jobs ---
 
-    def list_background_jobs(self, case_id: Optional[str] = None, status: Optional[str] = None) -> list:
+    def list_background_jobs(self, case_id: str | None = None, status: str | None = None) -> list:
         """List background jobs, optionally filtered by case_id and/or status."""
         params: dict = {}
         if case_id is not None:
@@ -378,25 +399,44 @@ class FoldAgentClient:
         response.raise_for_status()
         return response.json()
 
-    def redact_case(self, case_id: str, redaction_level: str, confirm: bool = False, reason: Optional[str] = None) -> dict:
+    def redact_case(
+        self, case_id: str, redaction_level: str, confirm: bool = False, reason: str | None = None
+    ) -> dict:
         """Apply a redaction level to a case and all its subjects."""
         payload = {"redaction_level": redaction_level, "confirm": confirm}
         if reason is not None:
             payload["reason"] = reason
-        response = self.client.post(f"/cases/{case_id}/redact", json=payload, headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/redact", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
-    def redact_subject(self, case_id: str, subject_id: str, redaction_level: str, confirm: bool = False, reason: Optional[str] = None) -> dict:
+    def redact_subject(
+        self,
+        case_id: str,
+        subject_id: str,
+        redaction_level: str,
+        confirm: bool = False,
+        reason: str | None = None,
+    ) -> dict:
         """Apply a redaction level to an individual subject."""
         payload = {"redaction_level": redaction_level, "confirm": confirm}
         if reason is not None:
             payload["reason"] = reason
-        response = self.client.post(f"/cases/{case_id}/subjects/{subject_id}/redact", json=payload, headers=self._headers())
+        response = self.client.post(
+            f"/cases/{case_id}/subjects/{subject_id}/redact", json=payload, headers=self._headers()
+        )
         response.raise_for_status()
         return response.json()
 
-    def delete_case(self, case_id: str, confirm: bool = False, hard_delete: bool = False, reason: Optional[str] = None) -> dict:
+    def delete_case(
+        self,
+        case_id: str,
+        confirm: bool = False,
+        hard_delete: bool = False,
+        reason: str | None = None,
+    ) -> dict:
         """Soft-delete or hard-delete a case."""
         params = {"confirm": confirm, "hard_delete": hard_delete}
         if reason is not None:

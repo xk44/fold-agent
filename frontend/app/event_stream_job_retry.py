@@ -2,8 +2,8 @@
 
 Extracted from event_stream.py for modularity.
 """
-from __future__ import annotations
 
+from __future__ import annotations
 
 # Terminal statuses that can be retried (match backend BackgroundJobStatusEnum)
 _RETRYABLE_STATUSES = {"failed", "timed_out"}
@@ -63,16 +63,10 @@ def retry_eligibility_reason(card_or_job: dict) -> str:
     limit = max_retries + 1
 
     if next_attempt > limit:
-        return (
-            f"Retry budget exhausted: attempt {attempt}/{limit}, "
-            f"max_retries={max_retries}"
-        )
+        return f"Retry budget exhausted: attempt {attempt}/{limit}, max_retries={max_retries}"
 
     retries_remaining = limit - attempt
-    return (
-        f"Eligible for retry: attempt {attempt}/{limit}, "
-        f"{retries_remaining} retry(s) remaining"
-    )
+    return f"Eligible for retry: attempt {attempt}/{limit}, {retries_remaining} retry(s) remaining"
 
 
 def format_retry_status_badge(card_or_job: dict) -> str:
@@ -162,7 +156,6 @@ def is_cancel_eligible(card_or_job: dict) -> bool:
     return card_or_job.get("status", "") in _CANCELLABLE_STATUSES
 
 
-
 def cancel_eligibility_reason(card_or_job: dict) -> str:
     """Return a human-readable reason for job cancellation eligibility."""
     source = card_or_job.get("source", "api")
@@ -176,7 +169,6 @@ def cancel_eligibility_reason(card_or_job: dict) -> str:
     return f"Status '{status}' is not cancellable (only pending/running)"
 
 
-
 def format_cancel_status_badge(card_or_job: dict) -> str:
     """Return a compact status badge string for cancellation eligibility."""
     has_identity = card_or_job.get("job_id") or card_or_job.get("id")
@@ -186,7 +178,6 @@ def format_cancel_status_badge(card_or_job: dict) -> str:
     if card_or_job.get("status", "") not in _CANCELLABLE_STATUSES:
         return "—"
     return "■ CANCEL OK"
-
 
 
 def enrich_cards_with_cancel_info(cards: list[dict]) -> list[dict]:
@@ -199,7 +190,6 @@ def enrich_cards_with_cancel_info(cards: list[dict]) -> list[dict]:
         new_card["cancel_badge"] = format_cancel_status_badge(card)
         enriched.append(new_card)
     return enriched
-
 
 
 def format_cancel_action_summary(enriched_cards: list[dict]) -> str:

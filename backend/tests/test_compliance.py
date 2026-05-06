@@ -12,14 +12,11 @@ Covers:
 
 from __future__ import annotations
 
-import json
-
 import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.compliance import (
     CLOUD_BACKENDS,
-    CREDENTIAL_MODE_REQUIREMENTS,
     HIPAA_SAFEGUARDS_MATRIX,
     LOCAL_BACKENDS,
     THERAPEUTIC_MODES,
@@ -29,7 +26,6 @@ from backend.app.compliance import (
     HashChainedAuditLog,
     HIPAAComplianceReport,
     IRBGateError,
-    IRBReadinessCheck,
     IRBSubmission,
     PHIFieldType,
     ProfessionalCredential,
@@ -49,7 +45,6 @@ from backend.app.compliance import (
     watermark_pdb,
     watermark_report,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -421,7 +416,9 @@ class TestCredentialAttestation:
         assert att.institution == "Caltech"
 
     def test_attest_optional_license_number(self) -> None:
-        att = attest_credentials("user5", ProfessionalCredential.md, "MGH", license_number="MD12345")
+        att = attest_credentials(
+            "user5", ProfessionalCredential.md, "MGH", license_number="MD12345"
+        )
         assert att.license_number == "MD12345"
 
     def test_attest_without_license_number(self) -> None:
@@ -434,7 +431,8 @@ class TestCredentialAttestation:
 
     def test_attest_expires_in_365_days(self) -> None:
         att = attest_credentials("user8", ProfessionalCredential.phd, "MIT")
-        from datetime import datetime, UTC
+        from datetime import datetime
+
         attested = datetime.fromisoformat(att.attested_at)
         expires = datetime.fromisoformat(att.expires_at)
         delta = expires - attested
@@ -549,25 +547,31 @@ class TestEnforceResidency:
 
 class TestIRBCheckEndpoint:
     def test_post_irb_check_pass(self, client: TestClient) -> None:
-        resp = client.post("/compliance/irb-check", json={
-            "institution": "Test University",
-            "irb_protocol_number": "IRB-001",
-            "pi_name": "Dr. Test",
-            "data_use_agreement_signed": True,
-            "human_subjects_approval": True,
-        })
+        resp = client.post(
+            "/compliance/irb-check",
+            json={
+                "institution": "Test University",
+                "irb_protocol_number": "IRB-001",
+                "pi_name": "Dr. Test",
+                "data_use_agreement_signed": True,
+                "human_subjects_approval": True,
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["passed"] is True
 
     def test_post_irb_check_fail_missing_dua(self, client: TestClient) -> None:
-        resp = client.post("/compliance/irb-check", json={
-            "institution": "Test University",
-            "irb_protocol_number": "IRB-001",
-            "pi_name": "Dr. Test",
-            "data_use_agreement_signed": False,
-            "human_subjects_approval": True,
-        })
+        resp = client.post(
+            "/compliance/irb-check",
+            json={
+                "institution": "Test University",
+                "irb_protocol_number": "IRB-001",
+                "pi_name": "Dr. Test",
+                "data_use_agreement_signed": False,
+                "human_subjects_approval": True,
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["passed"] is False
@@ -576,17 +580,17 @@ class TestIRBCheckEndpoint:
 
 class TestHIPAAAssessEndpoint:
     def test_post_hipaa_assess_no_phi(self, client: TestClient) -> None:
-        resp = client.post("/compliance/hipaa-assess", json={
-            "data_fields": ["binding_score", "peptide_sequence"]
-        })
+        resp = client.post(
+            "/compliance/hipaa-assess", json={"data_fields": ["binding_score", "peptide_sequence"]}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["compliant"] is True
 
     def test_post_hipaa_assess_with_phi(self, client: TestClient) -> None:
-        resp = client.post("/compliance/hipaa-assess", json={
-            "data_fields": ["ssn", "name", "binding_score"]
-        })
+        resp = client.post(
+            "/compliance/hipaa-assess", json={"data_fields": ["ssn", "name", "binding_score"]}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data["safeguards"]) >= 2
@@ -594,9 +598,10 @@ class TestHIPAAAssessEndpoint:
 
 class TestHIPAASeparatePHIEndpoint:
     def test_post_hipaa_separate_phi(self, client: TestClient) -> None:
-        resp = client.post("/compliance/hipaa-separate-phi", json={
-            "record": {"ssn": "123", "binding_score": 0.9, "email": "x@y.com"}
-        })
+        resp = client.post(
+            "/compliance/hipaa-separate-phi",
+            json={"record": {"ssn": "123", "binding_score": 0.9, "email": "x@y.com"}},
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "ssn" in data["phi_fields"]
@@ -608,11 +613,14 @@ class TestAuditEndpoints:
     def test_append_and_verify(self, client: TestClient) -> None:
         # Clear first
         audit_log.clear()
-        resp = client.post("/compliance/audit/append", json={
-            "action": "test_action",
-            "user": "test_user",
-            "details": {"key": "value"},
-        })
+        resp = client.post(
+            "/compliance/audit/append",
+            json={
+                "action": "test_action",
+                "user": "test_user",
+                "details": {"key": "value"},
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["action"] == "test_action"
@@ -637,18 +645,21 @@ class TestAuditEndpoints:
 
 class TestWatermarkEndpoints:
     def test_post_watermark_pdb(self, client: TestClient) -> None:
-        resp = client.post("/compliance/watermark-pdb", json={
-            "pdb_data": "ATOM      1  N   ALA A   1\n"
-        })
+        resp = client.post(
+            "/compliance/watermark-pdb", json={"pdb_data": "ATOM      1  N   ALA A   1\n"}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert WATERMARK_TEXT in data["data"]
 
     def test_post_watermark_report(self, client: TestClient) -> None:
-        resp = client.post("/compliance/watermark-report", json={
-            "report_text": "<p>Research report</p>",
-            "format": "html",
-        })
+        resp = client.post(
+            "/compliance/watermark-report",
+            json={
+                "report_text": "<p>Research report</p>",
+                "format": "html",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert WATERMARK_TEXT in data["data"]
@@ -659,11 +670,14 @@ class TestAttestationEndpoints:
         _attestation_store.clear()
 
     def test_post_attest_credentials(self, client: TestClient) -> None:
-        resp = client.post("/compliance/attest-credentials", json={
-            "user_id": "api_user",
-            "credential": "phd",
-            "institution": "Test U",
-        })
+        resp = client.post(
+            "/compliance/attest-credentials",
+            json={
+                "user_id": "api_user",
+                "credential": "phd",
+                "institution": "Test U",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["user_id"] == "api_user"
@@ -671,19 +685,25 @@ class TestAttestationEndpoints:
 
     def test_post_check_mode_access_allowed(self, client: TestClient) -> None:
         attest_credentials("api_user2", ProfessionalCredential.phd, "MIT")
-        resp = client.post("/compliance/check-mode-access", json={
-            "user_id": "api_user2",
-            "mode": "drug_discovery",
-        })
+        resp = client.post(
+            "/compliance/check-mode-access",
+            json={
+                "user_id": "api_user2",
+                "mode": "drug_discovery",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["allowed"] is True
 
     def test_post_check_mode_access_blocked(self, client: TestClient) -> None:
-        resp = client.post("/compliance/check-mode-access", json={
-            "user_id": "unattest_user",
-            "mode": "gene_therapy",
-        })
+        resp = client.post(
+            "/compliance/check-mode-access",
+            json={
+                "user_id": "unattest_user",
+                "mode": "gene_therapy",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["allowed"] is False

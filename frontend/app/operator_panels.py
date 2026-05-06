@@ -16,12 +16,14 @@ surface independently testable / reusable.
 
 Only Streamlit render helpers — pure logic stays in event_stream.py.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import streamlit as st
 
+from frontend.app.dashboard_helpers import normalize_table_rows
 from frontend.app.event_stream import (
     _CTX_EVENT_KEY,
     _CTX_FILTER_CASE_ID_KEY,
@@ -50,7 +52,6 @@ from frontend.app.event_stream import (
     format_operator_timeline,
     format_retry_action_summary,
 )
-from frontend.app.dashboard_helpers import normalize_table_rows
 
 if TYPE_CHECKING:
     from skills.shared.event_stream_client import SSEEvent
@@ -60,6 +61,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 # Operator context rail
 # ---------------------------------------------------------------------------
+
 
 def render_operator_context_rail(
     op_ctx: dict,
@@ -73,8 +75,7 @@ def render_operator_context_rail(
     with st.expander(
         "Operator context",
         expanded=bool(
-            op_ctx.get("summary_line")
-            and op_ctx["summary_line"] != "No active selections"
+            op_ctx.get("summary_line") and op_ctx["summary_line"] != "No active selections"
         ),
     ):
         st.code(format_operator_context(op_ctx))
@@ -83,6 +84,7 @@ def render_operator_context_rail(
 # ---------------------------------------------------------------------------
 # Live event drilldown
 # ---------------------------------------------------------------------------
+
 
 def render_live_event_drilldown(
     filtered_events: list[SSEEvent],
@@ -138,6 +140,7 @@ def render_live_event_drilldown(
 # Job status summary (cards + metrics + table)
 # ---------------------------------------------------------------------------
 
+
 def render_job_status_summary(
     filtered_cards: list[dict],
     enriched_cards: list[dict],
@@ -172,6 +175,7 @@ def render_job_status_summary(
 # Retry / re-dispatch panel
 # ---------------------------------------------------------------------------
 
+
 def render_job_retry_panel(
     enriched_cards: list[dict],
     client: FoldAgentClient,
@@ -202,9 +206,7 @@ def render_job_retry_panel(
             badge = card.get("retry_badge", "")
             retry_col1, retry_col2 = st.columns([3, 1])
             with retry_col1:
-                st.markdown(
-                    f"**{job_type}** ({status}) — `{short_id}` — {badge}"
-                )
+                st.markdown(f"**{job_type}** ({status}) — `{short_id}` — {badge}")
             with retry_col2:
                 if st.button(
                     f"Retry {short_id}",
@@ -213,13 +215,19 @@ def render_job_retry_panel(
                 ):
                     retry_result, retry_error = safe_call(client.retry_background_job, job_id)
                     if retry_error:
-                        render_api_error(retry_error, fallback_title=f"Retry failed for job {short_id}")
+                        render_api_error(
+                            retry_error, fallback_title=f"Retry failed for job {short_id}"
+                        )
                     else:
-                        st.success(f"Job {short_id} re-dispatched (attempt {retry_result.get('attempt', '?')})")
+                        st.success(
+                            f"Job {short_id} re-dispatched (attempt {retry_result.get('attempt', '?')})"
+                        )
                         st.rerun()
     else:
         with st.expander("Retry / re-dispatch"):
-            st.info("No jobs currently eligible for retry (only failed/timed_out jobs with remaining retry budget).")
+            st.info(
+                "No jobs currently eligible for retry (only failed/timed_out jobs with remaining retry budget)."
+            )
 
     if eligible_cancel_cards:
         st.markdown("#### Cancel running / pending jobs")
@@ -243,9 +251,13 @@ def render_job_retry_panel(
                 ):
                     cancel_result, cancel_error = safe_call(client.cancel_background_job, job_id)
                     if cancel_error:
-                        render_api_error(cancel_error, fallback_title=f"Cancel failed for job {short_id}")
+                        render_api_error(
+                            cancel_error, fallback_title=f"Cancel failed for job {short_id}"
+                        )
                     else:
-                        st.success(f"Job {short_id} cancellation requested ({cancel_result.get('status', '?')})")
+                        st.success(
+                            f"Job {short_id} cancellation requested ({cancel_result.get('status', '?')})"
+                        )
                         st.rerun()
     else:
         with st.expander("Cancel running / pending jobs"):
@@ -255,6 +267,7 @@ def render_job_retry_panel(
 # ---------------------------------------------------------------------------
 # Job detail drilldown (detail + timeline + action chips + linkback)
 # ---------------------------------------------------------------------------
+
 
 def render_job_detail_drilldown(
     enriched_cards: list[dict],
@@ -331,7 +344,8 @@ def render_job_detail_drilldown(
 
     # --- Action chips: compact action affordances ---
     action_chips = job_detail.get("action_chips") or derive_job_detail_actions(
-        selected_card, api_job=api_job_data,
+        selected_card,
+        api_job=api_job_data,
     )
     if action_chips:
         _render_action_chips(action_chips, selected_job_id, client, safe_call, render_api_error)
@@ -368,6 +382,7 @@ def render_job_detail_drilldown(
 # Private: action chips sub-panel
 # ---------------------------------------------------------------------------
 
+
 def _render_action_chips(
     action_chips: list[dict],
     selected_job_id: str,
@@ -395,12 +410,18 @@ def _render_action_chips(
                     width="stretch",
                 ):
                     retry_result, retry_error = safe_call(
-                        client.retry_background_job, chip_data.get("job_id", selected_job_id),
+                        client.retry_background_job,
+                        chip_data.get("job_id", selected_job_id),
                     )
                     if retry_error:
-                        render_api_error(retry_error, fallback_title=f"Retry failed for job {selected_job_id[:8]}")
+                        render_api_error(
+                            retry_error,
+                            fallback_title=f"Retry failed for job {selected_job_id[:8]}",
+                        )
                     else:
-                        st.success(f"Job {selected_job_id[:8]} re-dispatched (attempt {retry_result.get('attempt', '?')})")
+                        st.success(
+                            f"Job {selected_job_id[:8]} re-dispatched (attempt {retry_result.get('attempt', '?')})"
+                        )
                         st.rerun()
 
             elif chip_action == "view_structure" and chip_enabled:
@@ -414,7 +435,9 @@ def _render_action_chips(
                     if focus_case_id:
                         st.session_state[_CTX_PIPELINE_CASE_KEY] = focus_case_id
                     if focus_case_id and structure_job_id:
-                        st.session_state[f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{focus_case_id}"] = structure_job_id
+                        st.session_state[f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{focus_case_id}"] = (
+                            structure_job_id
+                        )
                     st.rerun()
 
             elif chip_action == "view_report" and chip_enabled:
@@ -480,6 +503,7 @@ def _render_action_chips(
 # Private: structure linkback sub-panel
 # ---------------------------------------------------------------------------
 
+
 def _render_structure_linkback(
     structure_linkback: dict,
     selected_job_id: str,
@@ -505,5 +529,7 @@ def _render_structure_linkback(
             if focus_case_id:
                 st.session_state[_CTX_PIPELINE_CASE_KEY] = focus_case_id
             if focus_case_id and structure_job_id:
-                st.session_state[f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{focus_case_id}"] = structure_job_id
+                st.session_state[f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{focus_case_id}"] = (
+                    structure_job_id
+                )
             st.rerun()

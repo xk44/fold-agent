@@ -10,13 +10,12 @@ import hashlib
 import math
 import struct
 import uuid
-from dataclasses import dataclass, field
-from typing import Optional
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Federated Structure Prediction
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class FederatedNode:
@@ -35,7 +34,7 @@ class FederatedJob:
     participating_nodes: list[str]
     status: str  # "pending" | "aggregating" | "complete" | "failed"
     model_updates_received: int
-    aggregated_result: Optional[dict]
+    aggregated_result: dict | None
     privacy_budget_used: float
 
 
@@ -106,16 +105,14 @@ def _hash_float_range(seed: str, lo: float, hi: float) -> float:
 
 def create_federated_job(
     sequence_hash: str,
-    target_nodes: Optional[list[str]] = None,
+    target_nodes: list[str] | None = None,
 ) -> FederatedJob:
     """Create a federated job distributing to available nodes.
 
     Only the sequence hash is distributed — never the actual sequence.
     """
     if target_nodes is None:
-        participating = [
-            nid for nid, node in MOCK_FEDERATION_NODES.items() if node.available
-        ]
+        participating = [nid for nid, node in MOCK_FEDERATION_NODES.items() if node.available]
     else:
         participating = [
             nid
@@ -261,13 +258,13 @@ class DPConfig:
     delta: float = 1e-5
     mechanism: str = "laplace"  # "laplace" | "gaussian"
     sensitivity: float = 1.0
-    clip_min: Optional[float] = None
-    clip_max: Optional[float] = None
+    clip_min: float | None = None
+    clip_max: float | None = None
 
 
 @dataclass
 class DPResult:
-    original_value: Optional[float]  # redacted by default — set to None
+    original_value: float | None  # redacted by default — set to None
     noisy_value: float
     epsilon_used: float
     noise_magnitude: float
@@ -306,9 +303,7 @@ def add_laplace_noise(value: float, sensitivity: float, epsilon: float) -> float
     return value + noise
 
 
-def add_gaussian_noise(
-    value: float, sensitivity: float, epsilon: float, delta: float
-) -> float:
+def add_gaussian_noise(value: float, sensitivity: float, epsilon: float, delta: float) -> float:
     """Add Gaussian noise (Gaussian mechanism). Deterministic."""
     if epsilon <= 0:
         raise ValueError("epsilon must be positive")
@@ -396,7 +391,9 @@ def create_cohort_report(
             margin = 1.96 * scale
         else:
             noisy = add_gaussian_noise(stat_val, config.sensitivity, config.epsilon, config.delta)
-            sigma = config.sensitivity * math.sqrt(2 * math.log(1.25 / config.delta)) / config.epsilon
+            sigma = (
+                config.sensitivity * math.sqrt(2 * math.log(1.25 / config.delta)) / config.epsilon
+            )
             margin = 1.96 * sigma
 
         noise_magnitude = abs(noisy - stat_val)

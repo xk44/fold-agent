@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import os
 
-import pytest
-
 # ---------------------------------------------------------------------------
 # GPU Worker
 # ---------------------------------------------------------------------------
-
 from backend.app.gpu_worker import (
     DEFAULT_GPU_PROFILES,
     GPUWorkerConfig,
@@ -124,7 +121,13 @@ class TestEncryptionRoundtrip:
 class TestEncryptionStatus:
     def test_returns_expected_keys(self):
         status = check_encryption_status()
-        for key in ("configured", "algorithm", "key_derivation", "crypto_library_available", "key_set"):
+        for key in (
+            "configured",
+            "algorithm",
+            "key_derivation",
+            "crypto_library_available",
+            "key_set",
+        ):
             assert key in status
 
     def test_configured_is_bool(self):
@@ -173,7 +176,13 @@ class TestCeleryConfig:
 
 class TestCeleryTaskRegistry:
     def test_expected_tasks_present(self):
-        for task in ("run_pipeline", "run_alphafold", "generate_report", "export_data", "cleanup_expired"):
+        for task in (
+            "run_pipeline",
+            "run_alphafold",
+            "generate_report",
+            "export_data",
+            "cleanup_expired",
+        ):
             assert task in CELERY_TASK_REGISTRY
 
     def test_descriptions_are_strings(self):

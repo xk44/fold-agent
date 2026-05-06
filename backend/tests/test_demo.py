@@ -12,7 +12,6 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -27,7 +26,6 @@ from backend.app.models import (
     Subject,
     Variant,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -75,7 +73,9 @@ def test_create_demo_case_populates_variants() -> None:
 def test_create_demo_case_populates_candidates() -> None:
     with _db() as db:
         result = create_demo_case(db)
-        count = db.query(CandidateAntigen).filter(CandidateAntigen.case_id == result["case_id"]).count()
+        count = (
+            db.query(CandidateAntigen).filter(CandidateAntigen.case_id == result["case_id"]).count()
+        )
 
     assert count == 3
     assert result["candidate_count"] == 3

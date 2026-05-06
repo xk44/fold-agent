@@ -54,7 +54,6 @@ def test_create_case_rejects_invalid_species(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-
 def test_patch_case_rejects_null_for_required_fields(client: TestClient) -> None:
     create_response = client.post(
         "/cases",

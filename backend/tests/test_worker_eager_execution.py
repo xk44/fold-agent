@@ -16,8 +16,6 @@ underlying logic is tested via direct function calls.
 
 from __future__ import annotations
 
-import importlib
-import os
 import sys
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -26,12 +24,9 @@ import pytest
 from celery import Celery
 from sqlalchemy.orm import Session
 
-from backend.app.config import settings
 from backend.app.db import SessionLocal
 from backend.app.models import (
     AuditLog,
-    BackgroundJob,
-    BackgroundJobStatusEnum,
     CandidateAntigen,
     Case,
     PipelineRun,
@@ -40,10 +35,10 @@ from backend.app.models import (
 )
 from backend.app.safety.preflight import PreflightResult
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_case(db: Session, *, species: str = "demo") -> str:
     """Insert a Case row and return its id."""
@@ -88,14 +83,15 @@ def _make_candidate(db: Session, case_id: str, variant_id: str) -> str:
 # Fixtures -- fresh DB per test
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def _reset_db():
     """Create all tables fresh for each test, then tear down."""
-    from backend.app.models import Base
-    from backend.app.db import engine
-
     # Shut down the background executor so it releases any SQLite connections.
     from backend.app import jobs as _jobs_mod
+    from backend.app.db import engine
+    from backend.app.models import Base
+
     old_executor = _jobs_mod._executor
     old_executor.shutdown(wait=True)
 
@@ -103,6 +99,7 @@ def _reset_db():
     Base.metadata.create_all(bind=engine)
 
     from concurrent.futures import ThreadPoolExecutor
+
     _jobs_mod._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="bg-job")
     _jobs_mod._cancel_events.clear()
     _jobs_mod._job_futures.clear()
@@ -118,6 +115,7 @@ def _reset_db():
 # 1. Shared persistence path: run_pipeline_job (no Celery, no broker)
 # ---------------------------------------------------------------------------
 
+
 class TestRunPipelineJobPersistence:
     """Verify that run_pipeline_job writes PipelineRun + AuditLog records."""
 
@@ -129,9 +127,16 @@ class TestRunPipelineJobPersistence:
         db.close()
 
         mock_steps = [
-            {"step_name": "annotation", "step_version": "1.0", "status": "completed",
-             "outputs": {}, "warnings": [], "errors": [], "safety_label": "research_only",
-             "requires_professional_review": False},
+            {
+                "step_name": "annotation",
+                "step_version": "1.0",
+                "status": "completed",
+                "outputs": {},
+                "warnings": [],
+                "errors": [],
+                "safety_label": "research_only",
+                "requires_professional_review": False,
+            },
         ]
 
         def fake_run_pipeline_sync(cid: str) -> dict:
@@ -181,10 +186,14 @@ class TestRunPipelineJobPersistence:
         )
 
         db2 = SessionLocal()
-        audit_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "pipeline.started",
-        ).all()
+        audit_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "pipeline.started",
+            )
+            .all()
+        )
         assert len(audit_entries) == 1
         # log_action stores inputs as inputs_hash; details may carry structured data
         # The key assertion: the audit log entry exists and is linked to the case
@@ -207,27 +216,43 @@ class TestRunPipelineJobPersistence:
                 "status": "completed",
                 "total_steps": 1,
                 "completed_steps": 1,
-                "steps": [{"step_name": "s1", "step_version": "1.0", "status": "completed",
-                            "outputs": {}, "warnings": [], "errors": [],
-                            "safety_label": "research_only",
-                            "requires_professional_review": False}],
+                "steps": [
+                    {
+                        "step_name": "s1",
+                        "step_version": "1.0",
+                        "status": "completed",
+                        "outputs": {},
+                        "warnings": [],
+                        "errors": [],
+                        "safety_label": "research_only",
+                        "requires_professional_review": False,
+                    }
+                ],
             },
             pipeline_mode="mock",
         )
 
         db2 = SessionLocal()
-        audit_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "pipeline.completed",
-        ).all()
+        audit_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "pipeline.completed",
+            )
+            .all()
+        )
         assert len(audit_entries) == 1
         assert audit_entries[0].case_id == case_id
         assert audit_entries[0].actor == "bg_job"
         assert audit_entries[0].outputs_hash is not None
-        step_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "pipeline.step.completed",
-        ).all()
+        step_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "pipeline.step.completed",
+            )
+            .all()
+        )
         assert len(step_entries) == 1
         db2.close()
 
@@ -246,12 +271,26 @@ class TestRunPipelineJobPersistence:
                 "total_steps": 2,
                 "completed_steps": 1,
                 "steps": [
-                    {"step_name": "s1", "step_version": "1.0", "status": "completed",
-                     "outputs": {}, "warnings": [], "errors": [],
-                     "safety_label": "research_only", "requires_professional_review": False},
-                    {"step_name": "s2", "step_version": "1.0", "status": "failed",
-                     "outputs": {}, "warnings": [], "errors": ["boom"],
-                     "safety_label": "research_only", "requires_professional_review": False},
+                    {
+                        "step_name": "s1",
+                        "step_version": "1.0",
+                        "status": "completed",
+                        "outputs": {},
+                        "warnings": [],
+                        "errors": [],
+                        "safety_label": "research_only",
+                        "requires_professional_review": False,
+                    },
+                    {
+                        "step_name": "s2",
+                        "step_version": "1.0",
+                        "status": "failed",
+                        "outputs": {},
+                        "warnings": [],
+                        "errors": ["boom"],
+                        "safety_label": "research_only",
+                        "requires_professional_review": False,
+                    },
                 ],
             },
             pipeline_mode="mock",
@@ -259,15 +298,23 @@ class TestRunPipelineJobPersistence:
 
         assert result["status"] == "failed"
         db2 = SessionLocal()
-        failed_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "pipeline.failed",
-        ).all()
+        failed_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "pipeline.failed",
+            )
+            .all()
+        )
         assert len(failed_entries) == 1
-        step_failed_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "pipeline.step.failed",
-        ).all()
+        step_failed_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "pipeline.step.failed",
+            )
+            .all()
+        )
         assert len(step_failed_entries) == 1
         pr = db2.query(PipelineRun).filter(PipelineRun.case_id == case_id).one()
         assert pr.status == "failed"
@@ -282,12 +329,26 @@ class TestRunPipelineJobPersistence:
         db.close()
 
         steps = [
-            {"step_name": "annotation", "step_version": "1.0", "status": "completed",
-             "outputs": {"genes": ["BRAF"]}, "warnings": [], "errors": [],
-             "safety_label": "research_only", "requires_professional_review": False},
-            {"step_name": "prioritization", "step_version": "2.0", "status": "completed",
-             "outputs": {"top_hits": 3}, "warnings": ["low confidence"], "errors": [],
-             "safety_label": "research_only", "requires_professional_review": True},
+            {
+                "step_name": "annotation",
+                "step_version": "1.0",
+                "status": "completed",
+                "outputs": {"genes": ["BRAF"]},
+                "warnings": [],
+                "errors": [],
+                "safety_label": "research_only",
+                "requires_professional_review": False,
+            },
+            {
+                "step_name": "prioritization",
+                "step_version": "2.0",
+                "status": "completed",
+                "outputs": {"top_hits": 3},
+                "warnings": ["low confidence"],
+                "errors": [],
+                "safety_label": "research_only",
+                "requires_professional_review": True,
+            },
         ]
 
         run_pipeline_job(
@@ -313,6 +374,7 @@ class TestRunPipelineJobPersistence:
 # ---------------------------------------------------------------------------
 # 2. Shared persistence path: run_alphafold_job (no Celery, no broker)
 # ---------------------------------------------------------------------------
+
 
 class TestRunAlphafoldJobPersistence:
     """Verify that run_alphafold_job writes StructureJob + AuditLog records."""
@@ -345,9 +407,7 @@ class TestRunAlphafoldJobPersistence:
 
         # Verify StructureJob was persisted
         db2 = SessionLocal()
-        structure_jobs = db2.query(StructureJob).filter(
-            StructureJob.case_id == case_id
-        ).all()
+        structure_jobs = db2.query(StructureJob).filter(StructureJob.case_id == case_id).all()
         assert len(structure_jobs) == 1
         sj = structure_jobs[0]
         assert sj.backend_used == "colabfold"
@@ -380,20 +440,32 @@ class TestRunAlphafoldJobPersistence:
         )
 
         db2 = SessionLocal()
-        started_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "alphafold.job.started",
-        ).all()
+        started_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "alphafold.job.started",
+            )
+            .all()
+        )
         assert len(started_entries) == 1
-        job_completed_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "alphafold.job.completed",
-        ).all()
+        job_completed_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "alphafold.job.completed",
+            )
+            .all()
+        )
         assert len(job_completed_entries) == 1
-        audit_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "alphafold.backend.completed",
-        ).all()
+        audit_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "alphafold.backend.completed",
+            )
+            .all()
+        )
         assert len(audit_entries) == 1
         assert audit_entries[0].actor == "bg_job"
         db2.close()
@@ -418,17 +490,19 @@ class TestRunAlphafoldJobPersistence:
         assert result["status"] == "completed"
 
         db2 = SessionLocal()
-        structure_jobs = db2.query(StructureJob).filter(
-            StructureJob.case_id == case_id
-        ).all()
+        structure_jobs = db2.query(StructureJob).filter(StructureJob.case_id == case_id).all()
         # No StructureJob should be created when there's no candidate_id
         assert len(structure_jobs) == 0
 
         # But audit log for the backend completion should still exist
-        audit_entries = db2.query(AuditLog).filter(
-            AuditLog.case_id == case_id,
-            AuditLog.action == "alphafold.backend.completed",
-        ).all()
+        audit_entries = (
+            db2.query(AuditLog)
+            .filter(
+                AuditLog.case_id == case_id,
+                AuditLog.action == "alphafold.backend.completed",
+            )
+            .all()
+        )
         assert len(audit_entries) == 1
         db2.close()
 
@@ -472,6 +546,7 @@ class TestRunAlphafoldJobPersistence:
 #    for eager execution, proving the same code path works without a broker.
 # ---------------------------------------------------------------------------
 
+
 def _make_eager_app() -> Celery:
     """Create a Celery app configured for eager (synchronous) execution."""
     app = Celery("foldagent_test", broker="memory://", backend="cache+memory://")
@@ -508,8 +583,8 @@ class TestPipelineRunTaskEager:
         @eager_app.task(bind=True, name="test.pipeline_run_eager")
         def pipeline_run_eager(self, *, job_id, payload, case_id=None):
             """Replica of backend.app.worker.tasks.pipeline_run logic."""
-            from backend.app.safety.preflight import PreflightResult, preflight_action
             from backend.app.jobs import run_pipeline_job as _run_pipeline_job
+            from backend.app.safety.preflight import preflight_action
 
             pipeline_case_id = case_id or payload.get("case_id")
             if not pipeline_case_id:
@@ -523,9 +598,7 @@ class TestPipelineRunTaskEager:
                 involves_sequence_data=species_mode != "demo",
             )
             if result.status != PreflightResult.PASS:
-                raise ValueError(
-                    f"Pipeline worker blocked by safety preflight: {result.reason}"
-                )
+                raise ValueError(f"Pipeline worker blocked by safety preflight: {result.reason}")
 
             return _run_pipeline_job(
                 case_id=pipeline_case_id,
@@ -544,7 +617,11 @@ class TestPipelineRunTaskEager:
             result = pipeline_run_eager.apply(
                 kwargs=dict(
                     job_id="eager-job-001",
-                    payload={"case_id": "case-demo", "species_mode": "demo", "pipeline_mode": "mock"},
+                    payload={
+                        "case_id": "case-demo",
+                        "species_mode": "demo",
+                        "pipeline_mode": "mock",
+                    },
                 )
             )
 
@@ -562,8 +639,8 @@ class TestPipelineRunTaskEager:
         @eager_app.task(bind=True, name="test.pipeline_run_eager_persist")
         def pipeline_run_eager_persist(self, *, job_id, payload, case_id=None):
             """Replica of the real pipeline_run task."""
-            from backend.app.safety.preflight import PreflightResult, preflight_action
             from backend.app.jobs import run_pipeline_job
+            from backend.app.safety.preflight import preflight_action
 
             pipeline_case_id = case_id or payload.get("case_id")
             if not pipeline_case_id:
@@ -577,9 +654,7 @@ class TestPipelineRunTaskEager:
                 involves_sequence_data=species_mode != "demo",
             )
             if result.status != PreflightResult.PASS:
-                raise ValueError(
-                    f"Pipeline worker blocked by safety preflight: {result.reason}"
-                )
+                raise ValueError(f"Pipeline worker blocked by safety preflight: {result.reason}")
 
             # Use a mock sync that returns realistic data
             def _mock_sync(cid: str) -> dict:
@@ -588,11 +663,16 @@ class TestPipelineRunTaskEager:
                     "total_steps": 1,
                     "completed_steps": 1,
                     "steps": [
-                        {"step_name": "annotation", "step_version": "1.0",
-                         "status": "completed", "outputs": {},
-                         "warnings": [], "errors": [],
-                         "safety_label": "research_only",
-                         "requires_professional_review": False},
+                        {
+                            "step_name": "annotation",
+                            "step_version": "1.0",
+                            "status": "completed",
+                            "outputs": {},
+                            "warnings": [],
+                            "errors": [],
+                            "safety_label": "research_only",
+                            "requires_professional_review": False,
+                        },
                     ],
                 }
 
@@ -636,16 +716,14 @@ class TestPipelineRunTaskEager:
             return {"status": "ok"}
 
         with pytest.raises(ValueError, match="pipeline_run requires case_id"):
-            pipeline_run_no_case.apply(
-                kwargs=dict(job_id="eager-no-case", payload={})
-            )
+            pipeline_run_no_case.apply(kwargs=dict(job_id="eager-no-case", payload={}))
 
     def test_pipeline_run_blocked_by_safety_preflight(self):
         eager_app = _make_eager_app()
 
         @eager_app.task(bind=True, name="test.pipeline_run_safety_block")
         def pipeline_run_safety_block(self, *, job_id, payload, case_id=None):
-            from backend.app.safety.preflight import PreflightResult, preflight_action
+            from backend.app.safety.preflight import preflight_action
 
             pipeline_case_id = case_id or payload.get("case_id")
             action = payload.get("action", "run_pipeline")
@@ -656,9 +734,7 @@ class TestPipelineRunTaskEager:
                 involves_sequence_data=species_mode != "demo",
             )
             if result.status != PreflightResult.PASS:
-                raise ValueError(
-                    f"Pipeline worker blocked by safety preflight: {result.reason}"
-                )
+                raise ValueError(f"Pipeline worker blocked by safety preflight: {result.reason}")
             return {"status": "ok"}
 
         with pytest.raises(ValueError, match="Pipeline worker blocked by safety preflight"):
@@ -673,6 +749,7 @@ class TestPipelineRunTaskEager:
 # ---------------------------------------------------------------------------
 # 4. Eager task execution: structure_prediction task
 # ---------------------------------------------------------------------------
+
 
 class TestStructurePredictionTaskEager:
     """Test the structure_prediction task logic in eager mode."""
@@ -737,6 +814,7 @@ class TestStructurePredictionTaskEager:
         def structure_prediction_fallback(self, *, job_id, backend_name, payload, case_id=None):
             pipeline_case_id = case_id or payload.get("case_id")
             from backend.app.jobs import run_alphafold_job as _run_alphafold_job
+
             return _run_alphafold_job(
                 case_id=pipeline_case_id,
                 job_id=job_id,
@@ -811,6 +889,7 @@ class TestStructurePredictionTaskEager:
 #    then calls the task functions directly (bypassing Celery dispatch).
 # ---------------------------------------------------------------------------
 
+
 class TestDirectTaskImport:
     """Import the real task module by setting the broker env var, then call
     the task functions' underlying Python logic directly.
@@ -829,6 +908,7 @@ class TestDirectTaskImport:
 
         # Reload config to pick up new env vars
         import backend.app.config as _cfg
+
         monkeypatch.setattr(_cfg.settings, "celery_broker_url", "redis://localhost:6379/0")
         monkeypatch.setattr(_cfg.settings, "redis_url", "redis://localhost:6379/0")
 
@@ -844,7 +924,7 @@ class TestDirectTaskImport:
         # Replace the Celery app with a passthrough mock so task functions
         # can be called directly as plain Python functions
         mock_app = MagicMock()
-        mock_app.task = lambda **kw: (lambda fn: fn)
+        mock_app.task = lambda **kw: lambda fn: fn
 
         # We need to get the undecorated function. Since the module was already
         # imported with the real Celery app, the functions are Celery Task objects.

@@ -19,7 +19,6 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 
-
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
@@ -30,8 +29,8 @@ class ConformationalState:
     """A single representative structure from the conformational ensemble."""
 
     state_id: int
-    pdb_data: str           # PDB-format coordinate block for this state
-    plddt_mean: float       # Mean pLDDT across all residues (0–100)
+    pdb_data: str  # PDB-format coordinate block for this state
+    plddt_mean: float  # Mean pLDDT across all residues (0–100)
     rmsd_to_reference: float  # Cα RMSD vs. the lowest-energy state (Å)
     population_weight: float  # Fraction of ensemble assigned to this cluster (0–1)
 
@@ -41,11 +40,11 @@ class EnsembleResult:
     """Full result of a conformational ensemble sampling run."""
 
     sequence: str
-    n_samples: int                                      # number of AF2 dropout draws
+    n_samples: int  # number of AF2 dropout draws
     states: list[ConformationalState] = field(default_factory=list)
-    n_clusters: int = 0                                 # number of distinct states found
-    diversity_score: float = 0.0                        # mean pairwise RMSD across clusters (Å)
-    converged: bool = False                             # True if adding more samples changes clusters < 5%
+    n_clusters: int = 0  # number of distinct states found
+    diversity_score: float = 0.0  # mean pairwise RMSD across clusters (Å)
+    converged: bool = False  # True if adding more samples changes clusters < 5%
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +91,15 @@ def sample_conformational_ensemble(
     for i in range(n_clusters):
         h_state = int(hashlib.sha256(f"{sequence}:state{i}".encode()).hexdigest(), 16)
         plddt = round(50.0 + (h_state & 0xFF) / 0xFF * 45.0, 2)
-        rmsd = 0.0 if i == 0 else round(cluster_rmsd_threshold * 0.3 + (h_state >> 8 & 0xFF) / 0xFF * cluster_rmsd_threshold * 1.5, 2)
+        rmsd = (
+            0.0
+            if i == 0
+            else round(
+                cluster_rmsd_threshold * 0.3
+                + (h_state >> 8 & 0xFF) / 0xFF * cluster_rmsd_threshold * 1.5,
+                2,
+            )
+        )
 
         pdb_data = (
             f"REMARK  ConformationalState {i} — AF2-dropout stub — RESEARCH ONLY\n"
@@ -101,22 +108,22 @@ def sample_conformational_ensemble(
             "END\n"
         )
 
-        states.append(ConformationalState(
-            state_id=i,
-            pdb_data=pdb_data,
-            plddt_mean=plddt,
-            rmsd_to_reference=rmsd,
-            population_weight=round(norm_weights[i], 6),
-        ))
+        states.append(
+            ConformationalState(
+                state_id=i,
+                pdb_data=pdb_data,
+                plddt_mean=plddt,
+                rmsd_to_reference=rmsd,
+                population_weight=round(norm_weights[i], 6),
+            )
+        )
 
     # Fix rounding so weights sum exactly to 1.0
     weight_sum = sum(s.population_weight for s in states)
     if states:
         states[-1].population_weight = round(states[-1].population_weight + (1.0 - weight_sum), 6)
 
-    diversity_score = round(
-        sum(s.rmsd_to_reference for s in states) / max(len(states), 1), 3
-    )
+    diversity_score = round(sum(s.rmsd_to_reference for s in states) / max(len(states), 1), 3)
     converged = n_samples >= 20
 
     return EnsembleResult(

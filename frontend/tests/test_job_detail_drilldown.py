@@ -7,26 +7,26 @@ Covers:
 - build_job_detail_table: converts detail dict to flat row dicts
 - _format_payload_preview: truncates payloads for readability
 """
+
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     build_job_detail_table,
     derive_job_detail,
     derive_structure_linkback,
     format_job_detail,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -109,6 +109,7 @@ def _make_card_from_api_job(api_job: dict) -> dict:
 # ---------------------------------------------------------------------------
 # derive_job_detail
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveJobDetailCardOnly:
     """Test derive_job_detail with only a card (no API job, no events)."""
@@ -250,6 +251,7 @@ class TestDeriveJobDetailWithEvents:
 # format_job_detail
 # ---------------------------------------------------------------------------
 
+
 class TestFormatJobDetail:
     def test_empty_dict(self):
         result = format_job_detail({})
@@ -327,8 +329,18 @@ class TestFormatJobDetail:
             "result": None,
             "error": None,
             "lifecycle_events": [
-                {"event": "pipeline.started", "timestamp": "T1", "action": "pipeline.started", "detail": "status=running"},
-                {"event": "pipeline.completed", "timestamp": "T2", "action": "pipeline.completed", "detail": "status=completed"},
+                {
+                    "event": "pipeline.started",
+                    "timestamp": "T1",
+                    "action": "pipeline.started",
+                    "detail": "status=running",
+                },
+                {
+                    "event": "pipeline.completed",
+                    "timestamp": "T2",
+                    "action": "pipeline.completed",
+                    "detail": "status=completed",
+                },
             ],
         }
         result = format_job_detail(detail)
@@ -361,6 +373,7 @@ class TestFormatJobDetail:
 # build_job_detail_table
 # ---------------------------------------------------------------------------
 
+
 class TestBuildJobDetailTable:
     def test_empty_dict(self):
         rows = build_job_detail_table({})
@@ -389,8 +402,18 @@ class TestBuildJobDetailTable:
             "case_id": "c1",
             "created_at": "2025-04-20T09:55:00",
             "lifecycle_events": [
-                {"event": "pipeline.started", "timestamp": "T1", "action": "pipeline.started", "detail": "status=running"},
-                {"event": "pipeline.completed", "timestamp": "T2", "action": "pipeline.completed", "detail": "status=completed"},
+                {
+                    "event": "pipeline.started",
+                    "timestamp": "T1",
+                    "action": "pipeline.started",
+                    "detail": "status=running",
+                },
+                {
+                    "event": "pipeline.completed",
+                    "timestamp": "T2",
+                    "action": "pipeline.completed",
+                    "detail": "status=completed",
+                },
             ],
         }
         rows = build_job_detail_table(detail)
@@ -406,7 +429,12 @@ class TestBuildJobDetailTable:
             "case_id": "c1",
             "created_at": "2025-04-20T09:55:00",
             "lifecycle_events": [
-                {"event": "pipeline.failed", "timestamp": "T1", "action": "pipeline.failed", "detail": ""},
+                {
+                    "event": "pipeline.failed",
+                    "timestamp": "T1",
+                    "action": "pipeline.failed",
+                    "detail": "",
+                },
             ],
         }
         rows = build_job_detail_table(detail)
@@ -419,6 +447,7 @@ class TestBuildJobDetailTable:
 # ---------------------------------------------------------------------------
 # _format_payload_preview (tested indirectly via format_job_detail)
 # ---------------------------------------------------------------------------
+
 
 class TestFormatPayloadPreview:
     """Test the _format_payload_preview helper indirectly via format_job_detail."""
@@ -483,6 +512,7 @@ class TestFormatPayloadPreview:
 # Integration: derive_job_detail + format_job_detail round-trip
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveJobDetailIntegration:
     def test_card_to_format_round_trip(self):
         api_job = _make_api_job(
@@ -524,8 +554,12 @@ class TestDeriveJobDetailIntegration:
         )
         card = _make_card_from_api_job(api_job)
         events = [
-            _make_pipeline_event(case_id="c1", status="running", ts="2025-04-20T09:00:00", job_id="j1"),
-            _make_pipeline_event(case_id="c1", status="completed", ts="2025-04-20T10:00:00", job_id="j1"),
+            _make_pipeline_event(
+                case_id="c1", status="running", ts="2025-04-20T09:00:00", job_id="j1"
+            ),
+            _make_pipeline_event(
+                case_id="c1", status="completed", ts="2025-04-20T10:00:00", job_id="j1"
+            ),
         ]
         detail = derive_job_detail(card, api_job=api_job, events=events)
         text = format_job_detail(detail)

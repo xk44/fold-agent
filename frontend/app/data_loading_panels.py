@@ -43,7 +43,9 @@ def _render_missing_data(api_base: str, case_id: str, http_get: Any, st: Any) ->
 
     for item in checklist:
         icon = "✅" if item["done"] else ("🔴" if item["priority"] == "high" else "🟡")
-        st.write(f"{icon} {'~~' if item['done'] else ''}{item['item']}{'~~' if item['done'] else ''}")
+        st.write(
+            f"{icon} {'~~' if item['done'] else ''}{item['item']}{'~~' if item['done'] else ''}"
+        )
 
     report = http_get(f"{api_base}/cases/{case_id}/data/missing").json()
 
@@ -73,7 +75,9 @@ def _render_file_validation(api_base: str, http_post: Any, st: Any) -> None:
         else:
             st.error(result["error"])
 
-    role_filename = st.text_input("Detect sample role from filename", placeholder="e.g. matched_normal.bam", key="role_input")
+    role_filename = st.text_input(
+        "Detect sample role from filename", placeholder="e.g. matched_normal.bam", key="role_input"
+    )
     if st.button("Detect Role") and role_filename:
         result = http_post(f"{api_base}/data/detect-role", json={"filename": role_filename}).json()
         st.info(f"Detected role: **{result['detected_role']}**")

@@ -6,9 +6,9 @@ command manifests so the mock-first product can evolve into real wrappers.
 
 from __future__ import annotations
 
+import subprocess
 from dataclasses import asdict, dataclass
 from shutil import which
-import subprocess
 
 from backend.app.config import settings
 from backend.app.pipeline.schemas import (
@@ -16,7 +16,6 @@ from backend.app.pipeline.schemas import (
     GatkMutect2Request,
     PvactoolsRequest,
     VepRequest,
-    parse_pipeline_request,
 )
 
 
@@ -82,7 +81,9 @@ def list_pipeline_adapter_statuses() -> dict[str, dict]:
     return {adapter.name: asdict(adapter) for adapter in PIPELINE_ADAPTERS.values()}
 
 
-def build_pipeline_command(adapter_name: str, payload: dict) -> tuple[ShellAdapterStatus, list[str], str | None]:
+def build_pipeline_command(
+    adapter_name: str, payload: dict
+) -> tuple[ShellAdapterStatus, list[str], str | None]:
     if adapter_name not in PIPELINE_ADAPTERS:
         raise KeyError(adapter_name)
 
@@ -112,7 +113,34 @@ def build_pipeline_command(adapter_name: str, payload: dict) -> tuple[ShellAdapt
             command.extend(["-R", req.reference])
         command.extend(["-I", req.input_bam])
         if req.normal_bam:
-            command.extend(["-I", req.normal_bam, "--normal-sample", req.normal_bam])
+            # --normal-sample expects a sample name, not a BAM path.
+            # Use explicit normal_sample if provided; otherwise extract from @RG SM: tag;
+            # fall back to "NORMAL".
+            normal_sample = merged.get("normal_sample") or ""
+            if not normal_sample:
+                samtools = which("samtools")
+                if samtools:
+                    try:
+                        rg_proc = subprocess.run(
+                            [samtools, "view", "-H", req.normal_bam],
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                            check=False,
+                        )
+                        for rg_line in rg_proc.stdout.splitlines():
+                            if rg_line.startswith("@RG"):
+                                for field in rg_line.split("\t"):
+                                    if field.startswith("SM:"):
+                                        normal_sample = field[3:].strip()
+                                        break
+                            if normal_sample:
+                                break
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
+            if not normal_sample:
+                normal_sample = "NORMAL"
+            command.extend(["-I", req.normal_bam, "--normal-sample", normal_sample])
         if req.intervals:
             command.extend(["-L", req.intervals])
         if req.panel_of_normals:
@@ -223,7 +251,9 @@ def execute_pipeline_adapter(adapter_name: str, payload: dict) -> ShellExecution
 
     timeout = int(payload.get("timeout_seconds", 30))
     try:
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
+        completed = subprocess.run(
+            command, capture_output=True, text=True, timeout=timeout, check=False
+        )
         return ShellExecution(
             adapter=adapter.name,
             mode="execute",

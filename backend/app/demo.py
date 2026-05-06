@@ -10,7 +10,6 @@ import os
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from backend.app.config import settings
 from backend.app.models import (
     CandidateAntigen,
     Case,
@@ -220,7 +219,7 @@ def _tag() -> dict:
 # ---------------------------------------------------------------------------
 
 
-def create_demo_case(db: "Session") -> dict:
+def create_demo_case(db: Session) -> dict:
     """Create a complete demo case with samples, variants, candidates, structure job, and report.
 
     Returns a summary dict with all created IDs.
@@ -379,7 +378,7 @@ def create_demo_case(db: "Session") -> dict:
     }
 
 
-def create_synthetic_dataset(db: "Session", n_cases: int = 3) -> list[dict]:
+def create_synthetic_dataset(db: Session, n_cases: int = 3) -> list[dict]:
     """Create multiple demo cases with varying data completeness.
 
     - Case 0: full data (all samples, 5 variants, 3 candidates, structure job, report)
@@ -423,13 +422,25 @@ def create_synthetic_dataset(db: "Session", n_cases: int = 3) -> list[dict]:
         if i == 1:
             # Partial: tumor + normal, 2 variants, 1 candidate
             partial_types = [
-                (SampleTypeEnum.tumor, f"/demo/data/partial_{i}_tumor.bam", f"sha256:partial_{i}_tumor"),
-                (SampleTypeEnum.normal, f"/demo/data/partial_{i}_normal.bam", f"sha256:partial_{i}_normal"),
+                (
+                    SampleTypeEnum.tumor,
+                    f"/demo/data/partial_{i}_tumor.bam",
+                    f"sha256:partial_{i}_tumor",
+                ),
+                (
+                    SampleTypeEnum.normal,
+                    f"/demo/data/partial_{i}_normal.bam",
+                    f"sha256:partial_{i}_normal",
+                ),
             ]
         else:
             # Minimal: tumor only
             partial_types = [
-                (SampleTypeEnum.tumor, f"/demo/data/minimal_{i}_tumor.bam", f"sha256:minimal_{i}_tumor"),
+                (
+                    SampleTypeEnum.tumor,
+                    f"/demo/data/minimal_{i}_tumor.bam",
+                    f"sha256:minimal_{i}_tumor",
+                ),
             ]
 
         samples = []
@@ -512,24 +523,26 @@ def create_synthetic_dataset(db: "Session", n_cases: int = 3) -> list[dict]:
         )
         db.commit()
 
-        results.append({
-            "case_id": case.id,
-            "subject_id": subject.id,
-            "species": case.species.value,
-            "subject_display_name": subject.anonymized_display_name,
-            "sample_count": len(samples),
-            "variant_count": len(variants),
-            "candidate_count": len(candidates),
-            "structure_job_id": None,
-            "report_id": None,
-            "completeness": "partial" if i == 1 else "minimal",
-            "demo": True,
-        })
+        results.append(
+            {
+                "case_id": case.id,
+                "subject_id": subject.id,
+                "species": case.species.value,
+                "subject_display_name": subject.anonymized_display_name,
+                "sample_count": len(samples),
+                "variant_count": len(variants),
+                "candidate_count": len(candidates),
+                "structure_job_id": None,
+                "report_id": None,
+                "completeness": "partial" if i == 1 else "minimal",
+                "demo": True,
+            }
+        )
 
     return results
 
 
-def reset_demo_data(db: "Session") -> dict:
+def reset_demo_data(db: Session) -> dict:
     """Clear all demo-created records (those tagged with foldagent_demo_created=True).
 
     Deletes in dependency order to avoid FK constraint violations.
@@ -539,9 +552,15 @@ def reset_demo_data(db: "Session") -> dict:
 
     def _is_demo(obj) -> bool:
         """Check if any JSON field carries the demo tag."""
-        for attr in ("custody_metadata", "quality_metrics", "uncertainty_flags",
-                     "confidence_metrics", "content_json", "privacy_flags",
-                     "metadata_json"):
+        for attr in (
+            "custody_metadata",
+            "quality_metrics",
+            "uncertainty_flags",
+            "confidence_metrics",
+            "content_json",
+            "privacy_flags",
+            "metadata_json",
+        ):
             val = getattr(obj, attr, None)
             if isinstance(val, dict) and val.get(_DEMO_TAG):
                 return True

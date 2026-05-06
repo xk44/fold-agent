@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.enzyme_engineering import (
-    ERTDesign,
-    EnzymeSubstrate,
     KNOWN_PRODRUG_SYSTEMS,
     KNOWN_THERAPEUTIC_ENZYMES,
+    EnzymeSubstrate,
+    ERTDesign,
     MutationSuggestion,
     ProdugSystem,
     design_ert,
@@ -17,7 +16,6 @@ from backend.app.modes.enzyme_engineering import (
     model_enzyme_substrate,
     suggest_mutations,
 )
-
 
 # ---------------------------------------------------------------------------
 # model_enzyme_substrate

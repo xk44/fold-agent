@@ -13,22 +13,23 @@ These tests verify that:
 9. The ``_build_ws_params`` and ``_build_sse_params`` helpers work.
 10. ``_active_transport`` reflects what was actually used.
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from frontend.app.event_stream_live_feed import LiveEventFeed
-from skills.shared.event_stream_client import SSEEvent, EventBuffer
-
+from skills.shared.event_stream_client import EventBuffer, SSEEvent
 
 # ---------------------------------------------------------------------------
 # Helpers — fake Streamlit and fake clients
 # ---------------------------------------------------------------------------
+
 
 def _make_fake_streamlit() -> SimpleNamespace:
     """Create a minimal fake streamlit with mutable session_state."""
@@ -71,6 +72,7 @@ class _FakeWSClient:
 # Tests: parameter builders
 # ---------------------------------------------------------------------------
 
+
 class TestBuildParams:
     def test_default_api_url_matches_foldagent_local_api_port(self) -> None:
         feed = LiveEventFeed()
@@ -88,7 +90,9 @@ class TestBuildParams:
         assert params == {"heartbeat": 1.0}
 
     def test_build_sse_params_with_cursor(self) -> None:
-        feed = LiveEventFeed(api_url="http://localhost:8000", poll_limit=25, event_prefixes=("pipeline.",))
+        feed = LiveEventFeed(
+            api_url="http://localhost:8000", poll_limit=25, event_prefixes=("pipeline.",)
+        )
         params = feed._build_sse_params(last_event_id="evt-42")
         assert params == {
             "limit": 25,
@@ -105,6 +109,7 @@ class TestBuildParams:
 # ---------------------------------------------------------------------------
 # Tests: _merge_events helper
 # ---------------------------------------------------------------------------
+
 
 class TestMergeEvents:
     def test_merge_new_events_into_empty_buffer(self) -> None:
@@ -162,6 +167,7 @@ class TestMergeEvents:
 # Tests: WS-preferred poll with SSE fallback
 # ---------------------------------------------------------------------------
 
+
 class TestPollWsPreferred:
     def test_ws_preferred_transport_default(self) -> None:
         """LiveEventFeed defaults to WS transport preference."""
@@ -178,10 +184,14 @@ class TestPollWsPreferred:
         monkeypatch.setitem(sys.modules, "streamlit", fake_streamlit)
 
         feed = LiveEventFeed(api_url="http://localhost:8000", poll_limit=10)
-        fake_ws = _FakeWSClient(responses=[[SSEEvent(event="pipeline.started", data={"ts": "t1"}, event_id="ws-1")]])
+        fake_ws = _FakeWSClient(
+            responses=[[SSEEvent(event="pipeline.started", data={"ts": "t1"}, event_id="ws-1")]]
+        )
         feed._ws_client = fake_ws
 
-        fake_sse = _FakeSSEClient(responses=[[SSEEvent(event="case.created", data={"ts": "t0"}, event_id="sse-1")]])
+        fake_sse = _FakeSSEClient(
+            responses=[[SSEEvent(event="case.created", data={"ts": "t0"}, event_id="sse-1")]]
+        )
         feed._sse_client = fake_sse
 
         buf = feed.poll()
@@ -198,7 +208,9 @@ class TestPollWsPreferred:
         monkeypatch.setitem(sys.modules, "streamlit", fake_streamlit)
 
         feed = LiveEventFeed(api_url="http://localhost:8000", poll_limit=10)
-        fake_ws = _FakeWSClient(responses=[[SSEEvent(event="pipeline.started", data={"ts": "t1"}, event_id="ws-1")]])
+        fake_ws = _FakeWSClient(
+            responses=[[SSEEvent(event="pipeline.started", data={"ts": "t1"}, event_id="ws-1")]]
+        )
         feed._ws_client = fake_ws
         fake_sse = _FakeSSEClient(responses=[])
         feed._sse_client = fake_sse
@@ -304,13 +316,16 @@ class TestPollWsPreferred:
 # Tests: incremental cursor tracking (preserved from original)
 # ---------------------------------------------------------------------------
 
+
 class TestPollCursorTracking:
     def test_poll_tracks_last_event_id_with_ws(self, monkeypatch) -> None:
         fake_streamlit = _make_fake_streamlit()
         fake_streamlit.session_state[LiveEventFeed.SESSION_META_KEY] = {"last_event_id": "evt-0"}
         monkeypatch.setitem(sys.modules, "streamlit", fake_streamlit)
 
-        feed = LiveEventFeed(api_url="http://localhost:8000", poll_limit=5, event_prefixes=("pipeline.",))
+        feed = LiveEventFeed(
+            api_url="http://localhost:8000", poll_limit=5, event_prefixes=("pipeline.",)
+        )
         first_events = [
             SSEEvent(event="pipeline.started", data={"ts": "t1"}, event_id="evt-1"),
             SSEEvent(event="pipeline.completed", data={"ts": "t2"}, event_id="evt-2"),
@@ -370,7 +385,9 @@ class TestPollCursorTracking:
             responses=[
                 [
                     SSEEvent(event="pipeline.started", data={"timestamp": "t1"}, event_id="evt-1"),
-                    SSEEvent(event="pipeline.completed", data={"timestamp": "t2"}, event_id="evt-2"),
+                    SSEEvent(
+                        event="pipeline.completed", data={"timestamp": "t2"}, event_id="evt-2"
+                    ),
                 ],
                 [
                     SSEEvent(event="pipeline.failed", data={"timestamp": "t3"}, event_id="evt-3"),
@@ -412,6 +429,7 @@ class TestPollCursorTracking:
 # Tests: lazy WS client initialization
 # ---------------------------------------------------------------------------
 
+
 class TestLazyWsClient:
     def test_ws_client_created_lazily(self) -> None:
         feed = LiveEventFeed(api_url="http://localhost:8000")
@@ -426,6 +444,7 @@ class TestLazyWsClient:
 # Tests: _active_transport state across polls
 # ---------------------------------------------------------------------------
 
+
 class TestActiveTransportTracking:
     def test_active_transport_starts_as_sse(self) -> None:
         feed = LiveEventFeed(api_url="http://localhost:8000")
@@ -437,9 +456,7 @@ class TestActiveTransportTracking:
         monkeypatch.setitem(sys.modules, "streamlit", fake_streamlit)
 
         feed = LiveEventFeed(api_url="http://localhost:8000")
-        fake_ws = _FakeWSClient(responses=[
-            [SSEEvent(event="test", data={}, event_id="t1")]
-        ])
+        fake_ws = _FakeWSClient(responses=[[SSEEvent(event="test", data={}, event_id="t1")]])
         feed._ws_client = fake_ws
         feed._sse_client = _FakeSSEClient(responses=[])
 
@@ -450,6 +467,7 @@ class TestActiveTransportTracking:
 # ---------------------------------------------------------------------------
 # Legacy _FakeEventClient (kept for backward-compat test above)
 # ---------------------------------------------------------------------------
+
 
 class _FakeEventClient:
     """Replicates the original _FakeEventClient used in existing tests.

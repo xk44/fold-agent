@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -33,7 +33,12 @@ def test_flatten_variant_rows_extracts_quality_metrics_and_missing_fields() -> N
                 "last_parsed_execution_id": "exec-1",
                 "created_at": "2026-04-22T18:00:00Z",
             },
-            {"id": "var-2", "case_id": "case-1", "genomic_coordinates": "1:10A>T", "review_status": "needs_data"},
+            {
+                "id": "var-2",
+                "case_id": "case-1",
+                "genomic_coordinates": "1:10A>T",
+                "review_status": "needs_data",
+            },
         ]
     )
 
@@ -111,7 +116,10 @@ def test_build_variant_detail_and_option_formatting_cover_fallbacks() -> None:
     assert detail["quality_parsed_from"] == "vcf"
     assert detail["quality_vaf"] == 0.42
     assert format_variant_option(variant) == "KIT · p.V600E"
-    assert format_variant_option({"id": "abc-1234-def", "gene": None, "protein_change": None}) == "unknown · abc-1234"
+    assert (
+        format_variant_option({"id": "abc-1234-def", "gene": None, "protein_change": None})
+        == "unknown · abc-1234"
+    )
 
 
 def test_build_variant_review_status_options_matches_expected_order() -> None:

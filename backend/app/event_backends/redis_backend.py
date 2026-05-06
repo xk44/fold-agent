@@ -147,8 +147,7 @@ class RedisEventBackend(EventBackend):
                 self._redis.publish(self._channel, json.dumps(outbound))
             except Exception:
                 logger.exception(
-                    "Failed to publish event %r to Redis – "
-                    "message was delivered locally",
+                    "Failed to publish event %r to Redis – message was delivered locally",
                     event_name,
                 )
 

@@ -3,6 +3,7 @@
 Covers: derive_job_status_cards, format_job_status_cards,
 and build_job_status_table_rows from frontend.app.event_stream.
 """
+
 from __future__ import annotations
 
 import sys
@@ -10,19 +11,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     build_job_status_table_rows,
     derive_job_status_cards,
     format_job_status_cards,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures — sample data
 # ---------------------------------------------------------------------------
 
-def _make_pipeline_event(case_id: str = "c1", status: str = "completed", ts: str = "2025-04-20T10:00:00"):
+
+def _make_pipeline_event(
+    case_id: str = "c1", status: str = "completed", ts: str = "2025-04-20T10:00:00"
+):
     return SSEEvent(
         event="pipeline.completed",
         data={
@@ -34,7 +37,9 @@ def _make_pipeline_event(case_id: str = "c1", status: str = "completed", ts: str
     )
 
 
-def _make_agent_task_event(case_id: str = "c1", action: str = "agent_task.created", ts: str = "2025-04-20T09:00:00"):
+def _make_agent_task_event(
+    case_id: str = "c1", action: str = "agent_task.created", ts: str = "2025-04-20T09:00:00"
+):
     return SSEEvent(
         event="agent_task.created",
         data={
@@ -80,6 +85,7 @@ def _make_api_job(
 # ---------------------------------------------------------------------------
 # derive_job_status_cards
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveJobStatusCardsEmpty:
     def test_no_events_no_jobs(self):
@@ -211,10 +217,16 @@ class TestDeriveJobStatusCardsMerge:
         'pipeline' and API job_type 'pipeline_run' differ, so they produce
         separate cards.  When the type matches exactly, dedup collapses them.
         """
-        events = [SSEEvent(
-            event="pipeline_run.completed",
-            data={"case_id": "c1", "action": "pipeline_run.completed", "timestamp": "2025-04-20T10:00:00"},
-        )]
+        events = [
+            SSEEvent(
+                event="pipeline_run.completed",
+                data={
+                    "case_id": "c1",
+                    "action": "pipeline_run.completed",
+                    "timestamp": "2025-04-20T10:00:00",
+                },
+            )
+        ]
         jobs = [_make_api_job(job_id="j1", case_id="c1", job_type="pipeline_run")]
         cards = derive_job_status_cards(events, jobs, dedup=True)
         # Should have 1 card, sourced from API
@@ -233,6 +245,7 @@ class TestDeriveJobStatusCardsMerge:
 # ---------------------------------------------------------------------------
 # format_job_status_cards
 # ---------------------------------------------------------------------------
+
 
 class TestFormatJobStatusCards:
     def test_empty_cards(self):
@@ -311,6 +324,7 @@ class TestFormatJobStatusCards:
 # ---------------------------------------------------------------------------
 # build_job_status_table_rows
 # ---------------------------------------------------------------------------
+
 
 class TestBuildJobStatusTableRows:
     def test_empty_cards(self):

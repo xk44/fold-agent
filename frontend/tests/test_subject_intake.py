@@ -1,9 +1,12 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from frontend.app.upload_wizard import build_sample_registration_payload, build_subject_creation_payload
+from frontend.app.upload_wizard import (
+    build_sample_registration_payload,
+    build_subject_creation_payload,
+)
 
 
 def test_build_subject_creation_payload_includes_metadata_and_privacy_flags() -> None:

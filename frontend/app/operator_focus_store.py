@@ -34,6 +34,7 @@ The module is intentionally tolerant: if the file is missing, corrupt,
 or unreadable, :func:`load_operator_focus` returns an empty dict so
 the dashboard degrades gracefully to fresh-snapshot behaviour.
 """
+
 from __future__ import annotations
 
 import json
@@ -61,6 +62,7 @@ def default_focus_path() -> Path:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def load_operator_focus(path: Path | None = None) -> dict[str, Any]:
     """Load a previously saved operator focus snapshot from disk.

@@ -22,10 +22,15 @@ def test_list_artifacts_for_case_returns_saved_report_and_bundle(client: TestCli
     assert all(artifact["id"] for artifact in artifacts)
     assert all(artifact["case_id"] == case_id for artifact in artifacts)
     assert all(artifact["filename"] for artifact in artifacts)
-    assert all(artifact["download_url"].startswith("/artifacts/file?path=") for artifact in artifacts)
+    assert all(
+        artifact["download_url"].startswith("/artifacts/file?path=") for artifact in artifacts
+    )
     assert all(artifact["file_size"] > 0 for artifact in artifacts)
     assert all(artifact["saved_at"] for artifact in artifacts)
-    assert {artifact["mime_type"] for artifact in artifacts} == {"application/json", "text/markdown; charset=utf-8"}
+    assert {artifact["mime_type"] for artifact in artifacts} == {
+        "application/json",
+        "text/markdown; charset=utf-8",
+    }
 
 
 def test_list_artifacts_for_missing_case_returns_404(client: TestClient) -> None:

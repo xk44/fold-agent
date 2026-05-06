@@ -3,6 +3,7 @@
 These test only the client-side request construction, not the backend logic.
 Uses httpx mocking to avoid needing a live server.
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,6 +23,7 @@ def _mock_response(json_data=None, status_code=200):
     resp.raise_for_status = MagicMock()
     if status_code >= 400:
         from httpx import HTTPStatusError
+
         resp.raise_for_status.side_effect = HTTPStatusError(
             f"{status_code}", request=MagicMock(), response=resp
         )
@@ -46,6 +48,7 @@ class TestRetryBackgroundJob:
     def test_retry_propagates_http_error(self):
         """When API returns 409 (conflict), client should raise."""
         import httpx
+
         client = FoldAgentClient(base_url="http://localhost:8000")
         error_resp = MagicMock()
         error_resp.status_code = 409

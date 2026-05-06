@@ -10,7 +10,6 @@ import json
 import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import structlog
 from sqlalchemy.orm import Session
@@ -60,11 +59,13 @@ def list_case_data_files(case_id: str) -> list[dict]:
     for f in root.rglob("*"):
         if f.is_file():
             stat = f.stat()
-            result.append({
-                "path": str(f.relative_to(root)),
-                "size_bytes": stat.st_size,
-                "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-            })
+            result.append(
+                {
+                    "path": str(f.relative_to(root)),
+                    "size_bytes": stat.st_size,
+                    "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+                }
+            )
     return result
 
 
@@ -83,11 +84,8 @@ def find_expired_artifacts(db: Session, *, retention_days: int | None = None) ->
     days = retention_days or get_retention_days()
     cutoff = datetime.now(UTC) - timedelta(days=days)
     from backend.app.models import Artifact
-    expired = (
-        db.query(Artifact)
-        .filter(Artifact.saved_at < cutoff)
-        .all()
-    )
+
+    expired = db.query(Artifact).filter(Artifact.saved_at < cutoff).all()
     return [
         {
             "artifact_id": a.id,
@@ -175,7 +173,9 @@ def export_audit_log(
     ]
 
     if format == "json":
-        return json.dumps({"audit_log": rows, "exported_at": datetime.now(UTC).isoformat()}, indent=2)
+        return json.dumps(
+            {"audit_log": rows, "exported_at": datetime.now(UTC).isoformat()}, indent=2
+        )
 
     lines = [
         "# FoldAgent Audit Log Export",
@@ -184,7 +184,9 @@ def export_audit_log(
         "",
     ]
     for r in rows:
-        lines.append(f"- [{r['timestamp']}] {r['actor']}: {r['action']} (case={r['case_id']}, gate={r['safety_gate_result']})")
+        lines.append(
+            f"- [{r['timestamp']}] {r['actor']}: {r['action']} (case={r['case_id']}, gate={r['safety_gate_result']})"
+        )
     return "\n".join(lines)
 
 

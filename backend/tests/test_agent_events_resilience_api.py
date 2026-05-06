@@ -1,5 +1,5 @@
-from sqlalchemy import text
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from backend.app.db import engine
 

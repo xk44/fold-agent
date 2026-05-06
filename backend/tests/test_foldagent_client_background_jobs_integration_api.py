@@ -1,7 +1,7 @@
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.app.db import SessionLocal
 from backend.app.jobs import create_job
 from skills.shared.foldagent_client import FoldAgentClient
-
 
 POLL_SLEEP_SECONDS = 0.05
 POLL_ATTEMPTS = 40
@@ -23,12 +22,16 @@ def _bind_shared_client(test_client: TestClient) -> FoldAgentClient:
 
 
 def _create_demo_case(test_client: TestClient) -> str:
-    response = test_client.post("/cases", json={"species": "demo", "diagnosis_summary": "Shared client integration case"})
+    response = test_client.post(
+        "/cases", json={"species": "demo", "diagnosis_summary": "Shared client integration case"}
+    )
     assert response.status_code == 201
     return response.json()["id"]
 
 
-def _poll_job_status(shared_client: FoldAgentClient, job_id: str, terminal_statuses: set[str] | None = None) -> dict:
+def _poll_job_status(
+    shared_client: FoldAgentClient, job_id: str, terminal_statuses: set[str] | None = None
+) -> dict:
     statuses = terminal_statuses or {"completed", "failed", "cancelled", "timed_out"}
     latest = shared_client.get_background_job(job_id)
     for _ in range(POLL_ATTEMPTS):
@@ -39,7 +42,9 @@ def _poll_job_status(shared_client: FoldAgentClient, job_id: str, terminal_statu
     return latest
 
 
-def _poll_audit_actions(shared_client: FoldAgentClient, case_id: str, required_actions: set[str]) -> list[str]:
+def _poll_audit_actions(
+    shared_client: FoldAgentClient, case_id: str, required_actions: set[str]
+) -> list[str]:
     latest_actions = [entry["action"] for entry in shared_client.get_audit_log(case_id)]
     for _ in range(POLL_ATTEMPTS):
         latest_actions = [entry["action"] for entry in shared_client.get_audit_log(case_id)]
@@ -55,7 +60,13 @@ def test_shared_client_cancel_and_list_background_jobs(client: TestClient) -> No
 
     db = SessionLocal()
     try:
-        job = create_job(db, case_id=case_id, job_type="pipeline_run", payload={"case_id": case_id}, max_retries=1)
+        job = create_job(
+            db,
+            case_id=case_id,
+            job_type="pipeline_run",
+            payload={"case_id": case_id},
+            max_retries=1,
+        )
         db.commit()
         job_id = job.id
     finally:
@@ -72,7 +83,9 @@ def test_shared_client_cancel_and_list_background_jobs(client: TestClient) -> No
     assert fetched["status"] == "cancelled"
 
 
-def test_shared_client_retry_background_job_auto_resubmits_pipeline_run(client: TestClient, monkeypatch) -> None:
+def test_shared_client_retry_background_job_auto_resubmits_pipeline_run(
+    client: TestClient, monkeypatch
+) -> None:
     shared_client = _bind_shared_client(client)
     case_id = _create_demo_case(client)
     call_count = {"count": 0}

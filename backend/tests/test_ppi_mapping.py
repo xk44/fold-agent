@@ -2,25 +2,22 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.ppi_mapping import (
     KNOWN_CANCER_PPIS,
     KNOWN_HOST_PATHOGEN_PPIS,
+    SIGNALING_PATHWAYS,
     CombinationTarget,
     DruggabilityScore,
     HostPathogenPPI,
     PPIResult,
-    PathwayNode,
-    SIGNALING_PATHWAYS,
     assess_interface_druggability,
     map_to_pathway,
     predict_host_pathogen_ppi,
     predict_ppi,
     suggest_combinations,
 )
-
 
 # ---------------------------------------------------------------------------
 # predict_ppi
@@ -330,9 +327,7 @@ def test_api_ppi_host_pathogen_not_found(client: TestClient) -> None:
 
 
 def test_api_ppi_combination_targets_brca(client: TestClient) -> None:
-    response = client.post(
-        "/ppi/combination-targets", json={"mutated_genes": ["BRCA1", "BRCA2"]}
-    )
+    response = client.post("/ppi/combination-targets", json={"mutated_genes": ["BRCA1", "BRCA2"]})
     assert response.status_code == 200
     data = response.json()
     assert data["combination_count"] >= 1

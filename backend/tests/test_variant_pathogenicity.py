@@ -32,14 +32,15 @@ from backend.app.modes.variant_pathogenicity import (
     map_variant_to_structure,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
 def _make_case(client: TestClient) -> str:
-    resp = client.post("/cases", json={"species": "demo", "diagnosis_summary": "pathogenicity test"})
+    resp = client.post(
+        "/cases", json={"species": "demo", "diagnosis_summary": "pathogenicity test"}
+    )
     assert resp.status_code == 201
     return resp.json()["id"]
 
@@ -351,8 +352,8 @@ class TestBuildPathogenicityReport:
 
     def test_report_counts_sum_correct(self, client: TestClient):
         case_id = _make_case(client)
-        _add_variant(client, case_id, "TP53", "R175H")   # pathogenic
-        _add_variant(client, case_id, "LDLR", "V408M")   # benign
+        _add_variant(client, case_id, "TP53", "R175H")  # pathogenic
+        _add_variant(client, case_id, "LDLR", "V408M")  # benign
         from backend.app.db import SessionLocal
 
         with SessionLocal() as db:

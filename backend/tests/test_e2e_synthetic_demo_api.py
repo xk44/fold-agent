@@ -7,7 +7,9 @@ from backend.app.seed_demo import seed_demo_database
 pytestmark = pytest.mark.e2e
 
 
-def test_synthetic_demo_flow_covers_seed_pipeline_reports_safety_audit_and_agent_surfaces(client: TestClient) -> None:
+def test_synthetic_demo_flow_covers_seed_pipeline_reports_safety_audit_and_agent_surfaces(
+    client: TestClient,
+) -> None:
     seeded = seed_demo_database(settings.database_url, reset=False)
     case_id = seeded["case_id"]
 
@@ -50,7 +52,9 @@ def test_synthetic_demo_flow_covers_seed_pipeline_reports_safety_audit_and_agent
 
     agent_skills = client.get("/agent/skills")
     assert agent_skills.status_code == 200
-    assert any(item["skill_name"] == "run_full_foldagent_case_review" for item in agent_skills.json())
+    assert any(
+        item["skill_name"] == "run_full_foldagent_case_review" for item in agent_skills.json()
+    )
 
     agent_dry_run = client.post(
         "/agent/tasks/dry-run",

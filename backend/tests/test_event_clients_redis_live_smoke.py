@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 from threading import Thread
 from types import SimpleNamespace
-from uuid import uuid4
 
 import httpx
 import pytest
@@ -14,8 +13,8 @@ import pytest
 from backend.tests.test_event_stream_redis_live_smoke import (
     RUN_FLAG,
     _ComposeRedis,
-    _UvicornServer,
     _publish_remote,
+    _UvicornServer,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -32,7 +31,9 @@ from frontend.app.event_stream_live_feed import LiveEventFeed
 from skills.shared.event_stream_client import EventClient, EventStreamClient, WebSocketEventClient
 
 
-def _publish_remote_later(redis_url: str, event_name: str, payload: dict, delay: float = 0.5) -> Thread:
+def _publish_remote_later(
+    redis_url: str, event_name: str, payload: dict, delay: float = 0.5
+) -> Thread:
     def _runner() -> None:
         time.sleep(delay)
         _publish_remote(redis_url, "foldagent:events", event_name, payload)
@@ -51,7 +52,9 @@ def test_live_websocket_event_client_receives_remote_redis_event() -> None:
         with _UvicornServer(redis_url) as base_url:
             publisher = _publish_remote_later(redis_url, "smoke.client_ws", {"marker": "ws-client"})
             client = WebSocketEventClient(base_url=base_url)
-            stream = client.stream_events("/agent/events/ws", params={"prefix": "smoke.", "heartbeat": 1})
+            stream = client.stream_events(
+                "/agent/events/ws", params={"prefix": "smoke.", "heartbeat": 1}
+            )
             try:
                 event = next(stream)
             finally:
@@ -63,37 +66,35 @@ def test_live_websocket_event_client_receives_remote_redis_event() -> None:
 
 
 def test_live_sse_event_stream_client_receives_remote_redis_event() -> None:
-    with _ComposeRedis() as redis_url:
-        with _UvicornServer(redis_url) as base_url:
-            publisher = _publish_remote_later(redis_url, "smoke.client_sse", {"marker": "sse-client"})
-            client = EventStreamClient(base_url=base_url, timeout=20.0)
-            stream = client.stream_events(
-                "/agent/events",
-                params={"follow": True, "prefix": "smoke.", "limit": 1},
-            )
-            try:
-                event = next(stream)
-            finally:
-                stream.close()
-            publisher.join(timeout=5)
-            assert event.event == "smoke.client_sse"
-            assert event.data == {"marker": "sse-client"}
-            assert event.event_id is None
+    with _ComposeRedis() as redis_url, _UvicornServer(redis_url) as base_url:
+        publisher = _publish_remote_later(redis_url, "smoke.client_sse", {"marker": "sse-client"})
+        client = EventStreamClient(base_url=base_url, timeout=20.0)
+        stream = client.stream_events(
+            "/agent/events",
+            params={"follow": True, "prefix": "smoke.", "limit": 1},
+        )
+        try:
+            event = next(stream)
+        finally:
+            stream.close()
+        publisher.join(timeout=5)
+        assert event.event == "smoke.client_sse"
+        assert event.data == {"marker": "sse-client"}
+        assert event.event_id is None
 
 
 def test_live_event_client_ws_facade_receives_remote_redis_event() -> None:
-    with _ComposeRedis() as redis_url:
-        with _UvicornServer(redis_url) as base_url:
-            publisher = _publish_remote_later(redis_url, "smoke.client_facade", {"marker": "ws-facade"})
-            client = EventClient(base_url=base_url, transport="ws")
-            stream = client.stream_events(params={"prefix": "smoke.", "heartbeat": 1})
-            try:
-                event = next(stream)
-            finally:
-                stream.close()
-            publisher.join(timeout=5)
-            assert event.event == "smoke.client_facade"
-            assert event.data == {"marker": "ws-facade"}
+    with _ComposeRedis() as redis_url, _UvicornServer(redis_url) as base_url:
+        publisher = _publish_remote_later(redis_url, "smoke.client_facade", {"marker": "ws-facade"})
+        client = EventClient(base_url=base_url, transport="ws")
+        stream = client.stream_events(params={"prefix": "smoke.", "heartbeat": 1})
+        try:
+            event = next(stream)
+        finally:
+            stream.close()
+        publisher.join(timeout=5)
+        assert event.event == "smoke.client_facade"
+        assert event.data == {"marker": "ws-facade"}
 
 
 def test_live_event_feed_bootstraps_sse_then_uses_ws_against_redis_server(monkeypatch) -> None:
@@ -127,6 +128,9 @@ def test_live_event_feed_bootstraps_sse_then_uses_ws_against_redis_server(monkey
             publisher.join(timeout=5)
 
             events = second_buf.latest(second_buf.total_count)
-            assert any(evt.event == "smoke.live_feed" and evt.data == {"marker": "live-feed"} for evt in events)
+            assert any(
+                evt.event == "smoke.live_feed" and evt.data == {"marker": "live-feed"}
+                for evt in events
+            )
             second_meta = fake_streamlit.session_state[feed.SESSION_META_KEY]
             assert second_meta["transport"] == "ws"

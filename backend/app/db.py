@@ -50,7 +50,9 @@ def _safe_database_url(bind: Engine) -> str:
 
 def is_missing_table_error(exc: OperationalError, *table_names: str) -> bool:
     error_text = str(exc).lower()
-    if not any(pattern in error_text for pattern in ("no such table", "does not exist", "doesn't exist")):
+    if not any(
+        pattern in error_text for pattern in ("no such table", "does not exist", "doesn't exist")
+    ):
         return False
     if not table_names:
         return True
@@ -107,6 +109,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 # Schema validation helpers
 # ---------------------------------------------------------------------------
 
+
 def expected_table_names() -> set[str]:
     """Return the set of table names declared in the ORM model metadata."""
     return set(Base.metadata.tables.keys())
@@ -139,12 +142,15 @@ def _alembic_upgrade_head(database_url: str) -> None:
     automatic migration at startup.  For production use prefer running
     Alembic manually as part of the deploy pipeline.
     """
-    from alembic import command
-    from alembic.config import Config
     from pathlib import Path
 
+    from alembic import command
+    from alembic.config import Config
+
     alembic_cfg = Config(str(Path(__file__).resolve().parents[2].parent / "alembic.ini"))
-    alembic_cfg.set_main_option("script_location", str(Path(__file__).resolve().parents[1] / "migrations"))
+    alembic_cfg.set_main_option(
+        "script_location", str(Path(__file__).resolve().parents[1] / "migrations")
+    )
     alembic_cfg.set_main_option("sqlalchemy.url", database_url)
     command.upgrade(alembic_cfg, "head")
     logger.info("Alembic upgrade head completed")
@@ -153,6 +159,7 @@ def _alembic_upgrade_head(database_url: str) -> None:
 # ---------------------------------------------------------------------------
 # init_db – the main entry-point called from the FastAPI lifespan
 # ---------------------------------------------------------------------------
+
 
 def init_db() -> None:
     """Initialise the database schema according to ``settings.db_init_mode``.

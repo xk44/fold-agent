@@ -12,11 +12,9 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # Custom exceptions
@@ -43,14 +41,14 @@ class IRBSubmission:
     pi_name: str
     data_use_agreement_signed: bool
     human_subjects_approval: bool
-    veterinary_authorization: Optional[bool] = None
+    veterinary_authorization: bool | None = None
 
 
 @dataclass
 class IRBReadinessCheck:
     passed: bool
-    institution: Optional[str]
-    irb_protocol: Optional[str]
+    institution: str | None
+    irb_protocol: str | None
     data_use_agreement: bool
     human_subjects: bool
     veterinary_authorization: bool
@@ -77,7 +75,9 @@ def check_irb_readiness(submission: IRBSubmission) -> IRBReadinessCheck:
     return IRBReadinessCheck(
         passed=passed,
         institution=submission.institution if submission.institution.strip() else None,
-        irb_protocol=submission.irb_protocol_number if submission.irb_protocol_number.strip() else None,
+        irb_protocol=submission.irb_protocol_number
+        if submission.irb_protocol_number.strip()
+        else None,
         data_use_agreement=submission.data_use_agreement_signed,
         human_subjects=submission.human_subjects_approval,
         veterinary_authorization=submission.veterinary_authorization or False,
@@ -86,7 +86,7 @@ def check_irb_readiness(submission: IRBSubmission) -> IRBReadinessCheck:
     )
 
 
-def enforce_irb_gate(submission: Optional[IRBSubmission]) -> None:
+def enforce_irb_gate(submission: IRBSubmission | None) -> None:
     """Raise IRBGateError if the IRB readiness check fails.
 
     This is a hard gate — not a disclaimer. No submission proceeds without passing.
@@ -261,9 +261,7 @@ def assess_hipaa_compliance(data_fields: list[str]) -> HIPAAComplianceReport:
             safeguards_applied.append(safeguard)
 
             if not safeguard.encrypted:
-                violations.append(
-                    f"PHI field '{field_name}' ({phi_type.value}) is not encrypted"
-                )
+                violations.append(f"PHI field '{field_name}' ({phi_type.value}) is not encrypted")
             if not safeguard.audit_logged:
                 violations.append(
                     f"PHI field '{field_name}' ({phi_type.value}) is not audit-logged"
@@ -279,12 +277,8 @@ def assess_hipaa_compliance(data_fields: list[str]) -> HIPAAComplianceReport:
         )
 
     if violations:
-        recommendations.append(
-            "Encrypt all PHI fields at rest and in transit before processing."
-        )
-        recommendations.append(
-            "Enable audit logging for all PHI field access."
-        )
+        recommendations.append("Encrypt all PHI fields at rest and in transit before processing.")
+        recommendations.append("Enable audit logging for all PHI field access.")
 
     return HIPAAComplianceReport(
         compliant=len(violations) == 0,
@@ -339,7 +333,7 @@ def _compute_entry_hash(
 class HashChainedAuditLog:
     """Singleton tamper-evident audit log using SHA-256 hash chaining."""
 
-    _instance: Optional[HashChainedAuditLog] = None
+    _instance: HashChainedAuditLog | None = None
 
     def __new__(cls) -> HashChainedAuditLog:
         if cls._instance is None:
@@ -374,8 +368,11 @@ class HashChainedAuditLog:
                     f"Expected {expected_previous[:16]}..., got {entry.previous_hash[:16]}..."
                 )
             recomputed = _compute_entry_hash(
-                entry.previous_hash, entry.action, entry.user,
-                entry.timestamp, entry.details,
+                entry.previous_hash,
+                entry.action,
+                entry.user,
+                entry.timestamp,
+                entry.details,
             )
             if entry.entry_hash != recomputed:
                 errors.append(
@@ -383,7 +380,7 @@ class HashChainedAuditLog:
                 )
         return len(errors) == 0, errors
 
-    def get_entries(self, since: Optional[str] = None) -> list[AuditEntry]:
+    def get_entries(self, since: str | None = None) -> list[AuditEntry]:
         if since is None:
             return list(self._chain)
         return [e for e in self._chain if e.timestamp >= since]
@@ -474,9 +471,7 @@ def watermark_report(report_text: str, format: str = "html") -> WatermarkedOutpu
     }
 
     if format == "html":
-        meta_comment = (
-            f"<!-- FOLDAGENT_WATERMARK: {json.dumps(meta, separators=(',', ':'))} -->"
-        )
+        meta_comment = f"<!-- FOLDAGENT_WATERMARK: {json.dumps(meta, separators=(',', ':'))} -->"
         header = (
             f'<div class="foldagent-watermark" style="background:#ffd700;color:#000;'
             f'font-weight:bold;padding:8px;text-align:center;">'
@@ -568,7 +563,7 @@ class CredentialAttestation:
     user_id: str
     credential: ProfessionalCredential
     institution: str
-    license_number: Optional[str]
+    license_number: str | None
     attested_at: str
     expires_at: str
     modes_unlocked: list[str]
@@ -582,7 +577,7 @@ def attest_credentials(
     user_id: str,
     credential: ProfessionalCredential,
     institution: str,
-    license_number: Optional[str] = None,
+    license_number: str | None = None,
 ) -> CredentialAttestation:
     """Record a credential attestation and return which modes are unlocked."""
     now = datetime.now(UTC)
@@ -638,7 +633,10 @@ def check_mode_access(user_id: str, mode: str) -> tuple[bool, str]:
             f"Required credentials: {required}."
         )
 
-    return True, f"Access granted: credential '{attestation.credential.value}' unlocks mode '{mode}'."
+    return (
+        True,
+        f"Access granted: credential '{attestation.credential.value}' unlocks mode '{mode}'.",
+    )
 
 
 # ---------------------------------------------------------------------------

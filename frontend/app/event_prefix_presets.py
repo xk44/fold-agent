@@ -4,6 +4,7 @@ These presets must align with the backend's real event families exposed by
 `/agent/events`. Keep names explicit so narrowing is intentional and easy to
 verify in tests.
 """
+
 from __future__ import annotations
 
 # Canonical backend event-family prefixes.

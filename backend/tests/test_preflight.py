@@ -1,4 +1,8 @@
-from backend.app.safety.preflight import PreflightResult, check_text_for_unsafe_patterns, preflight_action
+from backend.app.safety.preflight import (
+    PreflightResult,
+    check_text_for_unsafe_patterns,
+    preflight_action,
+)
 
 
 def test_unsafe_text_is_blocked() -> None:
@@ -25,7 +29,9 @@ def test_external_upload_requires_approval() -> None:
 
 
 def test_safe_text_passes() -> None:
-    is_safe, matches = check_text_for_unsafe_patterns("Candidate review summary for expert research discussion.")
+    is_safe, matches = check_text_for_unsafe_patterns(
+        "Candidate review summary for expert research discussion."
+    )
 
     assert is_safe is True
     assert matches == []

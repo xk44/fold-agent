@@ -16,6 +16,7 @@ Covers:
 - Enriched job when job_cards match
 - Enriched job fallback when job_cards do not match
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,27 +25,27 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from frontend.app.event_stream import (
+    _CTX_EVENT_KEY,
+    _CTX_FILTER_CASE_ID_KEY,
+    _CTX_FILTER_JOB_TYPE_KEY,
+    _CTX_FILTER_STATUS_KEY,
+    _CTX_INSPECT_CASE_KEY,
+    _CTX_JOB_KEY,
+    _CTX_PIPELINE_CASE_KEY,
+    _CTX_PREFOCUS_ARTIFACT_KEY,
+    _CTX_PREFOCUS_CASE_KEY,
+    _CTX_PREFOCUS_REPORT_KEY,
+    _CTX_REPORT_KEY_PREFIX,
+    _CTX_STRUCTURE_JOB_KEY_PREFIX,
     FILTER_ALL,
     derive_operator_context,
     format_operator_context,
-    _CTX_EVENT_KEY,
-    _CTX_JOB_KEY,
-    _CTX_PIPELINE_CASE_KEY,
-    _CTX_INSPECT_CASE_KEY,
-    _CTX_REPORT_KEY_PREFIX,
-    _CTX_STRUCTURE_JOB_KEY_PREFIX,
-    _CTX_FILTER_STATUS_KEY,
-    _CTX_FILTER_JOB_TYPE_KEY,
-    _CTX_FILTER_CASE_ID_KEY,
-    _CTX_PREFOCUS_REPORT_KEY,
-    _CTX_PREFOCUS_CASE_KEY,
-    _CTX_PREFOCUS_ARTIFACT_KEY,
 )
-
 
 # ---------------------------------------------------------------------------
 # derive_operator_context — empty / minimal state
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveOperatorContextEmpty:
     """Empty session state yields no active selections."""
@@ -64,11 +65,13 @@ class TestDeriveOperatorContextEmpty:
         assert ctx["job_status"] == ""
 
     def test_none_values_treated_as_empty(self):
-        ctx = derive_operator_context({
-            _CTX_EVENT_KEY: None,
-            _CTX_JOB_KEY: None,
-            _CTX_PIPELINE_CASE_KEY: None,
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_EVENT_KEY: None,
+                _CTX_JOB_KEY: None,
+                _CTX_PIPELINE_CASE_KEY: None,
+            }
+        )
         assert ctx["event_label"] == ""
         assert ctx["job_label"] == ""
         assert ctx["case_id"] == ""
@@ -78,13 +81,16 @@ class TestDeriveOperatorContextEmpty:
 # Event label
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextEvent:
     """Event label extraction."""
 
     def test_event_label_present(self):
-        ctx = derive_operator_context({
-            _CTX_EVENT_KEY: "case.created @ 2025-04-20 | case=c1",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_EVENT_KEY: "case.created @ 2025-04-20 | case=c1",
+            }
+        )
         assert ctx["event_label"] == "case.created @ 2025-04-20 | case=c1"
         assert "event:" in ctx["summary_line"]
 
@@ -106,13 +112,16 @@ class TestDeriveOperatorContextEvent:
 # Job label + enrichment from job_cards
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextJob:
     """Job label extraction and enrichment."""
 
     def test_job_label_present_no_cards(self):
-        ctx = derive_operator_context({
-            _CTX_JOB_KEY: "pipeline_run — running (abc12345)",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_JOB_KEY: "pipeline_run — running (abc12345)",
+            }
+        )
         assert ctx["job_label"] == "pipeline_run — running (abc12345)"
         assert ctx["job_id"] == ""
         assert ctx["job_type"] == ""
@@ -162,20 +171,25 @@ class TestDeriveOperatorContextJob:
 # Case ID — pipeline preferred over inspect
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextCase:
     """Case ID extraction with pipeline/inspect fallback."""
 
     def test_pipeline_case_selected(self):
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: "case-alpha",
-            _CTX_INSPECT_CASE_KEY: "case-beta",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: "case-alpha",
+                _CTX_INSPECT_CASE_KEY: "case-beta",
+            }
+        )
         assert ctx["case_id"] == "case-alpha"
 
     def test_inspect_case_fallback(self):
-        ctx = derive_operator_context({
-            _CTX_INSPECT_CASE_KEY: "case-beta",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_INSPECT_CASE_KEY: "case-beta",
+            }
+        )
         assert ctx["case_id"] == "case-beta"
 
     def test_no_case(self):
@@ -183,10 +197,12 @@ class TestDeriveOperatorContextCase:
         assert ctx["case_id"] == ""
 
     def test_pipeline_empty_falls_to_inspect(self):
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: "",
-            _CTX_INSPECT_CASE_KEY: "case-gamma",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: "",
+                _CTX_INSPECT_CASE_KEY: "case-gamma",
+            }
+        )
         assert ctx["case_id"] == "case-gamma"
 
 
@@ -194,31 +210,38 @@ class TestDeriveOperatorContextCase:
 # Report ID — keyed per case
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextReport:
     """Report ID extraction from report-detail-{case_id}."""
 
     def test_report_id_present(self):
         case_id = "case-42"
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: case_id,
-            f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "rep-99ab",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: case_id,
+                f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "rep-99ab",
+            }
+        )
         assert ctx["report_id"] == "rep-99ab"
         assert "report:" in ctx["summary_line"]
 
     def test_no_report_id_without_case(self):
-        ctx = derive_operator_context({
-            f"{_CTX_REPORT_KEY_PREFIX}case-42": "rep-99ab",
-        })
+        ctx = derive_operator_context(
+            {
+                f"{_CTX_REPORT_KEY_PREFIX}case-42": "rep-99ab",
+            }
+        )
         # No case selected → report-detail key not consulted
         assert ctx["report_id"] == ""
 
     def test_report_id_empty(self):
         case_id = "case-42"
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: case_id,
-            f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: case_id,
+                f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "",
+            }
+        )
         assert ctx["report_id"] == ""
 
 
@@ -226,22 +249,27 @@ class TestDeriveOperatorContextReport:
 # Structure job ID — keyed per case
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextStructureJob:
     """Structure job ID extraction from structure-job-{case_id}."""
 
     def test_structure_job_id_present(self):
         case_id = "case-42"
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: case_id,
-            f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}": "sj-42b1",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: case_id,
+                f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}": "sj-42b1",
+            }
+        )
         assert ctx["structure_job_id"] == "sj-42b1"
         assert "struct:" in ctx["summary_line"]
 
     def test_no_structure_job_without_case(self):
-        ctx = derive_operator_context({
-            f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}case-42": "sj-42b1",
-        })
+        ctx = derive_operator_context(
+            {
+                f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}case-42": "sj-42b1",
+            }
+        )
         assert ctx["structure_job_id"] == ""
 
 
@@ -249,41 +277,50 @@ class TestDeriveOperatorContextStructureJob:
 # Filters
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextFilters:
     """Filter extraction: specific values included, FILTER_ALL suppressed."""
 
     def test_specific_filters(self):
-        ctx = derive_operator_context({
-            _CTX_FILTER_STATUS_KEY: "running",
-            _CTX_FILTER_JOB_TYPE_KEY: "pipeline_run",
-            _CTX_FILTER_CASE_ID_KEY: "case-42",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_FILTER_STATUS_KEY: "running",
+                _CTX_FILTER_JOB_TYPE_KEY: "pipeline_run",
+                _CTX_FILTER_CASE_ID_KEY: "case-42",
+            }
+        )
         assert ctx["filters"]["status"] == "running"
         assert ctx["filters"]["job_type"] == "pipeline_run"
         assert ctx["filters"]["case_id"] == "case-42"
         assert "filter:" in ctx["summary_line"]
 
     def test_filter_all_suppressed(self):
-        ctx = derive_operator_context({
-            _CTX_FILTER_STATUS_KEY: FILTER_ALL,
-            _CTX_FILTER_JOB_TYPE_KEY: FILTER_ALL,
-            _CTX_FILTER_CASE_ID_KEY: FILTER_ALL,
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_FILTER_STATUS_KEY: FILTER_ALL,
+                _CTX_FILTER_JOB_TYPE_KEY: FILTER_ALL,
+                _CTX_FILTER_CASE_ID_KEY: FILTER_ALL,
+            }
+        )
         assert ctx["filters"] == {}
 
     def test_mixed_filters(self):
-        ctx = derive_operator_context({
-            _CTX_FILTER_STATUS_KEY: "running",
-            _CTX_FILTER_JOB_TYPE_KEY: FILTER_ALL,
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_FILTER_STATUS_KEY: "running",
+                _CTX_FILTER_JOB_TYPE_KEY: FILTER_ALL,
+            }
+        )
         assert "status" in ctx["filters"]
         assert "job_type" not in ctx["filters"]
 
     def test_empty_filter_values_omitted(self):
-        ctx = derive_operator_context({
-            _CTX_FILTER_STATUS_KEY: "",
-            _CTX_FILTER_JOB_TYPE_KEY: "",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_FILTER_STATUS_KEY: "",
+                _CTX_FILTER_JOB_TYPE_KEY: "",
+            }
+        )
         assert ctx["filters"] == {}
 
 
@@ -291,26 +328,33 @@ class TestDeriveOperatorContextFilters:
 # Prefocus
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorContextPrefocus:
     """Prefocus key extraction (pre-consumption state)."""
 
     def test_prefocus_report(self):
-        ctx = derive_operator_context({
-            _CTX_PREFOCUS_REPORT_KEY: "rep-99ab",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PREFOCUS_REPORT_KEY: "rep-99ab",
+            }
+        )
         assert ctx["prefocus"]["report_id"] == "rep-99ab"
         assert "prefocus:" in ctx["summary_line"]
 
     def test_prefocus_case(self):
-        ctx = derive_operator_context({
-            _CTX_PREFOCUS_CASE_KEY: "case-42",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PREFOCUS_CASE_KEY: "case-42",
+            }
+        )
         assert ctx["prefocus"]["case_id"] == "case-42"
 
     def test_prefocus_artifact(self):
-        ctx = derive_operator_context({
-            _CTX_PREFOCUS_ARTIFACT_KEY: "/tmp/demo.pdb",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PREFOCUS_ARTIFACT_KEY: "/tmp/demo.pdb",
+            }
+        )
         assert ctx["prefocus"]["artifact_path"] == "/tmp/demo.pdb"
 
     def test_no_prefocus_keys(self):
@@ -318,16 +362,19 @@ class TestDeriveOperatorContextPrefocus:
         assert ctx["prefocus"] == {}
 
     def test_prefocus_none_values_omitted(self):
-        ctx = derive_operator_context({
-            _CTX_PREFOCUS_REPORT_KEY: None,
-            _CTX_PREFOCUS_CASE_KEY: None,
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PREFOCUS_REPORT_KEY: None,
+                _CTX_PREFOCUS_CASE_KEY: None,
+            }
+        )
         assert ctx["prefocus"] == {}
 
 
 # ---------------------------------------------------------------------------
 # Summary line
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveOperatorContextSummaryLine:
     """Summary line composition."""
@@ -337,20 +384,24 @@ class TestDeriveOperatorContextSummaryLine:
         assert ctx["summary_line"] == "No active selections"
 
     def test_single_event(self):
-        ctx = derive_operator_context({
-            _CTX_EVENT_KEY: "case.created",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_EVENT_KEY: "case.created",
+            }
+        )
         assert ctx["summary_line"] == "event: case.created"
 
     def test_multiple_selections(self):
         case_id = "case-42"
-        ctx = derive_operator_context({
-            _CTX_EVENT_KEY: "pipeline.completed",
-            _CTX_JOB_KEY: "pipeline_run — running (abc12345)",
-            _CTX_PIPELINE_CASE_KEY: case_id,
-            f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "rep-99",
-            f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}": "sj-42",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_EVENT_KEY: "pipeline.completed",
+                _CTX_JOB_KEY: "pipeline_run — running (abc12345)",
+                _CTX_PIPELINE_CASE_KEY: case_id,
+                f"{_CTX_REPORT_KEY_PREFIX}{case_id}": "rep-99",
+                f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}": "sj-42",
+            }
+        )
         assert "event:" in ctx["summary_line"]
         assert "job:" in ctx["summary_line"]
         assert "case:" in ctx["summary_line"]
@@ -360,15 +411,18 @@ class TestDeriveOperatorContextSummaryLine:
         assert " | " in ctx["summary_line"]
 
     def test_case_id_shortened_in_summary(self):
-        ctx = derive_operator_context({
-            _CTX_PIPELINE_CASE_KEY: "case-with-a-very-long-id-1234567890",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PIPELINE_CASE_KEY: "case-with-a-very-long-id-1234567890",
+            }
+        )
         assert "case: case-wit" in ctx["summary_line"]  # first 8 chars
 
 
 # ---------------------------------------------------------------------------
 # format_operator_context
 # ---------------------------------------------------------------------------
+
 
 class TestFormatOperatorContext:
     """format_operator_context renders a compact multi-line block."""
@@ -419,9 +473,11 @@ class TestFormatOperatorContext:
         assert "status=running" in result
 
     def test_job_label_without_enrichment(self):
-        ctx = derive_operator_context({
-            _CTX_JOB_KEY: "some_custom_label",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_JOB_KEY: "some_custom_label",
+            }
+        )
         result = format_operator_context(ctx)
         assert "job:" in result
         assert "some_custom_label" in result
@@ -435,18 +491,22 @@ class TestFormatOperatorContext:
         assert "A" * 60 not in result
 
     def test_prefocus_shown(self):
-        ctx = derive_operator_context({
-            _CTX_PREFOCUS_REPORT_KEY: "rep-99ab",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_PREFOCUS_REPORT_KEY: "rep-99ab",
+            }
+        )
         result = format_operator_context(ctx)
         assert "prefocus:" in result
         assert "report_id=rep-99ab" in result
 
     def test_filters_sorted(self):
-        ctx = derive_operator_context({
-            _CTX_FILTER_STATUS_KEY: "running",
-            _CTX_FILTER_CASE_ID_KEY: "c1",
-        })
+        ctx = derive_operator_context(
+            {
+                _CTX_FILTER_STATUS_KEY: "running",
+                _CTX_FILTER_CASE_ID_KEY: "c1",
+            }
+        )
         result = format_operator_context(ctx)
         # case_id comes before status alphabetically
         assert result.index("case_id=c1") < result.index("status=running")
@@ -455,6 +515,7 @@ class TestFormatOperatorContext:
 # ---------------------------------------------------------------------------
 # Integration: constants match expected session state keys
 # ---------------------------------------------------------------------------
+
 
 class TestOperatorContextConstants:
     """Verify constants match the session state key conventions."""

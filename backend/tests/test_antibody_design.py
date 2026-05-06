@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.antibody_design import (
     KNOWN_ANTIBODY_TARGETS,
     KNOWN_NANOBODIES,
     BispecificDesign,
-    CDRRegion,
     CheckpointAnalysis,
     DesignedBinder,
     DockingResult,

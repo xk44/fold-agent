@@ -1,13 +1,13 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import httpx
-
-from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 from fastapi.testclient import TestClient
+
 from backend.app.main import app
+from skills.shared.foldagent_client import AlphaFoldValidationError, FoldAgentClient
 
 
 class _DummyResponse:
@@ -105,7 +105,9 @@ def test_create_agent_task_uses_current_agent_tasks_route() -> None:
 
 def test_get_agent_task_endpoint_exists() -> None:
     client = TestClient(app)
-    create_case = client.post("/cases", json={"species": "demo", "diagnosis_summary": "Agent task route case"})
+    create_case = client.post(
+        "/cases", json={"species": "demo", "diagnosis_summary": "Agent task route case"}
+    )
     case_id = create_case.json()["id"]
 
     created = client.post(

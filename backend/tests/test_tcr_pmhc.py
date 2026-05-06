@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.tcr_pmhc import (
+    KNOWN_TCR_PMHC,
+    TCR_PMHC_DISCLAIMER,
     CDRLoopAnalysis,
     ImmunogenicityPrediction,
-    KNOWN_TCR_PMHC,
     MultiSeedResult,
-    TCR_PMHC_DISCLAIMER,
     TCellResponseScore,
     TernaryComplexResult,
     analyze_cdr_loops,
@@ -74,7 +73,14 @@ def test_known_complexes_wt1_hla_a24() -> None:
 
 
 def test_known_complexes_all_have_required_fields() -> None:
-    required = {"peptide", "mhc_allele", "tcr_va", "tcr_vb", "binding_affinity_nm", "crystal_pdb_id"}
+    required = {
+        "peptide",
+        "mhc_allele",
+        "tcr_va",
+        "tcr_vb",
+        "binding_affinity_nm",
+        "crystal_pdb_id",
+    }
     for pep, entry in KNOWN_TCR_PMHC.items():
         for field in required:
             assert field in entry, f"Missing '{field}' in entry for {pep}"
@@ -109,9 +115,15 @@ def test_ternary_complex_result_instantiation() -> None:
 
 def test_ternary_complex_result_has_disclaimer_default() -> None:
     r = TernaryComplexResult(
-        peptide="X", mhc_allele="A", tcr_sequence="B",
-        mock_pdb_id="C", confidence_score=0.5, interface_contacts=[],
-        binding_mode="m", predicted_kd_nm=1.0, mhc_peptide_groove_score=0.5,
+        peptide="X",
+        mhc_allele="A",
+        tcr_sequence="B",
+        mock_pdb_id="C",
+        confidence_score=0.5,
+        interface_contacts=[],
+        binding_mode="m",
+        predicted_kd_nm=1.0,
+        mhc_peptide_groove_score=0.5,
         tcr_docking_angle_deg=30.0,
     )
     assert r.disclaimer == TCR_PMHC_DISCLAIMER
@@ -124,7 +136,8 @@ def test_ternary_complex_result_has_disclaimer_default() -> None:
 
 def test_tcell_response_score_instantiation() -> None:
     s = TCellResponseScore(
-        peptide="X", mhc_allele="A",
+        peptide="X",
+        mhc_allele="A",
         binding_geometry_score=0.8,
         predicted_activation="strong",
         cytokine_profile={"IFN-gamma": 0.9},
@@ -169,11 +182,16 @@ def test_cdr_loop_analysis_instantiation() -> None:
 
 def test_multiseed_result_instantiation() -> None:
     r = MultiSeedResult(
-        peptide="X", mhc_allele="A", tcr_sequence="B",
-        n_seeds=10, per_seed_scores=[0.5] * 10,
-        mean_score=0.5, std_score=0.0,
+        peptide="X",
+        mhc_allele="A",
+        tcr_sequence="B",
+        n_seeds=10,
+        per_seed_scores=[0.5] * 10,
+        mean_score=0.5,
+        std_score=0.0,
         confidence_interval_95=(0.4, 0.6),
-        convergence_metric=0.9, top_seed_index=0,
+        convergence_metric=0.9,
+        top_seed_index=0,
         reproducibility_score=0.85,
     )
     assert r.n_seeds == 10
@@ -186,7 +204,9 @@ def test_multiseed_result_instantiation() -> None:
 
 def test_immunogenicity_prediction_instantiation() -> None:
     p = ImmunogenicityPrediction(
-        peptide="X", mhc_allele="A", tcr_sequence="B",
+        peptide="X",
+        mhc_allele="A",
+        tcr_sequence="B",
         immunogenicity_score=0.7,
         mhc_binding_component=0.8,
         tcr_recognition_component=0.6,
@@ -457,7 +477,12 @@ def test_predict_immunogenicity_components_in_range() -> None:
 
 def test_predict_immunogenicity_response_class_valid() -> None:
     result = predict_immunogenicity(PEPTIDE, MHC, TCR)
-    valid = {"high_immunogenicity", "moderate_immunogenicity", "low_immunogenicity", "non_immunogenic"}
+    valid = {
+        "high_immunogenicity",
+        "moderate_immunogenicity",
+        "low_immunogenicity",
+        "non_immunogenic",
+    }
     assert result.predicted_response_class in valid
 
 
@@ -541,8 +566,13 @@ def test_build_report_returns_dict() -> None:
 def test_build_report_has_top_level_keys() -> None:
     report = build_immunogenicity_report(PEPTIDE, MHC, TCR)
     required_keys = {
-        "disclaimer", "input", "ternary_complex", "tcell_response",
-        "cdr_loops", "multiseed_sampling", "immunogenicity",
+        "disclaimer",
+        "input",
+        "ternary_complex",
+        "tcell_response",
+        "cdr_loops",
+        "multiseed_sampling",
+        "immunogenicity",
     }
     for k in required_keys:
         assert k in report, f"Missing key: {k}"
@@ -584,7 +614,9 @@ def test_build_report_multiseed_has_seeds() -> None:
 def test_build_report_deterministic() -> None:
     r1 = build_immunogenicity_report(PEPTIDE, MHC, TCR)
     r2 = build_immunogenicity_report(PEPTIDE, MHC, TCR)
-    assert r1["immunogenicity"]["immunogenicity_score"] == r2["immunogenicity"]["immunogenicity_score"]
+    assert (
+        r1["immunogenicity"]["immunogenicity_score"] == r2["immunogenicity"]["immunogenicity_score"]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -706,7 +738,12 @@ def test_api_predict_immunogenicity_response_class(client: TestClient) -> None:
         json={"peptide": PEPTIDE, "mhc_allele": MHC, "tcr_sequence": TCR},
     )
     data = response.json()
-    valid = {"high_immunogenicity", "moderate_immunogenicity", "low_immunogenicity", "non_immunogenic"}
+    valid = {
+        "high_immunogenicity",
+        "moderate_immunogenicity",
+        "low_immunogenicity",
+        "non_immunogenic",
+    }
     assert data["predicted_response_class"] in valid
 
 

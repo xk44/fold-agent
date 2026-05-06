@@ -14,12 +14,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from backend.app.alphafold.shells import AlphaFoldExecution
 from backend.app.main import app, get_db
-from backend.app.models import BackgroundJob
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _create_demo_case(client: TestClient) -> str:
     resp = client.post("/cases", json={"species": "demo", "diagnosis_summary": "BG job case"})
@@ -47,6 +46,7 @@ def _override_db_with_empty_sqlite(tmp_path) -> None:
 # ---------------------------------------------------------------------------
 # 1. Core lifecycle: dispatch -> pending -> running -> completed
 # ---------------------------------------------------------------------------
+
 
 def test_dispatch_pipeline_background_job_returns_pending(client: TestClient) -> None:
     case_id = _create_demo_case(client)
@@ -94,7 +94,9 @@ def test_background_job_status_404_for_unknown_id(client: TestClient) -> None:
     assert resp.status_code == 404
 
 
-def test_list_background_jobs_returns_empty_when_table_is_missing(client: TestClient, tmp_path) -> None:
+def test_list_background_jobs_returns_empty_when_table_is_missing(
+    client: TestClient, tmp_path
+) -> None:
     _override_db_with_empty_sqlite(tmp_path)
     try:
         resp = client.get("/jobs")
@@ -116,7 +118,9 @@ def test_get_background_job_returns_503_when_table_is_missing(client: TestClient
     assert "background_jobs" in resp.json()["detail"]
 
 
-def test_cancel_background_job_returns_503_when_table_is_missing(client: TestClient, tmp_path) -> None:
+def test_cancel_background_job_returns_503_when_table_is_missing(
+    client: TestClient, tmp_path
+) -> None:
     _override_db_with_empty_sqlite(tmp_path)
     try:
         resp = client.post("/jobs/nonexistent-job-id/cancel")
@@ -127,7 +131,9 @@ def test_cancel_background_job_returns_503_when_table_is_missing(client: TestCli
     assert "background_jobs" in resp.json()["detail"]
 
 
-def test_retry_background_job_returns_503_when_table_is_missing(client: TestClient, tmp_path) -> None:
+def test_retry_background_job_returns_503_when_table_is_missing(
+    client: TestClient, tmp_path
+) -> None:
     _override_db_with_empty_sqlite(tmp_path)
     try:
         resp = client.post("/jobs/nonexistent-job-id/retry")
@@ -141,6 +147,7 @@ def test_retry_background_job_returns_503_when_table_is_missing(client: TestClie
 # ---------------------------------------------------------------------------
 # 2. List / filter jobs
 # ---------------------------------------------------------------------------
+
 
 def test_list_background_jobs_filters_by_case(client: TestClient) -> None:
     case_a = _create_demo_case(client)
@@ -175,6 +182,7 @@ def test_list_background_jobs_filters_by_status(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 # 3. Pipeline-specific background dispatch
 # ---------------------------------------------------------------------------
+
 
 def test_async_pipeline_run_creates_pipeline_run_record(client: TestClient) -> None:
     case_id = _create_demo_case(client)
@@ -219,6 +227,7 @@ def test_async_pipeline_run_is_audit_logged(client: TestClient) -> None:
 # 4. AlphaFold background dispatch
 # ---------------------------------------------------------------------------
 
+
 def test_dispatch_alphafold_background_job(client: TestClient, monkeypatch) -> None:
     case_id = _create_demo_case(client)
     variant = client.post(
@@ -243,7 +252,15 @@ def test_dispatch_alphafold_background_job(client: TestClient, monkeypatch) -> N
             validation_ok=True,
             notes="simulated",
             status="completed",
-            stdout=json.dumps({"structure": {"backend": backend_name, "status": "completed", "pdb_file": "/tmp/demo_out/pdb"}}),
+            stdout=json.dumps(
+                {
+                    "structure": {
+                        "backend": backend_name,
+                        "status": "completed",
+                        "pdb_file": "/tmp/demo_out/pdb",
+                    }
+                }
+            ),
             stderr="",
             timed_out=False,
             return_code=0,
@@ -279,6 +296,7 @@ def test_dispatch_alphafold_background_job(client: TestClient, monkeypatch) -> N
 # 5. Error cases
 # ---------------------------------------------------------------------------
 
+
 def test_async_pipeline_dispatch_rejects_missing_case(client: TestClient) -> None:
     resp = client.post("/cases/nonexistent-case/pipeline/run-async", json={})
     assert resp.status_code == 404
@@ -301,6 +319,7 @@ def test_async_pipeline_dispatch_respects_safety_gate(client: TestClient) -> Non
 # 6. Job cancellation
 # ---------------------------------------------------------------------------
 
+
 def test_cancel_pending_or_running_job(client: TestClient) -> None:
     case_id = _create_demo_case(client)
 
@@ -320,6 +339,7 @@ def test_cancel_pending_or_running_job(client: TestClient) -> None:
 # 7. Non-blocking guarantee: dispatch returns fast
 # ---------------------------------------------------------------------------
 
+
 def test_async_dispatch_returns_immediately(client: TestClient) -> None:
     case_id = _create_demo_case(client)
 
@@ -335,6 +355,7 @@ def test_async_dispatch_returns_immediately(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 # 8. Timeout semantics: job response includes timeout/retry fields
 # ---------------------------------------------------------------------------
+
 
 def test_background_job_response_includes_timeout_fields(client: TestClient) -> None:
     case_id = _create_demo_case(client)
@@ -369,6 +390,7 @@ def test_dispatch_pipeline_async_with_timeout(client: TestClient) -> None:
 # 9. Retry endpoint
 # ---------------------------------------------------------------------------
 
+
 def test_retry_failed_background_job(client: TestClient) -> None:
     case_id = _create_demo_case(client)
 
@@ -400,6 +422,7 @@ def test_retry_nonexistent_job_returns_404(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 # 10. Cancel still works on running job (improved)
 # ---------------------------------------------------------------------------
+
 
 def test_cancel_running_job_accepted(client: TestClient) -> None:
     """Cancel endpoint should now accept (not refuse) cancellation for running jobs."""

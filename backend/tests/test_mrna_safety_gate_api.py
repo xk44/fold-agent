@@ -20,8 +20,9 @@ def test_mrna_gate_blocks_human_sequence_export_without_expert_mode(client: Test
     assert "Human mode" in body["reason"]
 
 
-
-def test_mrna_gate_requires_approval_for_dog_sequence_access_without_expert_mode(client: TestClient) -> None:
+def test_mrna_gate_requires_approval_for_dog_sequence_access_without_expert_mode(
+    client: TestClient,
+) -> None:
     response = client.post(
         "/safety/mrna-gate",
         json={
@@ -37,7 +38,6 @@ def test_mrna_gate_requires_approval_for_dog_sequence_access_without_expert_mode
     assert body["status"] == "requires_approval"
     assert body["needs_approval"] is True
     assert "expert mode" in body["reason"].lower()
-
 
 
 def test_safety_preflight_uses_mrna_gate_reasoning(client: TestClient) -> None:

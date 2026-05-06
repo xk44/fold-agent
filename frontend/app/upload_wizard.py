@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-import re
-
 
 _FILENAME_SAFE_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
 

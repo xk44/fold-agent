@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
 
 
-def test_shell_execution_history_lists_pipeline_runs_and_skips_blocked_alphafold_runs(client: TestClient) -> None:
+def test_shell_execution_history_lists_pipeline_runs_and_skips_blocked_alphafold_runs(
+    client: TestClient,
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Execution history case"},
@@ -37,7 +39,9 @@ def test_shell_execution_history_lists_pipeline_runs_and_skips_blocked_alphafold
     assert "stdout" in executions[0]
     assert "stderr" in executions[0]
     assert executions[0]["artifacts"]
-    assert any(artifact["artifact_type"] == "execution_log" for artifact in executions[0]["artifacts"])
+    assert any(
+        artifact["artifact_type"] == "execution_log" for artifact in executions[0]["artifacts"]
+    )
     assert any(artifact["id"] for artifact in executions[0]["artifacts"])
 
 

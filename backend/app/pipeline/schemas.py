@@ -33,7 +33,7 @@ class BwaRequest(PipelineAdapterRequestBase):
     read_group: str | None = None
 
     @model_validator(mode="after")
-    def validate_paths(self) -> "BwaRequest":
+    def validate_paths(self) -> BwaRequest:
         if not self.reference:
             raise ValueError("reference path is required")
         if not self.fastq_1:
@@ -55,7 +55,7 @@ class GatkMutect2Request(PipelineAdapterRequestBase):
     germline_resource: str | None = None
 
     @model_validator(mode="after")
-    def validate_input(self) -> "GatkMutect2Request":
+    def validate_input(self) -> GatkMutect2Request:
         if not self.input_bam:
             raise ValueError("input_bam is required")
         return self
@@ -76,7 +76,7 @@ class VepRequest(PipelineAdapterRequestBase):
     canonical: bool = True
 
     @model_validator(mode="after")
-    def validate_input(self) -> "VepRequest":
+    def validate_input(self) -> VepRequest:
         if not self.input_vcf:
             raise ValueError("input_vcf is required")
         return self
@@ -102,7 +102,7 @@ class PvactoolsRequest(PipelineAdapterRequestBase):
         return v
 
     @model_validator(mode="after")
-    def validate_input(self) -> "PvactoolsRequest":
+    def validate_input(self) -> PvactoolsRequest:
         if not self.input_vcf:
             raise ValueError("input_vcf is required")
         if not self.sample_name:

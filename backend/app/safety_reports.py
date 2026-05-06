@@ -36,7 +36,7 @@ class EvidenceAssessment:
     recommendations: list[str] = field(default_factory=list)
 
 
-def assess_evidence_level(case_id: str, db: "Session") -> EvidenceAssessment:
+def assess_evidence_level(case_id: str, db: Session) -> EvidenceAssessment:
     """Evaluate evidence quality for a case and return an EvidenceAssessment.
 
     Checks candidate count, binding predictions, structure predictions,
@@ -47,11 +47,7 @@ def assess_evidence_level(case_id: str, db: "Session") -> EvidenceAssessment:
     flags: list[str] = []
     recommendations: list[str] = []
 
-    candidates = (
-        db.query(CandidateAntigen)
-        .filter(CandidateAntigen.case_id == case_id)
-        .all()
-    )
+    candidates = db.query(CandidateAntigen).filter(CandidateAntigen.case_id == case_id).all()
     samples = db.query(Sample).filter(Sample.case_id == case_id).all()
 
     candidate_count = len(candidates)
@@ -69,9 +65,7 @@ def assess_evidence_level(case_id: str, db: "Session") -> EvidenceAssessment:
         )
 
     # --- Binding predictions ---
-    has_binding = any(
-        c.prediction_scores and len(c.prediction_scores) > 0 for c in candidates
-    )
+    has_binding = any(c.prediction_scores and len(c.prediction_scores) > 0 for c in candidates)
     if candidates and not has_binding:
         flags.append("No binding affinity data available")
         recommendations.append(
@@ -163,9 +157,7 @@ class FPAssessment:
     per_candidate: list[CandidateFPWarning] = field(default_factory=list)
 
 
-def assess_false_positive_risk(
-    candidates: list, db: "Session"
-) -> FPAssessment:
+def assess_false_positive_risk(candidates: list, db: Session) -> FPAssessment:
     """Evaluate false-positive risk across a list of CandidateAntigen objects.
 
     Considers candidate-to-variant ratio, missing expression data, and
@@ -185,9 +177,7 @@ def assess_false_positive_risk(
 
     # Determine case from first candidate
     case_id = candidates[0].case_id
-    variant_count = (
-        db.query(Variant).filter(Variant.case_id == case_id).count()
-    )
+    variant_count = db.query(Variant).filter(Variant.case_id == case_id).count()
     candidate_count = len(candidates)
 
     # High ratio of candidates to variants suggests aggressive filtering or pipeline issues
@@ -245,15 +235,11 @@ def assess_false_positive_risk(
         if cand.uncertainty_flags:
             flagged = [k for k, v in cand.uncertainty_flags.items() if v]
             if flagged:
-                cand_warnings.append(
-                    f"Uncertainty flags set: {', '.join(flagged)}."
-                )
+                cand_warnings.append(f"Uncertainty flags set: {', '.join(flagged)}.")
                 risk_score += 1
 
         if cand_warnings:
-            per_candidate.append(
-                CandidateFPWarning(candidate_id=cand.id, warnings=cand_warnings)
-            )
+            per_candidate.append(CandidateFPWarning(candidate_id=cand.id, warnings=cand_warnings))
 
     # Derive risk level
     if risk_score == 0:
@@ -290,65 +276,45 @@ _CITATION_TEMPLATES: dict[str, Citation] = {
     "netmhcpan": Citation(
         source="NetMHCpan 4.1",
         description=(
-            "Peptide-MHC class I binding prediction. "
-            "Reynisson B et al. (2020) Nucleic Acids Res."
+            "Peptide-MHC class I binding prediction. Reynisson B et al. (2020) Nucleic Acids Res."
         ),
         url="https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/",
     ),
     "netmhcpan_4": Citation(
         source="NetMHCpan 4.1",
         description=(
-            "Peptide-MHC class I binding prediction. "
-            "Reynisson B et al. (2020) Nucleic Acids Res."
+            "Peptide-MHC class I binding prediction. Reynisson B et al. (2020) Nucleic Acids Res."
         ),
         url="https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/",
     ),
     "alphafold": Citation(
         source="AlphaFold2",
-        description=(
-            "Protein structure prediction. "
-            "Jumper J et al. (2021) Nature."
-        ),
+        description=("Protein structure prediction. Jumper J et al. (2021) Nature."),
         url="https://alphafold.ebi.ac.uk/",
     ),
     "alphafold2": Citation(
         source="AlphaFold2",
-        description=(
-            "Protein structure prediction. "
-            "Jumper J et al. (2021) Nature."
-        ),
+        description=("Protein structure prediction. Jumper J et al. (2021) Nature."),
         url="https://alphafold.ebi.ac.uk/",
     ),
     "alphafold3": Citation(
         source="AlphaFold3",
-        description=(
-            "Protein structure prediction with ligands. "
-            "Abramson J et al. (2024) Nature."
-        ),
+        description=("Protein structure prediction with ligands. Abramson J et al. (2024) Nature."),
         url="https://alphafoldserver.com/",
     ),
     "vep": Citation(
         source="Ensembl VEP",
-        description=(
-            "Variant Effect Predictor annotation. "
-            "McLaren W et al. (2016) Genome Biol."
-        ),
+        description=("Variant Effect Predictor annotation. McLaren W et al. (2016) Genome Biol."),
         url="https://www.ensembl.org/Tools/VEP",
     ),
     "ensembl_vep": Citation(
         source="Ensembl VEP",
-        description=(
-            "Variant Effect Predictor annotation. "
-            "McLaren W et al. (2016) Genome Biol."
-        ),
+        description=("Variant Effect Predictor annotation. McLaren W et al. (2016) Genome Biol."),
         url="https://www.ensembl.org/Tools/VEP",
     ),
     "mutect2": Citation(
         source="GATK Mutect2",
-        description=(
-            "Somatic SNV and indel calling. "
-            "Benjamin D et al. (2019) bioRxiv."
-        ),
+        description=("Somatic SNV and indel calling. Benjamin D et al. (2019) bioRxiv."),
         url="https://gatk.broadinstitute.org/hc/en-us/articles/360037593851",
     ),
     "strelka2": Citation(
@@ -389,13 +355,13 @@ def _accessed_today() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
-def build_report_citations(case_id: str, db: "Session") -> list[Citation]:
+def build_report_citations(case_id: str, db: Session) -> list[Citation]:
     """Generate source citations for tools and references used in a case.
 
     Inspects variant caller_source, annotation_source, candidate prediction_scores,
     structure job backend_used, and case species to determine which citations apply.
     """
-    from backend.app.models import CandidateAntigen, Case, Sample, StructureJob, Variant
+    from backend.app.models import CandidateAntigen, Case, StructureJob, Variant
 
     case = db.get(Case, case_id)
     today = _accessed_today()
@@ -437,11 +403,7 @@ def build_report_citations(case_id: str, db: "Session") -> list[Citation]:
             _add(v.annotation_source)
 
     # Binding prediction tools from candidate prediction_scores
-    candidates = (
-        db.query(CandidateAntigen)
-        .filter(CandidateAntigen.case_id == case_id)
-        .all()
-    )
+    candidates = db.query(CandidateAntigen).filter(CandidateAntigen.case_id == case_id).all()
     for c in candidates:
         if c.prediction_scores:
             tool = c.prediction_scores.get("tool") or c.prediction_scores.get("predictor")
@@ -449,11 +411,7 @@ def build_report_citations(case_id: str, db: "Session") -> list[Citation]:
                 _add(tool)
 
     # Structure prediction backends
-    structure_jobs = (
-        db.query(StructureJob)
-        .filter(StructureJob.case_id == case_id)
-        .all()
-    )
+    structure_jobs = db.query(StructureJob).filter(StructureJob.case_id == case_id).all()
     for sj in structure_jobs:
         if sj.backend_used:
             _add(sj.backend_used)
@@ -500,7 +458,7 @@ class ProfessionalAttestation:
 _attestation_store: dict[str, dict] = {}
 
 
-def check_attestation_required(case_id: str, db: "Session") -> bool:
+def check_attestation_required(case_id: str, db: Session) -> bool:
     """Return True if a professional attestation is required before report export.
 
     Attestation is required when:
@@ -513,16 +471,14 @@ def check_attestation_required(case_id: str, db: "Session") -> bool:
     if assessment.level not in (EvidenceLevel.strong, EvidenceLevel.moderate):
         return False
 
-    report_count = (
-        db.query(Report).filter(Report.case_id == case_id).count()
-    )
+    report_count = db.query(Report).filter(Report.case_id == case_id).count()
     return report_count > 0
 
 
 def record_attestation(
     case_id: str,
     attestation: ProfessionalAttestation,
-    db: "Session",
+    db: Session,
 ) -> dict:
     """Record a professional attestation for a case.
 

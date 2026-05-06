@@ -164,7 +164,9 @@ def test_api_conformational_sampling_200(client: TestClient) -> None:
 
 
 def test_api_conformational_sampling_has_states(client: TestClient) -> None:
-    resp = client.post("/ensemble/conformational-sampling", json={"sequence": _SEQ, "n_samples": 20})
+    resp = client.post(
+        "/ensemble/conformational-sampling", json={"sequence": _SEQ, "n_samples": 20}
+    )
     data = resp.json()
     assert "states" in data
     assert len(data["states"]) >= 1

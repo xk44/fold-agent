@@ -16,12 +16,14 @@ dashboard.py shorter and each surface independently testable.
 Only Streamlit render helpers — pure logic stays in report_preview.py
 and event_stream.py.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import streamlit as st
 
+from frontend.app.dashboard_helpers import normalize_table_rows
 from frontend.app.report_preview import (
     build_alphafold_backend_capability_chips,
     build_alphafold_backend_form_state,
@@ -45,8 +47,6 @@ from frontend.app.report_preview import (
     summarize_alphafold_operator_status,
     summarize_alphafold_recommended_backend,
 )
-from frontend.app.dashboard_helpers import normalize_table_rows
-
 from skills.shared.foldagent_client import AlphaFoldValidationError, SafetyEnforcementError
 
 if TYPE_CHECKING:
@@ -56,6 +56,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 # AlphaFold backend diagnostics
 # ---------------------------------------------------------------------------
+
 
 def render_alphafold_diagnostics(
     alphafold_backends: dict | None,
@@ -113,6 +114,7 @@ def render_alphafold_diagnostics(
 # Pipeline status + shell run panels + execution history
 # ---------------------------------------------------------------------------
 
+
 def render_pipeline_section(
     *,
     client: FoldAgentClient,
@@ -156,7 +158,9 @@ def render_pipeline_section(
         if st.button("Run mock pipeline", width="stretch"):
             pipeline_run, pipeline_error = safe_call(client.run_pipeline, pipeline_case_id)
             if pipeline_error:
-                render_api_error(pipeline_error, fallback_title="Pipeline run blocked by safety enforcement.")
+                render_api_error(
+                    pipeline_error, fallback_title="Pipeline run blocked by safety enforcement."
+                )
             else:
                 st.success(f"Pipeline run {pipeline_run['id']} completed")
                 st.rerun()
@@ -191,7 +195,9 @@ def render_pipeline_section(
             render_api_error=render_api_error,
         )
 
-    execution_history, execution_history_error = safe_call(client.list_execution_history, pipeline_case_id)
+    execution_history, execution_history_error = safe_call(
+        client.list_execution_history, pipeline_case_id
+    )
     if execution_history_error:
         st.info("No shell execution history available yet.")
     elif execution_history:
@@ -200,8 +206,17 @@ def render_pipeline_section(
         selected_execution = st.selectbox(
             "Execution log viewer",
             options=execution_history,
-            index=next((i for i, item in enumerate(execution_history) if item["id"] == st.session_state.get(f"execution-viewer-{pipeline_case_id}")), 0),
-            format_func=lambda item: f"{item['runner_kind']} · {item['runner_name']} · {item['status']}",
+            index=next(
+                (
+                    i
+                    for i, item in enumerate(execution_history)
+                    if item["id"] == st.session_state.get(f"execution-viewer-{pipeline_case_id}")
+                ),
+                0,
+            ),
+            format_func=lambda item: (
+                f"{item['runner_kind']} · {item['runner_name']} · {item['status']}"
+            ),
             key=f"execution-viewer-{pipeline_case_id}",
         )
         if selected_execution.get("artifacts"):
@@ -210,23 +225,41 @@ def render_pipeline_section(
             selected_exec_artifact = st.selectbox(
                 "Execution artifact",
                 options=selected_execution["artifacts"],
-                format_func=lambda artifact: f"{artifact['artifact_type']} · {artifact['filename']}",
+                format_func=lambda artifact: (
+                    f"{artifact['artifact_type']} · {artifact['filename']}"
+                ),
                 key=f"execution-artifact-{pipeline_case_id}",
             )
             exec_col1, exec_col2 = st.columns(2)
             with exec_col1:
-                st.link_button("Open execution artifact", api_url.rstrip("/") + selected_exec_artifact["download_url"], width="stretch")
+                st.link_button(
+                    "Open execution artifact",
+                    api_url.rstrip("/") + selected_exec_artifact["download_url"],
+                    width="stretch",
+                )
             with exec_col2:
-                if st.button("Load execution artifact", key=f"load-execution-artifact-{pipeline_case_id}", width="stretch"):
-                    artifact_file, artifact_file_error = safe_call(client.download_artifact, selected_exec_artifact["path"])
+                if st.button(
+                    "Load execution artifact",
+                    key=f"load-execution-artifact-{pipeline_case_id}",
+                    width="stretch",
+                ):
+                    artifact_file, artifact_file_error = safe_call(
+                        client.download_artifact, selected_exec_artifact["path"]
+                    )
                     if artifact_file_error:
                         st.error(artifact_file_error)
                     else:
                         try:
-                            st.session_state[f"execution-artifact-file-{pipeline_case_id}"] = artifact_file.decode("utf-8")
+                            st.session_state[f"execution-artifact-file-{pipeline_case_id}"] = (
+                                artifact_file.decode("utf-8")
+                            )
                         except UnicodeDecodeError:
-                            st.session_state[f"execution-artifact-file-{pipeline_case_id}"] = f"Binary artifact: {len(artifact_file)} bytes"
-            cached_execution_artifact = st.session_state.get(f"execution-artifact-file-{pipeline_case_id}")
+                            st.session_state[f"execution-artifact-file-{pipeline_case_id}"] = (
+                                f"Binary artifact: {len(artifact_file)} bytes"
+                            )
+            cached_execution_artifact = st.session_state.get(
+                f"execution-artifact-file-{pipeline_case_id}"
+            )
             if cached_execution_artifact is not None:
                 st.caption("Execution artifact content")
                 st.code(cached_execution_artifact)
@@ -265,6 +298,7 @@ def render_pipeline_section(
 # Private: bioinformatics adapter shells
 # ---------------------------------------------------------------------------
 
+
 def _render_bioinformatics_shell(
     *,
     client: FoldAgentClient,
@@ -298,9 +332,14 @@ def _render_bioinformatics_shell(
             }
             if shell_adapter_name == "pvactools":
                 payload["sample_name"] = shell_sample_name
-            shell_result, shell_error = safe_call(client.pipeline_adapter_run, shell_adapter_name, payload)
+            shell_result, shell_error = safe_call(
+                client.pipeline_adapter_run, shell_adapter_name, payload
+            )
             if shell_error:
-                render_api_error(shell_error, fallback_title="Pipeline shell wrapper blocked by safety enforcement.")
+                render_api_error(
+                    shell_error,
+                    fallback_title="Pipeline shell wrapper blocked by safety enforcement.",
+                )
             else:
                 st.session_state["pipeline-shell-run-result"] = shell_result
         if st.session_state.get("pipeline-shell-run-result") is not None:
@@ -310,6 +349,7 @@ def _render_bioinformatics_shell(
 # ---------------------------------------------------------------------------
 # Private: AlphaFold backend shells
 # ---------------------------------------------------------------------------
+
 
 def _render_alphafold_shell(
     *,
@@ -328,12 +368,16 @@ def _render_alphafold_shell(
         st.caption("Diagnostics preview shown above; use this panel to run a backend.")
         backend_options = sorted(alphafold_backends.keys())
         default_backend = choose_default_alphafold_backend(alphafold_backends)
-        default_backend_index = backend_options.index(default_backend) if default_backend in backend_options else 0
+        default_backend_index = (
+            backend_options.index(default_backend) if default_backend in backend_options else 0
+        )
         alphafold_backend_name = st.selectbox(
             "AlphaFold shell backend",
             options=backend_options,
             index=default_backend_index,
-            format_func=lambda name: format_alphafold_backend_option_label(name, alphafold_backends.get(name) or {}),
+            format_func=lambda name: format_alphafold_backend_option_label(
+                name, alphafold_backends.get(name) or {}
+            ),
             key="alphafold-shell-backend",
         )
         selected_backend_payload = alphafold_backends.get(alphafold_backend_name) or {}
@@ -343,15 +387,22 @@ def _render_alphafold_shell(
             alphafold_backends,
         )
         if backend_form_state["severity"] == "error":
-            st.error("Selected backend is not currently runnable. Review warnings below before submitting.")
+            st.error(
+                "Selected backend is not currently runnable. Review warnings below before submitting."
+            )
         elif backend_form_state["severity"] == "warning":
-            st.warning("Selected backend has extra requirements. Review warnings below before submitting.")
+            st.warning(
+                "Selected backend has extra requirements. Review warnings below before submitting."
+            )
         else:
             st.info("Selected backend is ready for the required input type shown below.")
         if backend_form_state.get("recommended_backend_name"):
             st.caption(
                 "Suggested safer default: "
-                + (backend_form_state.get("recommended_backend_label") or backend_form_state["recommended_backend_name"])
+                + (
+                    backend_form_state.get("recommended_backend_label")
+                    or backend_form_state["recommended_backend_name"]
+                )
             )
         switch_state = build_alphafold_recommended_switch_state(backend_form_state)
         if switch_state["show_switch"]:
@@ -402,11 +453,15 @@ def _render_alphafold_shell(
         if transition_notice:
             preserved = ", ".join(transition_notice.get("preserved_fields") or []) or "none"
             stale = ", ".join(transition_notice.get("stale_fields") or []) or "none"
-            st.info(f"Switched backend. Preserved: {preserved}. Reset stale incompatible fields: {stale}.")
+            st.info(
+                f"Switched backend. Preserved: {preserved}. Reset stale incompatible fields: {stale}."
+            )
         with st.form("alphafold-shell-run-form"):
             af_sequence = st.text_area(
                 "AlphaFold sequence",
-                value=st.session_state.get("alphafold-sequence", "MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQV"),
+                value=st.session_state.get(
+                    "alphafold-sequence", "MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQV"
+                ),
                 key="alphafold-sequence",
                 disabled=not backend_form_state["field_enabled"]["sequence"],
                 help="Used for ColabFold/local ColabFold/AlphaFold2-style sequence submission.",
@@ -438,7 +493,11 @@ def _render_alphafold_shell(
                 st.caption(" ".join(backend_form_state["disabled_field_reasons"]["accession"]))
             af_ack = False
             if backend_form_state["requires_acknowledgement"]:
-                af_ack = st.checkbox(backend_form_state["acknowledgement_label"], value=st.session_state.get("alphafold-ack", False), key="alphafold-ack")
+                af_ack = st.checkbox(
+                    backend_form_state["acknowledgement_label"],
+                    value=st.session_state.get("alphafold-ack", False),
+                    key="alphafold-ack",
+                )
             submission_gate = build_alphafold_submission_gate(
                 backend_form_state,
                 acknowledged=af_ack,
@@ -501,9 +560,15 @@ def _render_alphafold_shell(
                 st.error(str(exc))
         if st.session_state.get("alphafold-shell-run-safety-error") is not None:
             st.error("AlphaFold run blocked by safety enforcement.")
-            st.code(format_safety_enforcement_error(st.session_state["alphafold-shell-run-safety-error"]))
+            st.code(
+                format_safety_enforcement_error(
+                    st.session_state["alphafold-shell-run-safety-error"]
+                )
+            )
         if st.session_state.get("alphafold-shell-run-error") is not None:
             st.error("AlphaFold backend validation blocked the run.")
-            st.code(format_alphafold_validation_error(st.session_state["alphafold-shell-run-error"]))
+            st.code(
+                format_alphafold_validation_error(st.session_state["alphafold-shell-run-error"])
+            )
         if st.session_state.get("alphafold-shell-run-result") is not None:
             st.json(st.session_state["alphafold-shell-run-result"])

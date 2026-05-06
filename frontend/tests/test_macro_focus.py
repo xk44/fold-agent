@@ -30,6 +30,7 @@ Covers:
 - Integration: derive_macro_focus_prefocus from chip data
   - Roundtrip: derive_job_detail_actions → chip → derive_macro_focus_prefocus
 """
+
 from __future__ import annotations
 
 import sys
@@ -48,10 +49,10 @@ from frontend.app.event_stream import (
     derive_macro_focus_prefocus,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -100,16 +101,28 @@ def _make_card_from_api_job(api_job: dict) -> dict:
 # derive_macro_focus_bundle
 # ===========================================================================
 
+
 class TestDeriveMacroFocusBundleBasic:
     """Basic bundle derivation tests."""
 
     def test_returns_none_when_no_case_id(self):
-        job_card = {"source": "api", "job_id": "j1", "job_type": "pipeline_run", "status": "completed"}
+        job_card = {
+            "source": "api",
+            "job_id": "j1",
+            "job_type": "pipeline_run",
+            "status": "completed",
+        }
         result = derive_macro_focus_bundle(job_card)
         assert result is None
 
     def test_returns_none_when_case_id_empty(self):
-        job_card = {"source": "api", "job_id": "j1", "case_id": "", "job_type": "pipeline_run", "status": "completed"}
+        job_card = {
+            "source": "api",
+            "job_id": "j1",
+            "case_id": "",
+            "job_type": "pipeline_run",
+            "status": "completed",
+        }
         result = derive_macro_focus_bundle(job_card)
         assert result is None
 
@@ -127,9 +140,18 @@ class TestDeriveMacroFocusBundleBasic:
         card = _make_card_from_api_job(api_job)
         result = derive_macro_focus_bundle(card, api_job=api_job)
         assert result is not None
-        for key in ("case_id", "report_id", "structure_job_id", "candidate_id",
-                     "artifact_paths", "job_type", "has_report", "has_structure",
-                     "has_artifacts", "dimensions"):
+        for key in (
+            "case_id",
+            "report_id",
+            "structure_job_id",
+            "candidate_id",
+            "artifact_paths",
+            "job_type",
+            "has_report",
+            "has_structure",
+            "has_artifacts",
+            "dimensions",
+        ):
             assert key in result
 
 
@@ -316,6 +338,7 @@ class TestDeriveMacroFocusBundleDimensions:
 # derive_macro_focus_prefocus
 # ===========================================================================
 
+
 class TestDeriveMacroFocusPrefocus:
     """Session state derivation from macro-focus bundle."""
 
@@ -468,6 +491,7 @@ class TestDeriveMacroFocusPrefocus:
 # ===========================================================================
 # Macro focus chip in derive_job_detail_actions
 # ===========================================================================
+
 
 class TestMacroFocusChipDerivation:
     """Test that derive_job_detail_actions includes macro_focus chip."""

@@ -3,6 +3,7 @@
 Covers: compute_auto_refresh_config, AutoRefreshConfig, format_auto_refresh_mode_label
 from frontend.app.event_stream.
 """
+
 from __future__ import annotations
 
 import sys
@@ -97,9 +98,7 @@ class TestComputeAutoRefreshConfig:
     def test_connection_error_with_active_jobs_uses_faster(self):
         """Active jobs override error backoff — still refresh fast."""
         job_cards = [{"status": "running"}]
-        cfg = compute_auto_refresh_config(
-            job_cards=job_cards, has_connection_error=True
-        )
+        cfg = compute_auto_refresh_config(job_cards=job_cards, has_connection_error=True)
         # Active jobs take priority: refresh should be faster than pure error backoff
         error_only_cfg = compute_auto_refresh_config(has_connection_error=True)
         assert cfg.interval_seconds <= error_only_cfg.interval_seconds

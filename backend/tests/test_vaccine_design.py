@@ -10,10 +10,8 @@ from backend.app.modes.vaccine_design import (
     EMINI_SURFACE_ACCESSIBILITY,
     PARKER_HYDROPHILICITY,
     PATHOGEN_DATABASE,
-    REFERENCE_STRAINS,
     EpitopeCandidate,
     LinkerType,
-    VaccineConstruct,
     analyze_epitope_conservation,
     build_multi_epitope_construct,
     build_vaccine_design_report,
@@ -113,7 +111,9 @@ def test_build_construct_preserves_epitopes_list() -> None:
 
 def test_build_construct_all_linker_types() -> None:
     for linker in LinkerType:
-        construct = build_multi_epitope_construct([_EP1, _EP2], linker=linker.value, add_signal_peptide=False)
+        construct = build_multi_epitope_construct(
+            [_EP1, _EP2], linker=linker.value, add_signal_peptide=False
+        )
         assert linker.value in construct.full_sequence
 
 
@@ -389,7 +389,13 @@ def test_rapid_response_pipeline_construct_built() -> None:
 
 def test_build_vaccine_design_report_structure() -> None:
     epitopes = [
-        {"sequence": "ACDEFGHIKL", "source": "gene_x", "epitope_type": "b_cell", "score": 0.8, "conservation": 0.9}
+        {
+            "sequence": "ACDEFGHIKL",
+            "source": "gene_x",
+            "epitope_type": "b_cell",
+            "score": 0.8,
+            "conservation": 0.9,
+        }
     ]
     report = build_vaccine_design_report(None, epitopes)
     assert "disclaimers" in report
@@ -414,8 +420,20 @@ def test_build_vaccine_design_report_empty_epitopes() -> None:
 
 def test_build_vaccine_design_report_epitope_table_content() -> None:
     epitopes = [
-        {"sequence": "ACDEFGHIKL", "source": "gene_x", "epitope_type": "b_cell", "score": 0.8, "conservation": 0.9},
-        {"sequence": "MNPQRSTVWY", "source": "gene_y", "epitope_type": "t_cell_mhci", "score": 0.7, "conservation": 0.6},
+        {
+            "sequence": "ACDEFGHIKL",
+            "source": "gene_x",
+            "epitope_type": "b_cell",
+            "score": 0.8,
+            "conservation": 0.9,
+        },
+        {
+            "sequence": "MNPQRSTVWY",
+            "source": "gene_y",
+            "epitope_type": "t_cell_mhci",
+            "score": 0.7,
+            "conservation": 0.6,
+        },
     ]
     report = build_vaccine_design_report(None, epitopes)
     assert len(report["epitope_table"]) == 2
@@ -435,8 +453,20 @@ def test_api_build_construct(client: TestClient) -> None:
         "/vaccine-design/build-construct",
         json={
             "epitopes": [
-                {"sequence": "ACDEFGHIKL", "source": "gene_a", "epitope_type": "b_cell", "score": 0.8, "conservation": 0.9},
-                {"sequence": "MNPQRSTVWY", "source": "gene_b", "epitope_type": "t_cell_mhci", "score": 0.7, "conservation": 0.6},
+                {
+                    "sequence": "ACDEFGHIKL",
+                    "source": "gene_a",
+                    "epitope_type": "b_cell",
+                    "score": 0.8,
+                    "conservation": 0.9,
+                },
+                {
+                    "sequence": "MNPQRSTVWY",
+                    "source": "gene_b",
+                    "epitope_type": "t_cell_mhci",
+                    "score": 0.7,
+                    "conservation": 0.6,
+                },
             ],
             "linker": "GPGPG",
             "add_signal_peptide": True,

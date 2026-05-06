@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
 
 
-def test_mock_variant_and_candidate_endpoints_return_dashboard_ready_data(client: TestClient) -> None:
+def test_mock_variant_and_candidate_endpoints_return_dashboard_ready_data(
+    client: TestClient,
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Candidate table case"},
@@ -43,7 +45,6 @@ def test_candidate_report_reflects_mock_candidate_summary(client: TestClient) ->
     assert "top candidate" in report["content_text"].lower()
 
 
-
 def test_variant_and_candidate_review_updates_are_persisted(client: TestClient) -> None:
     create_case = client.post(
         "/cases",
@@ -64,7 +65,10 @@ def test_variant_and_candidate_review_updates_are_persisted(client: TestClient) 
 
     candidate_update = client.patch(
         f"/candidates/{candidate['id']}/review",
-        json={"review_status": "expert_accepted_for_further_research", "expert_review_notes": "Promising mock candidate"},
+        json={
+            "review_status": "expert_accepted_for_further_research",
+            "expert_review_notes": "Promising mock candidate",
+        },
     )
     assert candidate_update.status_code == 200
     assert candidate_update.json()["review_status"] == "expert_accepted_for_further_research"

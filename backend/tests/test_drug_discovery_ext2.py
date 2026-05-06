@@ -5,23 +5,22 @@ Covers all 5 features + 10 API endpoints.
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.drug_discovery_ext import (
     AMINO_ACID_PROPERTIES,
     CHEMBL_MOCK_SIMILARITIES,
     KNOWN_CRYPTIC_SITES,
+    AllostericSite,
+    AllosteryResult,
     BatchDDGResult,
     CrypticSite,
     DDGPrediction,
     DockingResult,
     DrugPipelineResult,
     PocketResult,
-    TherapeuticReasoningResult,
-    AllostericSite,
-    AllosteryResult,
     ReasoningStep,
+    TherapeuticReasoningResult,
     _parse_variant,
     batch_predict_ddg,
     detect_cryptic_sites,
@@ -36,16 +35,14 @@ from backend.app.main import app
 
 client = TestClient(app)
 
-_MOCK_PDB = (
-    "ATOM      1  CA  ALA A   1      1.000   2.000   3.000  1.00 10.00           C\n"
-    * 50
-)
+_MOCK_PDB = "ATOM      1  CA  ALA A   1      1.000   2.000   3.000  1.00 10.00           C\n" * 50
 _SEQ = "MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSY" * 3
 
 
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 1: Pocket prediction
 # ---------------------------------------------------------------------------
+
 
 class TestPredictPockets:
     def test_returns_list(self):
@@ -97,13 +94,15 @@ class TestPredictPockets:
     def test_different_gene_different_result(self):
         a = predict_pockets(_MOCK_PDB, gene="EGFR")
         b = predict_pockets(_MOCK_PDB, gene="KRAS")
-        assert [p.pocket_id for p in a] != [p.pocket_id for p in b] or \
-               [p.druggability_score for p in a] != [p.druggability_score for p in b]
+        assert [p.pocket_id for p in a] != [p.pocket_id for p in b] or [
+            p.druggability_score for p in a
+        ] != [p.druggability_score for p in b]
 
 
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 1: Docking
 # ---------------------------------------------------------------------------
+
 
 class TestDockCompound:
     def setup_method(self):
@@ -144,6 +143,7 @@ class TestDockCompound:
 # Unit tests — Feature 1: Full pipeline
 # ---------------------------------------------------------------------------
 
+
 class TestRunDrugPipeline:
     def test_returns_pipeline_result(self):
         result = run_drug_pipeline("EGFR")
@@ -179,6 +179,7 @@ class TestRunDrugPipeline:
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 2: Cryptic sites
 # ---------------------------------------------------------------------------
+
 
 class TestDetectCrypticSites:
     def test_returns_list(self):
@@ -227,6 +228,7 @@ class TestDetectCrypticSites:
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 3: Allostery
 # ---------------------------------------------------------------------------
+
 
 class TestPredictAllostery:
     def test_returns_allostery_result(self):
@@ -278,6 +280,7 @@ class TestPredictAllostery:
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 4: Therapeutic reasoning
 # ---------------------------------------------------------------------------
+
 
 class TestTherapeuticReasoning:
     def test_returns_result(self):
@@ -332,6 +335,7 @@ class TestTherapeuticReasoning:
 # ---------------------------------------------------------------------------
 # Unit tests — Feature 5: DDG prediction
 # ---------------------------------------------------------------------------
+
 
 class TestPredictDDG:
     def test_returns_ddg_prediction(self):
@@ -406,39 +410,52 @@ class TestBatchPredictDDG:
 # API endpoint tests
 # ---------------------------------------------------------------------------
 
+
 class TestApiPocketPrediction:
     def test_post_pocket_prediction_200(self):
-        resp = client.post("/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "EGFR"})
+        resp = client.post(
+            "/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "EGFR"}
+        )
         assert resp.status_code == 200
 
     def test_response_has_pockets(self):
-        resp = client.post("/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "KRAS"})
+        resp = client.post(
+            "/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "KRAS"}
+        )
         data = resp.json()
         assert "pockets" in data
         assert data["pocket_count"] >= 2
 
     def test_response_has_safety_label(self):
-        resp = client.post("/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "BRAF"})
+        resp = client.post(
+            "/drug-ext/pocket-prediction", json={"pdb_data": _MOCK_PDB, "gene": "BRAF"}
+        )
         assert "safety_label" in resp.json()
 
 
 class TestApiDockCompound:
     def test_post_dock_200(self):
-        resp = client.post("/drug-ext/dock-compound", json={
-            "pdb_data": _MOCK_PDB,
-            "gene": "EGFR",
-            "compound_smiles": "CC(=O)Oc1ccccc1C(=O)O",
-            "compound_name": "aspirin",
-        })
+        resp = client.post(
+            "/drug-ext/dock-compound",
+            json={
+                "pdb_data": _MOCK_PDB,
+                "gene": "EGFR",
+                "compound_smiles": "CC(=O)Oc1ccccc1C(=O)O",
+                "compound_name": "aspirin",
+            },
+        )
         assert resp.status_code == 200
 
     def test_response_has_docking_result(self):
-        resp = client.post("/drug-ext/dock-compound", json={
-            "pdb_data": _MOCK_PDB,
-            "gene": "EGFR",
-            "compound_smiles": "CC(=O)Oc1ccccc1C(=O)O",
-            "compound_name": "aspirin",
-        })
+        resp = client.post(
+            "/drug-ext/dock-compound",
+            json={
+                "pdb_data": _MOCK_PDB,
+                "gene": "EGFR",
+                "compound_smiles": "CC(=O)Oc1ccccc1C(=O)O",
+                "compound_name": "aspirin",
+            },
+        )
         data = resp.json()
         assert "docking_result" in data
         assert data["docking_result"]["binding_energy_kcal"] < 0
@@ -456,10 +473,13 @@ class TestApiFullPipeline:
         assert data["best_compound"] is not None
 
     def test_custom_library(self):
-        resp = client.post("/drug-ext/full-pipeline", json={
-            "target_gene": "KRAS",
-            "compound_library": [{"name": "FakeDrug", "smiles": "CC"}],
-        })
+        resp = client.post(
+            "/drug-ext/full-pipeline",
+            json={
+                "target_gene": "KRAS",
+                "compound_library": [{"name": "FakeDrug", "smiles": "CC"}],
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["best_compound"] == "FakeDrug"
 
@@ -509,21 +529,29 @@ class TestApiAllostery:
 
 class TestApiTherapeuticReasoning:
     def test_post_therapeutic_reasoning_200(self):
-        resp = client.post("/drug-ext/therapeutic-reasoning", json={"gene": "EGFR", "variant": "T790M"})
+        resp = client.post(
+            "/drug-ext/therapeutic-reasoning", json={"gene": "EGFR", "variant": "T790M"}
+        )
         assert resp.status_code == 200
 
     def test_response_has_steps(self):
-        resp = client.post("/drug-ext/therapeutic-reasoning", json={"gene": "EGFR", "variant": "T790M"})
+        resp = client.post(
+            "/drug-ext/therapeutic-reasoning", json={"gene": "EGFR", "variant": "T790M"}
+        )
         data = resp.json()
         assert data["step_count"] == 6
 
     def test_response_has_drug_matches(self):
-        resp = client.post("/drug-ext/therapeutic-reasoning", json={"gene": "ABL1", "variant": "T315I"})
+        resp = client.post(
+            "/drug-ext/therapeutic-reasoning", json={"gene": "ABL1", "variant": "T315I"}
+        )
         data = resp.json()
         assert len(data["existing_drug_matches"]) > 0
 
     def test_response_has_recommendation(self):
-        resp = client.post("/drug-ext/therapeutic-reasoning", json={"gene": "KRAS", "variant": "G12C"})
+        resp = client.post(
+            "/drug-ext/therapeutic-reasoning", json={"gene": "KRAS", "variant": "G12C"}
+        )
         assert len(resp.json()["final_recommendation"]) > 10
 
 
@@ -542,17 +570,23 @@ class TestApiDDG:
         assert "ddg_spurs" in data
 
     def test_post_batch_ddg_200(self):
-        resp = client.post("/drug-ext/batch-ddg", json={
-            "gene": "EGFR",
-            "variants": ["T790M", "L858R", "C797S"],
-        })
+        resp = client.post(
+            "/drug-ext/batch-ddg",
+            json={
+                "gene": "EGFR",
+                "variants": ["T790M", "L858R", "C797S"],
+            },
+        )
         assert resp.status_code == 200
 
     def test_post_batch_ddg_count(self):
-        resp = client.post("/drug-ext/batch-ddg", json={
-            "gene": "KRAS",
-            "variants": ["G12C", "G12D"],
-        })
+        resp = client.post(
+            "/drug-ext/batch-ddg",
+            json={
+                "gene": "KRAS",
+                "variants": ["G12C", "G12D"],
+            },
+        )
         assert resp.json()["variant_count"] == 2
 
     def test_post_batch_ddg_empty_422(self):

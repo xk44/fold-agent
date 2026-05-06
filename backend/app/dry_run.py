@@ -60,7 +60,9 @@ def check_approval_required(action: str) -> dict:
     """Return approval requirement info for a given action name."""
     required = action in APPROVAL_REQUIRED_ACTIONS
     if required:
-        reason, prompt = _APPROVAL_REASONS.get(action, ("Approval required.", "Confirm the action."))
+        reason, prompt = _APPROVAL_REASONS.get(
+            action, ("Approval required.", "Confirm the action.")
+        )
     else:
         reason = "This action does not require explicit approval."
         prompt = ""
@@ -75,6 +77,7 @@ def check_approval_required(action: str) -> dict:
 # ---------------------------------------------------------------------------
 # Dry-run implementations per action
 # ---------------------------------------------------------------------------
+
 
 def _dry_run_create_case(params: dict) -> DryRunResult:
     species = params.get("species", "demo")
@@ -96,7 +99,12 @@ def _dry_run_run_pipeline(params: dict) -> DryRunResult:
     steps = params.get("steps", ["all"])
     return DryRunResult(
         action="run_pipeline",
-        would_affect=["pipeline_runs table", "variants table", "candidates table", f"case {case_id}"],
+        would_affect=[
+            "pipeline_runs table",
+            "variants table",
+            "candidates table",
+            f"case {case_id}",
+        ],
         parameters=params,
         safety_level="dangerous",
         requires_approval=True,
@@ -172,7 +180,10 @@ def _dry_run_submit_alphafold(params: dict) -> DryRunResult:
     return DryRunResult(
         action="submit_alphafold",
         would_affect=["structure_jobs table", "external AlphaFold API"],
-        parameters={**params, "sequence": sequence[:20] + "..." if len(sequence) > 20 else sequence},
+        parameters={
+            **params,
+            "sequence": sequence[:20] + "..." if len(sequence) > 20 else sequence,
+        },
         safety_level="dangerous",
         requires_approval=True,
         notes=(
@@ -213,7 +224,6 @@ def dry_run_action(action_name: str, params: dict) -> DryRunResult:
     handler = _ACTION_HANDLERS.get(action_name)
     if handler is None:
         raise ValueError(
-            f"Unknown action '{action_name}'. "
-            f"Supported actions: {SUPPORTED_DRY_RUN_ACTIONS}"
+            f"Unknown action '{action_name}'. Supported actions: {SUPPORTED_DRY_RUN_ACTIONS}"
         )
     return handler(params)

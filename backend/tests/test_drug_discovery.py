@@ -2,25 +2,21 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.drug_discovery import (
-    APPROVED_DRUG_LIBRARY,
     KNOWN_DRUG_TARGETS,
     AllostericSite,
     BindingSite,
     CompoundHit,
     CovalentHit,
     RepurposingCandidate,
-    build_drug_discovery_report,
     find_repurposing_candidates,
     predict_allosteric_sites,
     predict_binding_sites,
     screen_compound_library,
     screen_covalent_candidates,
 )
-
 
 # ---------------------------------------------------------------------------
 # predict_binding_sites
@@ -57,9 +53,28 @@ def test_binding_sites_case_insensitive() -> None:
 
 
 def test_binding_sites_all_20_targets_have_data() -> None:
-    targets = ["EGFR", "BRAF", "ABL1", "HER2", "VEGFR", "ALK", "KRAS", "TP53",
-               "PIK3CA", "PTEN", "CDK4", "MET", "RET", "FLT3", "JAK2", "BTK",
-               "BCL2", "IDH1", "FGFR", "MDM2"]
+    targets = [
+        "EGFR",
+        "BRAF",
+        "ABL1",
+        "HER2",
+        "VEGFR",
+        "ALK",
+        "KRAS",
+        "TP53",
+        "PIK3CA",
+        "PTEN",
+        "CDK4",
+        "MET",
+        "RET",
+        "FLT3",
+        "JAK2",
+        "BTK",
+        "BCL2",
+        "IDH1",
+        "FGFR",
+        "MDM2",
+    ]
     for gene in targets:
         sites = predict_binding_sites(gene)
         assert len(sites) >= 1, f"No binding sites for {gene}"

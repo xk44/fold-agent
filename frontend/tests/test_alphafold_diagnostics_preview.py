@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -238,7 +238,9 @@ def test_format_alphafold_diagnostics_preview_includes_backend_metadata() -> Non
 
 
 def test_build_alphafold_backend_form_state_for_sequence_backend() -> None:
-    state = build_alphafold_backend_form_state("colabfold", _sample_alphafold_backends()["colabfold"])
+    state = build_alphafold_backend_form_state(
+        "colabfold", _sample_alphafold_backends()["colabfold"]
+    )
 
     assert state["input_mode"] == "sequence"
     assert state["required_field"] == "sequence"
@@ -258,7 +260,9 @@ def test_build_alphafold_backend_form_state_for_json_backend() -> None:
 
 
 def test_build_alphafold_backend_form_state_for_accession_backend() -> None:
-    state = build_alphafold_backend_form_state("alphafold_db", _sample_alphafold_backends()["alphafold_db"])
+    state = build_alphafold_backend_form_state(
+        "alphafold_db", _sample_alphafold_backends()["alphafold_db"]
+    )
 
     assert state["input_mode"] == "accession"
     assert state["required_field"] == "accession"
@@ -302,10 +306,14 @@ def test_format_alphafold_backend_option_label_marks_unavailable_backend() -> No
 
 
 def test_build_alphafold_backend_form_state_includes_disabled_field_reasons() -> None:
-    state = build_alphafold_backend_form_state("alphafold_db", _sample_alphafold_backends()["alphafold_db"])
+    state = build_alphafold_backend_form_state(
+        "alphafold_db", _sample_alphafold_backends()["alphafold_db"]
+    )
 
     assert state["disabled_field_reasons"]["sequence"]
-    assert any("accession" in reason.lower() for reason in state["disabled_field_reasons"]["sequence"])
+    assert any(
+        "accession" in reason.lower() for reason in state["disabled_field_reasons"]["sequence"]
+    )
     assert state["disabled_field_reasons"]["json_path"]
 
 
@@ -334,7 +342,9 @@ def test_diagnostics_level_ack_flag_requires_warning_and_label_marker() -> None:
 
 
 def test_build_alphafold_backend_form_state_sets_submit_block_reason_for_error_backend() -> None:
-    state = build_alphafold_backend_form_state("alphafold_server", _sample_alphafold_backends()["alphafold_server"])
+    state = build_alphafold_backend_form_state(
+        "alphafold_server", _sample_alphafold_backends()["alphafold_server"]
+    )
 
     assert state["submit_blocked"] is True
     assert "not currently runnable" in state["submit_block_reason"].lower()
@@ -354,7 +364,10 @@ def test_summarize_alphafold_recommended_backend_mentions_default_and_reason() -
 
     assert summary["backend_name"] == "alphafold3_local"
     assert "recommended" in summary["label"].lower()
-    assert any("available" in line.lower() or "validated" in line.lower() for line in summary["reason_lines"])
+    assert any(
+        "available" in line.lower() or "validated" in line.lower()
+        for line in summary["reason_lines"]
+    )
 
 
 def test_build_alphafold_run_payload_preview_matches_json_backend() -> None:
@@ -409,7 +422,9 @@ def test_build_alphafold_backend_capability_chips_handles_reference_backend() ->
 def test_format_alphafold_troubleshooting_summary_surfaces_invalid_backend_reason() -> None:
     payload = _sample_alphafold_backends()
     payload["alphafold3_local"]["validation_ok"] = False
-    payload["alphafold3_local"]["validation_reason"] = "Command probe succeeded but GPU runtime was not detected."
+    payload["alphafold3_local"]["validation_reason"] = (
+        "Command probe succeeded but GPU runtime was not detected."
+    )
     payload["alphafold3_local"]["diagnostics"] = {
         **payload["alphafold3_local"]["diagnostics"],
         "gpu_runtime_available": False,

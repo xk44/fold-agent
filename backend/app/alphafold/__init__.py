@@ -3,34 +3,13 @@
 from backend.app.alphafold.base import (
     AlphaFoldBackend,
     BackendMode,
-    StructureInputManifest,
-    StructureResult,
     MockAlphaFoldBackend,
     StaticMetadataBackend,
-    register_backend,
+    StructureInputManifest,
+    StructureResult,
     get_backend,
     list_backends,
-)
-from backend.app.alphafold.schemas import (
-    AlphaFoldJobRequestBase,
-    AlphaFold3LocalJobRequest,
-    AlphaFold2LocalJobRequest,
-    AlphaFoldServerJobRequest,
-    AlphaFoldDbLookupRequest,
-    ColabFoldJobRequest,
-    parse_alphafold_request,
-    # AF3 JSON input dialect models
-    AF3InputJSON,
-    BondAtomSpec,
-    DnaEntity,
-    DnaModification,
-    LigandEntity,
-    ProteinEntity,
-    ProteinModification,
-    ProteinTemplate,
-    RnaEntity,
-    RnaModification,
-    SequenceEntry,
+    register_backend,
 )
 from backend.app.alphafold.output_parsers import (
     STRUCTURE_EVIDENCE_KEYS,
@@ -40,6 +19,27 @@ from backend.app.alphafold.output_parsers import (
     filter_structure_evidence,
     harvest_af3_output_dir,
     parse_alphafold_stdout,
+)
+from backend.app.alphafold.schemas import (
+    # AF3 JSON input dialect models
+    AF3InputJSON,
+    AlphaFold2LocalJobRequest,
+    AlphaFold3LocalJobRequest,
+    AlphaFoldDbLookupRequest,
+    AlphaFoldJobRequestBase,
+    AlphaFoldServerJobRequest,
+    BondAtomSpec,
+    ColabFoldJobRequest,
+    DnaEntity,
+    DnaModification,
+    LigandEntity,
+    ProteinEntity,
+    ProteinModification,
+    ProteinTemplate,
+    RnaEntity,
+    RnaModification,
+    SequenceEntry,
+    parse_alphafold_request,
 )
 
 __all__ = [

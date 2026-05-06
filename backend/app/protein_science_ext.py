@@ -7,13 +7,13 @@ RESEARCH USE ONLY.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-
 
 # ---------------------------------------------------------------------------
 # Feature 1: Membrane protein handling
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TMHelix:
@@ -45,10 +45,26 @@ class LipidEnvironment:
 
 # Kyte-Doolittle hydrophobicity scale
 KYTE_DOOLITTLE: dict[str, float] = {
-    "A": 1.8, "R": -4.5, "N": -3.5, "D": -3.5, "C": 2.5,
-    "Q": -3.5, "E": -3.5, "G": -0.4, "H": -3.2, "I": 4.5,
-    "L": 3.8, "K": -3.9, "M": 1.9, "F": 2.8, "P": -1.6,
-    "S": -0.8, "T": -0.7, "W": -0.9, "Y": -1.3, "V": 4.2,
+    "A": 1.8,
+    "R": -4.5,
+    "N": -3.5,
+    "D": -3.5,
+    "C": 2.5,
+    "Q": -3.5,
+    "E": -3.5,
+    "G": -0.4,
+    "H": -3.2,
+    "I": 4.5,
+    "L": 3.8,
+    "K": -3.9,
+    "M": 1.9,
+    "F": 2.8,
+    "P": -1.6,
+    "S": -0.8,
+    "T": -0.7,
+    "W": -0.9,
+    "Y": -1.3,
+    "V": 4.2,
 }
 
 
@@ -65,7 +81,7 @@ def predict_tm_helices(sequence: str) -> list[TMHelix]:
 
     scores: list[float] = []
     for i in range(n - window_size + 1):
-        window = seq[i: i + window_size]
+        window = seq[i : i + window_size]
         score = sum(KYTE_DOOLITTLE.get(aa, 0.0) for aa in window) / window_size
         scores.append(score)
 
@@ -85,12 +101,14 @@ def predict_tm_helices(sequence: str) -> list[TMHelix]:
                 helix_end = helix_start + window_size + len(helix_scores) - 2
                 avg_score = sum(helix_scores) / len(helix_scores)
                 orientation = "in_to_out" if len(helices) % 2 == 0 else "out_to_in"
-                helices.append(TMHelix(
-                    start=helix_start,
-                    end=min(helix_end, n - 1),
-                    orientation=orientation,
-                    hydrophobicity_score=round(avg_score, 3),
-                ))
+                helices.append(
+                    TMHelix(
+                        start=helix_start,
+                        end=min(helix_end, n - 1),
+                        orientation=orientation,
+                        hydrophobicity_score=round(avg_score, 3),
+                    )
+                )
                 helix_scores = []
         i += 1
 
@@ -99,12 +117,14 @@ def predict_tm_helices(sequence: str) -> list[TMHelix]:
         helix_end = helix_start + window_size + len(helix_scores) - 2
         avg_score = sum(helix_scores) / len(helix_scores)
         orientation = "in_to_out" if len(helices) % 2 == 0 else "out_to_in"
-        helices.append(TMHelix(
-            start=helix_start,
-            end=min(helix_end, n - 1),
-            orientation=orientation,
-            hydrophobicity_score=round(avg_score, 3),
-        ))
+        helices.append(
+            TMHelix(
+                start=helix_start,
+                end=min(helix_end, n - 1),
+                orientation=orientation,
+                hydrophobicity_score=round(avg_score, 3),
+            )
+        )
 
     return helices
 
@@ -159,7 +179,9 @@ def analyze_membrane_protein(sequence: str) -> MembraneProteinResult:
                 if gap_start <= gap_end:
                     region = (gap_start, gap_end)
                     # Alternate: after even-indexed helix → extracellular if type_I
-                    if (idx % 2 == 0 and topology == "type_I") or (idx % 2 == 1 and topology != "type_I"):
+                    if (idx % 2 == 0 and topology == "type_I") or (
+                        idx % 2 == 1 and topology != "type_I"
+                    ):
                         intracellular.append(region)
                     else:
                         extracellular.append(region)
@@ -214,7 +236,12 @@ def assign_lipid_environment(result: MembraneProteinResult) -> LipidEnvironment:
         # GPCR-like → plasma membrane
         return LipidEnvironment(
             membrane_type="plasma",
-            lipid_composition={"POPC": 0.35, "POPE": 0.25, "cholesterol": 0.30, "sphingomyelin": 0.10},
+            lipid_composition={
+                "POPC": 0.35,
+                "POPE": 0.25,
+                "cholesterol": 0.30,
+                "sphingomyelin": 0.10,
+            },
             thickness_nm=4.0,
             tilt_angle_deg=5.0,
         )
@@ -230,7 +257,12 @@ def assign_lipid_environment(result: MembraneProteinResult) -> LipidEnvironment:
         # Mitochondrial
         return LipidEnvironment(
             membrane_type="mitochondrial",
-            lipid_composition={"POPC": 0.40, "POPE": 0.35, "cardiolipin": 0.20, "cholesterol": 0.05},
+            lipid_composition={
+                "POPC": 0.40,
+                "POPE": 0.35,
+                "cardiolipin": 0.20,
+                "cholesterol": 0.05,
+            },
             thickness_nm=3.6,
             tilt_angle_deg=12.0,
         )
@@ -283,6 +315,7 @@ def calculate_cavity_accessibility(
 # Feature 2: Metal coordination site prediction
 # ---------------------------------------------------------------------------
 
+
 class MetalIon(str, Enum):
     zinc = "zinc"
     iron = "iron"
@@ -330,36 +363,126 @@ METAL_BINDING_MOTIFS: dict[str, str] = {
 
 # Known metalloprotein reference DB (15 entries)
 KNOWN_METALLOPROTEIN_DB: list[dict] = [
-    {"name": "carbonic_anhydrase", "gene": "CA2", "metal": MetalIon.zinc,
-     "motif": "ZINC_FINGER", "function": "catalytic", "keywords": ["CA2", "carbonic", "anhydrase"]},
-    {"name": "hemoglobin_alpha", "gene": "HBA1", "metal": MetalIon.iron,
-     "motif": "HEME", "function": "oxygen_transport", "keywords": ["HBA1", "hemoglobin", "globin"]},
-    {"name": "hemoglobin_beta", "gene": "HBB", "metal": MetalIon.iron,
-     "motif": "HEME", "function": "oxygen_transport", "keywords": ["HBB", "hemoglobin"]},
-    {"name": "calmodulin", "gene": "CALM1", "metal": MetalIon.calcium,
-     "motif": "EF_HAND", "function": "signaling", "keywords": ["CALM1", "calmodulin"]},
-    {"name": "superoxide_dismutase_cu", "gene": "SOD1", "metal": MetalIon.copper,
-     "motif": "COPPER_TYPE1", "function": "catalytic", "keywords": ["SOD1", "superoxide", "dismutase"]},
-    {"name": "superoxide_dismutase_zn", "gene": "SOD1", "metal": MetalIon.zinc,
-     "motif": "ZINC_MONONUCLEAR", "function": "structural", "keywords": ["SOD1", "superoxide"]},
-    {"name": "ferritin", "gene": "FTH1", "metal": MetalIon.iron,
-     "motif": "IRON_STORAGE", "function": "storage", "keywords": ["FTH1", "ferritin"]},
-    {"name": "matrix_metalloprotease", "gene": "MMP2", "metal": MetalIon.zinc,
-     "motif": "ZINC_MONONUCLEAR", "function": "catalytic", "keywords": ["MMP2", "metalloprotease", "MMP"]},
-    {"name": "alcohol_dehydrogenase", "gene": "ADH1", "metal": MetalIon.zinc,
-     "motif": "ZINC_FINGER", "function": "catalytic", "keywords": ["ADH1", "alcohol", "dehydrogenase"]},
-    {"name": "myoglobin", "gene": "MB", "metal": MetalIon.iron,
-     "motif": "HEME", "function": "oxygen_storage", "keywords": ["MB", "myoglobin"]},
-    {"name": "lactoferrin", "gene": "LTF", "metal": MetalIon.iron,
-     "motif": "TRANSFERRIN", "function": "transport", "keywords": ["LTF", "lactoferrin", "transferrin"]},
-    {"name": "manganese_sod", "gene": "SOD2", "metal": MetalIon.manganese,
-     "motif": "MANGANESE_SOD", "function": "catalytic", "keywords": ["SOD2", "manganese"]},
-    {"name": "nitrogenase", "gene": "NIFH", "metal": MetalIon.iron,
-     "motif": "IRON_SULFUR", "function": "catalytic", "keywords": ["NIFH", "nitrogenase"]},
-    {"name": "cytochrome_c", "gene": "CYCS", "metal": MetalIon.iron,
-     "motif": "HEME", "function": "electron_transfer", "keywords": ["CYCS", "cytochrome"]},
-    {"name": "cobalt_corrinoid", "gene": "MMUT", "metal": MetalIon.cobalt,
-     "motif": "COBALT_CORRINS", "function": "catalytic", "keywords": ["MMUT", "cobalamin", "methylmalonyl"]},
+    {
+        "name": "carbonic_anhydrase",
+        "gene": "CA2",
+        "metal": MetalIon.zinc,
+        "motif": "ZINC_FINGER",
+        "function": "catalytic",
+        "keywords": ["CA2", "carbonic", "anhydrase"],
+    },
+    {
+        "name": "hemoglobin_alpha",
+        "gene": "HBA1",
+        "metal": MetalIon.iron,
+        "motif": "HEME",
+        "function": "oxygen_transport",
+        "keywords": ["HBA1", "hemoglobin", "globin"],
+    },
+    {
+        "name": "hemoglobin_beta",
+        "gene": "HBB",
+        "metal": MetalIon.iron,
+        "motif": "HEME",
+        "function": "oxygen_transport",
+        "keywords": ["HBB", "hemoglobin"],
+    },
+    {
+        "name": "calmodulin",
+        "gene": "CALM1",
+        "metal": MetalIon.calcium,
+        "motif": "EF_HAND",
+        "function": "signaling",
+        "keywords": ["CALM1", "calmodulin"],
+    },
+    {
+        "name": "superoxide_dismutase_cu",
+        "gene": "SOD1",
+        "metal": MetalIon.copper,
+        "motif": "COPPER_TYPE1",
+        "function": "catalytic",
+        "keywords": ["SOD1", "superoxide", "dismutase"],
+    },
+    {
+        "name": "superoxide_dismutase_zn",
+        "gene": "SOD1",
+        "metal": MetalIon.zinc,
+        "motif": "ZINC_MONONUCLEAR",
+        "function": "structural",
+        "keywords": ["SOD1", "superoxide"],
+    },
+    {
+        "name": "ferritin",
+        "gene": "FTH1",
+        "metal": MetalIon.iron,
+        "motif": "IRON_STORAGE",
+        "function": "storage",
+        "keywords": ["FTH1", "ferritin"],
+    },
+    {
+        "name": "matrix_metalloprotease",
+        "gene": "MMP2",
+        "metal": MetalIon.zinc,
+        "motif": "ZINC_MONONUCLEAR",
+        "function": "catalytic",
+        "keywords": ["MMP2", "metalloprotease", "MMP"],
+    },
+    {
+        "name": "alcohol_dehydrogenase",
+        "gene": "ADH1",
+        "metal": MetalIon.zinc,
+        "motif": "ZINC_FINGER",
+        "function": "catalytic",
+        "keywords": ["ADH1", "alcohol", "dehydrogenase"],
+    },
+    {
+        "name": "myoglobin",
+        "gene": "MB",
+        "metal": MetalIon.iron,
+        "motif": "HEME",
+        "function": "oxygen_storage",
+        "keywords": ["MB", "myoglobin"],
+    },
+    {
+        "name": "lactoferrin",
+        "gene": "LTF",
+        "metal": MetalIon.iron,
+        "motif": "TRANSFERRIN",
+        "function": "transport",
+        "keywords": ["LTF", "lactoferrin", "transferrin"],
+    },
+    {
+        "name": "manganese_sod",
+        "gene": "SOD2",
+        "metal": MetalIon.manganese,
+        "motif": "MANGANESE_SOD",
+        "function": "catalytic",
+        "keywords": ["SOD2", "manganese"],
+    },
+    {
+        "name": "nitrogenase",
+        "gene": "NIFH",
+        "metal": MetalIon.iron,
+        "motif": "IRON_SULFUR",
+        "function": "catalytic",
+        "keywords": ["NIFH", "nitrogenase"],
+    },
+    {
+        "name": "cytochrome_c",
+        "gene": "CYCS",
+        "metal": MetalIon.iron,
+        "motif": "HEME",
+        "function": "electron_transfer",
+        "keywords": ["CYCS", "cytochrome"],
+    },
+    {
+        "name": "cobalt_corrinoid",
+        "gene": "MMUT",
+        "metal": MetalIon.cobalt,
+        "motif": "COBALT_CORRINS",
+        "function": "catalytic",
+        "keywords": ["MMUT", "cobalamin", "methylmalonyl"],
+    },
 ]
 
 
@@ -418,7 +541,11 @@ def predict_metal_sites(sequence: str) -> MetalSiteResult:
             geometry = _geometry_from_cn(cn)
 
             # Site type heuristics
-            if "zinc_finger" in motif_name or "rubredoxin" in motif_name or "iron_sulfur" in motif_name:
+            if (
+                "zinc_finger" in motif_name
+                or "rubredoxin" in motif_name
+                or "iron_sulfur" in motif_name
+            ):
                 site_type = "structural"
             elif "ef_hand" in motif_name or "calcium" in motif_name:
                 site_type = "regulatory"
@@ -428,15 +555,17 @@ def predict_metal_sites(sequence: str) -> MetalSiteResult:
             confidence = 0.75 if motif_name in ("zinc_finger", "ef_hand", "iron_sulfur") else 0.60
             druggable = site_type == "catalytic"
 
-            sites.append(MetalSite(
-                metal=metal,
-                coordinating_residues=coord_positions,
-                coordination_number=cn,
-                geometry=geometry,
-                confidence=confidence,
-                site_type=site_type,
-                druggable=druggable,
-            ))
+            sites.append(
+                MetalSite(
+                    metal=metal,
+                    coordinating_residues=coord_positions,
+                    coordination_number=cn,
+                    geometry=geometry,
+                    confidence=confidence,
+                    site_type=site_type,
+                    druggable=druggable,
+                )
+            )
 
     # CHH / CCH / CCC / HHH cluster scan (short-range, within 10 residues)
     cluster_patterns = [
@@ -449,7 +578,9 @@ def predict_metal_sites(sequence: str) -> MetalSiteResult:
         for m in re.finditer(pattern, seq):
             start = m.start()
             matched = m.group()
-            coord_positions = [start + i for i, aa in enumerate(matched) if aa in ("C", "H", "D", "E")]
+            coord_positions = [
+                start + i for i, aa in enumerate(matched) if aa in ("C", "H", "D", "E")
+            ]
             if not coord_positions:
                 continue
             # Avoid duplicate sites (check overlap with existing)
@@ -460,15 +591,17 @@ def predict_metal_sites(sequence: str) -> MetalSiteResult:
             if overlap:
                 continue
             cn = min(len(coord_positions), 4)
-            sites.append(MetalSite(
-                metal=metal,
-                coordinating_residues=coord_positions,
-                coordination_number=cn,
-                geometry=_geometry_from_cn(cn),
-                confidence=0.55,
-                site_type=site_type,
-                druggable=(site_type == "catalytic"),
-            ))
+            sites.append(
+                MetalSite(
+                    metal=metal,
+                    coordinating_residues=coord_positions,
+                    coordination_number=cn,
+                    geometry=_geometry_from_cn(cn),
+                    confidence=0.55,
+                    site_type=site_type,
+                    druggable=(site_type == "catalytic"),
+                )
+            )
 
     catalytic = sum(1 for s in sites if s.site_type == "catalytic")
     structural = sum(1 for s in sites if s.site_type == "structural")
@@ -490,16 +623,19 @@ def cross_validate_metal(sequence: str, gene: str = "") -> dict:
     db_matches: list[dict] = []
     for entry in KNOWN_METALLOPROTEIN_DB:
         match = False
-        if gene_upper and any(kw.upper() in gene_upper or gene_upper in kw.upper()
-                               for kw in entry["keywords"]):
+        if gene_upper and any(
+            kw.upper() in gene_upper or gene_upper in kw.upper() for kw in entry["keywords"]
+        ):
             match = True
         if match:
-            db_matches.append({
-                "db_name": entry["name"],
-                "gene": entry["gene"],
-                "expected_metal": entry["metal"].value,
-                "function": entry["function"],
-            })
+            db_matches.append(
+                {
+                    "db_name": entry["name"],
+                    "gene": entry["gene"],
+                    "expected_metal": entry["metal"].value,
+                    "function": entry["function"],
+                }
+            )
 
     predicted_metals = list({s.metal.value for s in predicted.sites})
     validated = []
@@ -507,7 +643,9 @@ def cross_validate_metal(sequence: str, gene: str = "") -> dict:
         if match["expected_metal"] in predicted_metals:
             validated.append({**match, "validated": True})
         else:
-            validated.append({**match, "validated": False, "note": "metal not predicted from sequence"})
+            validated.append(
+                {**match, "validated": False, "note": "metal not predicted from sequence"}
+            )
 
     return {
         "gene": gene,
@@ -523,6 +661,7 @@ def cross_validate_metal(sequence: str, gene: str = "") -> dict:
 # ---------------------------------------------------------------------------
 # Feature 3: Glycoprotein modeling
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GlycosylationSite:
@@ -606,13 +745,15 @@ def predict_glycosylation_sites(sequence: str) -> list[GlycosylationSite]:
         # Assign glycan type based on position (deterministic)
         glycan_types_list = list(COMMON_GLYCAN_TYPES.keys())
         glycan = glycan_types_list[pos % len(glycan_types_list)]
-        sites.append(GlycosylationSite(
-            position=pos,
-            type="n_linked",
-            motif=motif_str,
-            occupancy_probability=occupancy,
-            glycan_type=glycan,
-        ))
+        sites.append(
+            GlycosylationSite(
+                position=pos,
+                type="n_linked",
+                motif=motif_str,
+                occupancy_probability=occupancy,
+                glycan_type=glycan,
+            )
+        )
 
     # O-linked: S or T in Pro-rich regions (P within 3 residues)
     for i, aa in enumerate(seq):
@@ -624,24 +765,28 @@ def predict_glycosylation_sites(sequence: str) -> list[GlycosylationSite]:
             if "P" in window:
                 # Avoid overlapping with N-linked sites at same position
                 if not any(s.position == i for s in sites):
-                    sites.append(GlycosylationSite(
-                        position=i,
-                        type="o_linked",
-                        motif=aa,
-                        occupancy_probability=0.35,
-                        glycan_type="mucin_type_o",
-                    ))
+                    sites.append(
+                        GlycosylationSite(
+                            position=i,
+                            type="o_linked",
+                            motif=aa,
+                            occupancy_probability=0.35,
+                            glycan_type="mucin_type_o",
+                        )
+                    )
 
     # C-mannosylation: WXXW motif
     for m in re.finditer(r"W.{2}W", seq):
         pos = m.start()
-        sites.append(GlycosylationSite(
-            position=pos,
-            type="c_mannosylation",
-            motif=m.group(),
-            occupancy_probability=0.45,
-            glycan_type="high_mannose",
-        ))
+        sites.append(
+            GlycosylationSite(
+                position=pos,
+                type="c_mannosylation",
+                motif=m.group(),
+                occupancy_probability=0.45,
+                glycan_type="high_mannose",
+            )
+        )
 
     return sites
 
@@ -679,8 +824,8 @@ def analyze_glycan_shield(sequence: str) -> GlycanShieldResult:
         "estimated_shielded_residues": len(shielded_set),
         "vaccine_design_note": (
             "High glycan shield — epitope selection should focus on exposed regions"
-            if shield_pct > 30 else
-            "Moderate glycan shield — targeted glycan engineering may improve immunogenicity"
+            if shield_pct > 30
+            else "Moderate glycan shield — targeted glycan engineering may improve immunogenicity"
         ),
     }
 
@@ -696,9 +841,7 @@ def analyze_glycan_shield(sequence: str) -> GlycanShieldResult:
     )
 
 
-def assess_epitope_accessibility(
-    shield: GlycanShieldResult, epitope_positions: list[int]
-) -> dict:
+def assess_epitope_accessibility(shield: GlycanShieldResult, epitope_positions: list[int]) -> dict:
     """For each epitope position, report whether it's shielded by glycans."""
     shielded_set = set(shield.shielded_residues)
     results: dict[int, dict] = {}
@@ -735,7 +878,7 @@ def assess_epitope_accessibility(
         "accessibility_score": round(exposed_count / max(len(epitope_positions), 1), 3),
         "recommendation": (
             "Select exposed epitopes for vaccine design"
-            if exposed_count > 0 else
-            "All epitopes shielded — consider glycan deletion mutants"
+            if exposed_count > 0
+            else "All epitopes shielded — consider glycan deletion mutants"
         ),
     }

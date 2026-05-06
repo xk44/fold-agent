@@ -63,7 +63,6 @@ def test_generate_report_for_missing_case_returns_404(client: TestClient) -> Non
     assert response.status_code == 404
 
 
-
 def test_report_export_rejects_unknown_format(client: TestClient) -> None:
     create_case = client.post(
         "/cases",
@@ -75,7 +74,6 @@ def test_report_export_rejects_unknown_format(client: TestClient) -> None:
     response = client.get(f"/reports/{report['id']}/export?format=pdf")
 
     assert response.status_code == 422
-
 
 
 def test_case_bundle_export_contains_case_audit_reports_and_pipeline(client: TestClient) -> None:

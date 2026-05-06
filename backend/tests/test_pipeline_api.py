@@ -45,7 +45,6 @@ def test_pipeline_status_for_missing_case_returns_404(client: TestClient) -> Non
     assert response.status_code == 404
 
 
-
 def test_pipeline_run_is_audit_logged(client: TestClient) -> None:
     create_case = client.post(
         "/cases",

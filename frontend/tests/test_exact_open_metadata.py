@@ -17,6 +17,7 @@ Covers:
   - Roundtrip from derive_macro_focus_bundle → derive_macro_focus_prefocus auto-open
 - Roundtrip from derive_job_detail_actions chip data → derive_exact_open_metadata
 """
+
 from __future__ import annotations
 
 import sys
@@ -26,15 +27,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from frontend.app.event_stream import (
     derive_exact_open_metadata,
+    derive_job_detail_actions,
     derive_macro_focus_bundle,
     derive_macro_focus_prefocus,
-    derive_job_detail_actions,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -82,6 +83,7 @@ def _make_card_from_api_job(api_job: dict) -> dict:
 # ===========================================================================
 # derive_exact_open_metadata
 # ===========================================================================
+
 
 class TestDeriveExactOpenMetadataBasic:
     """Basic exact-open derivation tests."""
@@ -238,6 +240,7 @@ class TestDeriveExactOpenMetadataFromRealBundle:
 # ===========================================================================
 # derive_macro_focus_prefocus auto-open integration
 # ===========================================================================
+
 
 class TestMacroFocusPrefocusAutoOpen:
     """Test that derive_macro_focus_prefocus includes auto-open metadata."""

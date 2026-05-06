@@ -51,7 +51,9 @@ def build_subject_redaction_preview(
     target_level = str(redaction_level or current_level)
     return {
         "subject_id": str(subject_detail.get("id") or "unknown"),
-        "display_name": str(subject_detail.get("anonymized_display_name") or subject_detail.get("id") or "unknown"),
+        "display_name": str(
+            subject_detail.get("anonymized_display_name") or subject_detail.get("id") or "unknown"
+        ),
         "current_level": current_level,
         "target_level": target_level,
         "confirm": bool(confirm),
@@ -59,7 +61,6 @@ def build_subject_redaction_preview(
         "will_change": current_level != target_level,
         "severity": "high" if target_level in {"anonymous", "deleted"} else "medium",
     }
-
 
 
 def format_subject_redaction_preview(preview: dict) -> str:
@@ -76,7 +77,6 @@ def format_subject_redaction_preview(preview: dict) -> str:
             f"reason={preview.get('reason') or 'n/a'}",
         ]
     )
-
 
 
 def build_case_delete_preview(
@@ -97,7 +97,6 @@ def build_case_delete_preview(
         "resulting_level": "deleted",
         "severity": "critical" if hard_delete else "high",
     }
-
 
 
 def format_case_delete_preview(preview: dict) -> str:

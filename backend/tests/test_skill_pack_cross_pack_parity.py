@@ -77,7 +77,9 @@ def test_every_skill_has_enrichment_depth() -> None:
             assert len(text.splitlines()) >= 100, f"{path} too short after enrichment"
             assert text.count("- ") >= 8, f"{path} should have rich bullet detail"
             assert text.count(" — ") >= 5, f"{path} endpoints should include purpose annotations"
-            assert "See also: `skills/shared/safety_policy.md`" in text, f"{path} missing safety policy cross-reference"
+            assert "See also: `skills/shared/safety_policy.md`" in text, (
+                f"{path} missing safety policy cross-reference"
+            )
 
 
 def test_cross_pack_endpoint_parity_against_hermes() -> None:

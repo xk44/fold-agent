@@ -131,7 +131,9 @@ def format_alphafold_backend_option_label(backend_name: str, backend_payload: di
         status_parts.append("🟡 needs validation")
     else:
         status_parts.append("🟢 ready")
-    if payload.get("requires_external_upload") or diagnostics.get("requires_external_upload_acknowledgement"):
+    if payload.get("requires_external_upload") or diagnostics.get(
+        "requires_external_upload_acknowledgement"
+    ):
         status_parts.append("ack required")
     mode = payload.get("mode") or "n/a"
     return f"{backend_name} [{mode}; {'; '.join(status_parts)}]"
@@ -221,7 +223,9 @@ def build_alphafold_backend_form_state(backend_name: str, backend_payload: dict)
     if backend_name == "alphafold_db" or diagnostics.get("supports_accession_lookup"):
         input_mode = "accession"
         required_field = "accession"
-    elif diagnostics.get("requires_json_input") or diagnostics.get("supports_remote_json_submission"):
+    elif diagnostics.get("requires_json_input") or diagnostics.get(
+        "supports_remote_json_submission"
+    ):
         input_mode = "json"
         required_field = "json_path"
     else:
@@ -234,9 +238,15 @@ def build_alphafold_backend_form_state(backend_name: str, backend_payload: dict)
         "accession": input_mode == "accession",
     }
     disabled_field_reasons = {
-        "sequence": [] if field_enabled["sequence"] else [f"Disabled: this backend expects {required_field} input instead."],
-        "json_path": [] if field_enabled["json_path"] else [f"Disabled: this backend expects {required_field} input instead."],
-        "accession": [] if field_enabled["accession"] else [f"Disabled: this backend expects {required_field} input instead."],
+        "sequence": []
+        if field_enabled["sequence"]
+        else [f"Disabled: this backend expects {required_field} input instead."],
+        "json_path": []
+        if field_enabled["json_path"]
+        else [f"Disabled: this backend expects {required_field} input instead."],
+        "accession": []
+        if field_enabled["accession"]
+        else [f"Disabled: this backend expects {required_field} input instead."],
     }
 
     guidance_lines = [
@@ -245,17 +255,25 @@ def build_alphafold_backend_form_state(backend_name: str, backend_payload: dict)
         f"required_field={required_field}",
     ]
     if input_mode == "sequence":
-        guidance_lines.append("Submit a protein sequence here; JSON path and accession are not used.")
+        guidance_lines.append(
+            "Submit a protein sequence here; JSON path and accession are not used."
+        )
         if diagnostics.get("supports_a3m_input"):
             guidance_lines.append("A3M-style aligned input is supported by this backend family.")
         if diagnostics.get("supports_num_recycle"):
-            guidance_lines.append("This backend supports recycle-count style tuning when exposed later.")
+            guidance_lines.append(
+                "This backend supports recycle-count style tuning when exposed later."
+            )
     elif input_mode == "json":
         guidance_lines.append("Submit a JSON input path here; sequence and accession are not used.")
         if diagnostics.get("supports_input_dir") or diagnostics.get("parses_output_directory"):
-            guidance_lines.append("This backend can parse output directory artifacts after the run completes.")
+            guidance_lines.append(
+                "This backend can parse output directory artifacts after the run completes."
+            )
     else:
-        guidance_lines.append("Submit an AlphaFold DB accession here; local sequence/JSON inputs are not used.")
+        guidance_lines.append(
+            "Submit an AlphaFold DB accession here; local sequence/JSON inputs are not used."
+        )
 
     warning_lines = []
     available = bool(payload.get("available"))
@@ -264,7 +282,9 @@ def build_alphafold_backend_form_state(backend_name: str, backend_payload: dict)
         warning_lines.append("Backend is not currently available on this system.")
     if available and not validation_ok:
         warning_lines.append("Backend command exists but environment validation is not yet OK.")
-    if payload.get("requires_external_upload") or diagnostics.get("requires_external_upload_acknowledgement"):
+    if payload.get("requires_external_upload") or diagnostics.get(
+        "requires_external_upload_acknowledgement"
+    ):
         warning_lines.append("This backend requires external upload acknowledgement before use.")
     if payload.get("requires_gpu"):
         warning_lines.append("This backend expects local GPU capacity.")
@@ -326,8 +346,14 @@ def format_alphafold_backend_form_guidance(form_state: dict) -> str:
                     f"submit_block_reason={payload.get('submit_block_reason') or 'none'}",
                 ],
             ),
-            _section("Guidance", [f"- {line}" for line in (payload.get('guidance_lines') or [])] or ["- none"]),
-            _section("Warnings", [f"- {line}" for line in (payload.get('warning_lines') or [])] or ["- none"]),
+            _section(
+                "Guidance",
+                [f"- {line}" for line in (payload.get("guidance_lines") or [])] or ["- none"],
+            ),
+            _section(
+                "Warnings",
+                [f"- {line}" for line in (payload.get("warning_lines") or [])] or ["- none"],
+            ),
         ]
     )
 
@@ -414,7 +440,11 @@ def format_bundle_preview(bundle_payload: dict) -> str:
                 ],
             ),
             _section("Top genes", [f"- {gene}" for gene in top_genes] or ["- none"]),
-            _section("Latest reports", [f"- {report.get('report_type') or 'unknown'}" for report in reports[:5]] or ["- none"]),
+            _section(
+                "Latest reports",
+                [f"- {report.get('report_type') or 'unknown'}" for report in reports[:5]]
+                or ["- none"],
+            ),
             _section(
                 "Pipeline status",
                 [
@@ -423,7 +453,7 @@ def format_bundle_preview(bundle_payload: dict) -> str:
                     f"total_steps={latest_pipeline.get('total_steps') if latest_pipeline else 'n/a'}",
                 ],
             ),
-            _section("Safety label", [str(bundle_payload.get('safety_label') or 'n/a')]),
+            _section("Safety label", [str(bundle_payload.get("safety_label") or "n/a")]),
         ]
     )
 
@@ -599,7 +629,7 @@ def summarize_agent_skill_inventory(payload: list) -> dict:
 def format_agent_skill_inventory_preview(payload: list) -> str:
     summary = summarize_agent_skill_inventory(payload)
     lines = [
-        f"## Agent skill inventory",
+        "## Agent skill inventory",
         f"total_skills={summary['total_skills']} | skills_with_safety_boundaries={summary['skills_with_safety_boundaries']}",
     ]
     for fw, count in summary["framework_counts"].items():
@@ -680,18 +710,41 @@ def format_report_preview(report_payload: dict) -> str:
                         f"iptm={content.get('iptm') if content.get('iptm') is not None else 'n/a'}",
                     ],
                 ),
-                _section("Missing data checklist", [f"- [ ] {item}" for item in (content.get('missing_data_checklist') or [])] or ["- [ ] none"]),
-                _section("Tool versions", [f"- {k}: {v}" for k, v in (content.get('tool_versions') or {}).items()] or ["- none"]),
-                _section("Safety labels", [f"- {item}" for item in (content.get('safety_labels') or [])] or ["- none"]),
+                _section(
+                    "Missing data checklist",
+                    [f"- [ ] {item}" for item in (content.get("missing_data_checklist") or [])]
+                    or ["- [ ] none"],
+                ),
+                _section(
+                    "Tool versions",
+                    [f"- {k}: {v}" for k, v in (content.get("tool_versions") or {}).items()]
+                    or ["- none"],
+                ),
+                _section(
+                    "Safety labels",
+                    [f"- {item}" for item in (content.get("safety_labels") or [])] or ["- none"],
+                ),
             ]
         )
 
     if report_type == "ethics_package":
-        consent_lines = [f"- {k}: {v}" for k, v in (content.get('consent_templates') or {}).items()] or ["- none"]
-        privacy_lines = [f"- {item}" for item in (content.get('privacy_notices') or [])] or ["- none"]
-        risk_lines = [f"- risk: {item}" for item in ((content.get('risk_benefit_summary') or {}).get('risks') or [])]
-        benefit_lines = [f"- benefit: {item}" for item in ((content.get('risk_benefit_summary') or {}).get('benefits') or [])]
-        oversight_lines = [f"- [ ] {item}" for item in (content.get('professional_oversight_checklist') or [])] or ["- [ ] none"]
+        consent_lines = [
+            f"- {k}: {v}" for k, v in (content.get("consent_templates") or {}).items()
+        ] or ["- none"]
+        privacy_lines = [f"- {item}" for item in (content.get("privacy_notices") or [])] or [
+            "- none"
+        ]
+        risk_lines = [
+            f"- risk: {item}"
+            for item in ((content.get("risk_benefit_summary") or {}).get("risks") or [])
+        ]
+        benefit_lines = [
+            f"- benefit: {item}"
+            for item in ((content.get("risk_benefit_summary") or {}).get("benefits") or [])
+        ]
+        oversight_lines = [
+            f"- [ ] {item}" for item in (content.get("professional_oversight_checklist") or [])
+        ] or ["- [ ] none"]
         return "\n\n".join(
             [
                 f"Ethics Package\nCase: {case_id}",
@@ -700,7 +753,9 @@ def format_report_preview(report_payload: dict) -> str:
                 _section("Privacy notices", privacy_lines),
                 _section("Risk and benefit summary", (risk_lines + benefit_lines) or ["- none"]),
                 _section("Professional oversight checklist", oversight_lines),
-                _section("Jurisdiction warning", [str(content.get('jurisdiction_warning') or 'n/a')]),
+                _section(
+                    "Jurisdiction warning", [str(content.get("jurisdiction_warning") or "n/a")]
+                ),
             ]
         )
 

@@ -11,9 +11,8 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 # ---------------------------------------------------------------------------
 # Feature 1: Per-residue ensemble disagreement heatmap
@@ -21,10 +20,26 @@ from datetime import datetime, timezone
 
 # 3-letter amino acid codes for mock residue names
 _AA_THREE = {
-    "A": "ALA", "R": "ARG", "N": "ASN", "D": "ASP", "C": "CYS",
-    "E": "GLU", "Q": "GLN", "G": "GLY", "H": "HIS", "I": "ILE",
-    "L": "LEU", "K": "LYS", "M": "MET", "F": "PHE", "P": "PRO",
-    "S": "SER", "T": "THR", "W": "TRP", "Y": "TYR", "V": "VAL",
+    "A": "ALA",
+    "R": "ARG",
+    "N": "ASN",
+    "D": "ASP",
+    "C": "CYS",
+    "E": "GLU",
+    "Q": "GLN",
+    "G": "GLY",
+    "H": "HIS",
+    "I": "ILE",
+    "L": "LEU",
+    "K": "LYS",
+    "M": "MET",
+    "F": "PHE",
+    "P": "PRO",
+    "S": "SER",
+    "T": "THR",
+    "W": "TRP",
+    "Y": "TYR",
+    "V": "VAL",
 }
 
 
@@ -73,7 +88,7 @@ def compute_ensemble_heatmap(
         n = len(plddts)
         mean = sum(plddts) / n if n else 0.0
         variance = sum((v - mean) ** 2 for v in plddts) / n if n else 0.0
-        std = variance ** 0.5
+        std = variance**0.5
 
         if std < 5.0:
             level = "low"
@@ -107,11 +122,7 @@ def compute_ensemble_heatmap(
     if start is not None:
         high_disagreement_regions.append((start, len(sequence) - 1))
 
-    overall = (
-        sum(pr.std_plddt for pr in per_residue) / len(per_residue)
-        if per_residue
-        else 0.0
-    )
+    overall = sum(pr.std_plddt for pr in per_residue) / len(per_residue) if per_residue else 0.0
 
     return EnsembleHeatmapResult(
         sequence=sequence,
@@ -214,9 +225,7 @@ def recommend_backend(
     """
     if task_class not in TASK_CLASS_BENCHMARKS:
         valid = sorted(TASK_CLASS_BENCHMARKS)
-        raise ValueError(
-            f"Unknown task class {task_class!r}. Valid classes: {valid}"
-        )
+        raise ValueError(f"Unknown task class {task_class!r}. Valid classes: {valid}")
 
     ranked = TASK_CLASS_BENCHMARKS[task_class]
     if not allow_cloud:
@@ -224,8 +233,7 @@ def recommend_backend(
 
     if not ranked:
         raise RuntimeError(
-            f"No backends available for task class {task_class!r} "
-            f"with allow_cloud={allow_cloud}"
+            f"No backends available for task class {task_class!r} with allow_cloud={allow_cloud}"
         )
 
     best_name, best_score = ranked[0]
@@ -334,9 +342,9 @@ def run_batch_prediction(
     if not sequences:
         raise ValueError("sequences list must not be empty")
 
-    batch_id = str(uuid.UUID(hashlib.sha256(
-        json.dumps(sequences + [backend_name]).encode()
-    ).hexdigest()[:32]))
+    batch_id = str(
+        uuid.UUID(hashlib.sha256(json.dumps(sequences + [backend_name]).encode()).hexdigest()[:32])
+    )
 
     version = _BACKEND_VERSIONS.get(backend_name, "0.0.0")
     provenances: list[SequenceProvenance] = []
@@ -348,7 +356,7 @@ def run_batch_prediction(
         ts = datetime.fromtimestamp(
             # Deterministic timestamp offset from batch hash
             1_700_000_000 + int(input_hash[:8], 16) % 86400,
-            tz=timezone.utc,
+            tz=UTC,
         ).isoformat()
 
         provenances.append(
@@ -365,9 +373,7 @@ def run_batch_prediction(
         )
 
     # Manifest hash = SHA-256 over all input hashes concatenated
-    manifest_payload = json.dumps(
-        [p.input_hash for p in provenances], sort_keys=True
-    ).encode()
+    manifest_payload = json.dumps([p.input_hash for p in provenances], sort_keys=True).encode()
     manifest_hash = hashlib.sha256(manifest_payload).hexdigest()
 
     return BatchResult(
@@ -382,6 +388,7 @@ def run_batch_prediction(
 # ---------------------------------------------------------------------------
 # Feature 4: Universal PDB/mmCIF format normalizer
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class NormalizedStructure:
@@ -401,7 +408,11 @@ def detect_format(data: str) -> str:
     stripped = data.lstrip()
     if stripped.startswith("data_") or "_atom_site." in data or "loop_" in data:
         return "mmcif"
-    if stripped.startswith("ATOM") or stripped.startswith("REMARK") or stripped.startswith("HEADER"):
+    if (
+        stripped.startswith("ATOM")
+        or stripped.startswith("REMARK")
+        or stripped.startswith("HEADER")
+    ):
         return "pdb"
     # Fall back to checking for PDB-style records
     pdb_keywords = ("ATOM  ", "HETATM", "REMARK", "MODEL ", "ENDMDL", "TER   ", "END")
@@ -446,7 +457,9 @@ def normalize_pdb(
     chain_map: dict[str, str] = {}
 
     if fmt == "mmcif":
-        warnings.append("mmCIF format detected; full normalization not yet supported — returning as-is")
+        warnings.append(
+            "mmCIF format detected; full normalization not yet supported — returning as-is"
+        )
         return NormalizedStructure(
             format="mmcif",
             data=pdb_data,
@@ -591,9 +604,7 @@ def pin_version(tool_name: str) -> VersionPin:
         KeyError: if tool_name is not in TOOL_VERSIONS
     """
     if tool_name not in TOOL_VERSIONS:
-        raise KeyError(
-            f"Unknown tool: {tool_name!r}. Known tools: {sorted(TOOL_VERSIONS)}"
-        )
+        raise KeyError(f"Unknown tool: {tool_name!r}. Known tools: {sorted(TOOL_VERSIONS)}")
 
     version = TOOL_VERSIONS[tool_name]
     superseded_by = _SUPERSEDED_BY.get(tool_name)
@@ -627,11 +638,7 @@ def get_version_manifest() -> dict:
     pins = check_all_versions()
     return {
         "versions": {p.tool_name: p.current_version for p in pins},
-        "superseded": {
-            p.tool_name: p.supersession_warning
-            for p in pins
-            if p.superseded
-        },
+        "superseded": {p.tool_name: p.supersession_warning for p in pins if p.superseded},
         "total_tools": len(pins),
         "superseded_count": sum(1 for p in pins if p.superseded),
         "manifest_hash": hashlib.sha256(

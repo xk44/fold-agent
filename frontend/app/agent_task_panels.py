@@ -49,12 +49,18 @@ def format_agent_task_operator_summary(summary: dict) -> str:
                     f"system_tasks={summary.get('system_tasks', 0)}",
                     "status_counts="
                     + (
-                        ", ".join(f"{k}:{v}" for k, v in sorted((summary.get("status_counts") or {}).items()))
+                        ", ".join(
+                            f"{k}:{v}"
+                            for k, v in sorted((summary.get("status_counts") or {}).items())
+                        )
                         or "none"
                     ),
                     "framework_counts="
                     + (
-                        ", ".join(f"{k}:{v}" for k, v in sorted((summary.get("framework_counts") or {}).items()))
+                        ", ".join(
+                            f"{k}:{v}"
+                            for k, v in sorted((summary.get("framework_counts") or {}).items())
+                        )
                         or "none"
                     ),
                 ],
@@ -98,7 +104,8 @@ def derive_agent_task_form_options(skills_payload: list[dict] | None) -> dict:
     return {
         "frameworks": ordered_frameworks,
         "skills_by_framework": {
-            framework: sorted(skills_by_framework.get(framework, set())) for framework in ordered_frameworks
+            framework: sorted(skills_by_framework.get(framework, set()))
+            for framework in ordered_frameworks
         },
     }
 
@@ -139,7 +146,9 @@ def format_agent_task_detail_preview(task_payload: dict | None) -> str:
     logs = payload.get("logs") or {}
     artifacts = payload.get("artifacts") or {}
     logs_keys = ", ".join(sorted(logs.keys())) if isinstance(logs, dict) and logs else "none"
-    artifact_keys = ", ".join(sorted(artifacts.keys())) if isinstance(artifacts, dict) and artifacts else "none"
+    artifact_keys = (
+        ", ".join(sorted(artifacts.keys())) if isinstance(artifacts, dict) and artifacts else "none"
+    )
     return "\n\n".join(
         [
             "Agent task detail",
@@ -172,14 +181,12 @@ def _parse_optional_json_text(text: str) -> dict | None:
     return parsed
 
 
-
 def build_agent_task_update_payload(*, status: str, logs_text: str, artifacts_text: str) -> dict:
     return {
         "status": status,
         "logs": _parse_optional_json_text(logs_text),
         "artifacts": _parse_optional_json_text(artifacts_text),
     }
-
 
 
 def render_agent_task_section(
@@ -226,7 +233,11 @@ def render_agent_task_section(
                 skill_name = st.selectbox("Skill", options=known_skills)
             else:
                 skill_name = st.text_input("Skill", value="")
-            status = st.selectbox("Initial status", options=["pending", "running", "completed", "failed", "cancelled"], index=0)
+            status = st.selectbox(
+                "Initial status",
+                options=["pending", "running", "completed", "failed", "cancelled"],
+                index=0,
+            )
             dry_run_submit = st.form_submit_button("Dry run", width="stretch")
             create_submit = st.form_submit_button("Create task", width="stretch")
 
@@ -265,7 +276,9 @@ def render_agent_task_section(
                 st.rerun()
 
         if st.session_state.get("agent-task-dry-run-result"):
-            st.code(format_agent_task_dry_run_preview(st.session_state["agent-task-dry-run-result"]))
+            st.code(
+                format_agent_task_dry_run_preview(st.session_state["agent-task-dry-run-result"])
+            )
             with st.expander("Raw dry run payload"):
                 st.json(st.session_state["agent-task-dry-run-result"])
 
@@ -294,14 +307,24 @@ def render_agent_task_section(
                     selected_case_filter == "system" and task_case in {None, "system"}
                 ):
                     continue
-            if selected_framework_filter != "all" and str(task.get("framework") or "other") != selected_framework_filter:
+            if (
+                selected_framework_filter != "all"
+                and str(task.get("framework") or "other") != selected_framework_filter
+            ):
                 continue
-            if selected_status_filter != "all" and str(task.get("status") or "unknown") != selected_status_filter:
+            if (
+                selected_status_filter != "all"
+                and str(task.get("status") or "unknown") != selected_status_filter
+            ):
                 continue
             filtered_tasks.append(task)
 
         if filtered_tasks:
-            st.dataframe(normalize_table_rows(build_agent_task_table_rows(filtered_tasks)), width="stretch", hide_index=True)
+            st.dataframe(
+                normalize_table_rows(build_agent_task_table_rows(filtered_tasks)),
+                width="stretch",
+                hide_index=True,
+            )
             task_labels = {
                 f"{str(task.get('id') or '')[:8]} — {task.get('framework')} — {task.get('skill_name')} — {task.get('status')}": task
                 for task in filtered_tasks
@@ -318,7 +341,11 @@ def render_agent_task_section(
                 with st.expander("Task artifacts"):
                     st.json(selected_task.get("artifacts"))
 
-            default_logs_text = json.dumps(selected_task.get("logs"), indent=2, sort_keys=True) if selected_task.get("logs") is not None else ""
+            default_logs_text = (
+                json.dumps(selected_task.get("logs"), indent=2, sort_keys=True)
+                if selected_task.get("logs") is not None
+                else ""
+            )
             default_artifacts_text = (
                 json.dumps(selected_task.get("artifacts"), indent=2, sort_keys=True)
                 if selected_task.get("artifacts") is not None
@@ -331,10 +358,13 @@ def render_agent_task_section(
                     index=["pending", "running", "completed", "failed", "cancelled"].index(
                         str(selected_task.get("status") or "pending")
                     )
-                    if str(selected_task.get("status") or "pending") in ["pending", "running", "completed", "failed", "cancelled"]
+                    if str(selected_task.get("status") or "pending")
+                    in ["pending", "running", "completed", "failed", "cancelled"]
                     else 0,
                 )
-                updated_logs_text = st.text_area("Update logs (JSON object)", value=default_logs_text, height=140)
+                updated_logs_text = st.text_area(
+                    "Update logs (JSON object)", value=default_logs_text, height=140
+                )
                 updated_artifacts_text = st.text_area(
                     "Update artifacts (JSON object)",
                     value=default_artifacts_text,
@@ -351,11 +381,15 @@ def render_agent_task_section(
                 except ValueError as exc:
                     st.error(f"Invalid task JSON payload: {exc}")
                 else:
-                    updated_task, update_error = safe_call(client.update_agent_task, str(selected_task.get("id")), **update_payload)
+                    updated_task, update_error = safe_call(
+                        client.update_agent_task, str(selected_task.get("id")), **update_payload
+                    )
                     if update_error:
                         render_api_error(update_error, fallback_title="Agent task update failed.")
                     else:
-                        st.success(f"Updated task {str(updated_task.get('id') or '')[:8]} to {updated_status}")
+                        st.success(
+                            f"Updated task {str(updated_task.get('id') or '')[:8]} to {updated_status}"
+                        )
                         st.rerun()
         else:
             st.info("No agent tasks match the current filters.")

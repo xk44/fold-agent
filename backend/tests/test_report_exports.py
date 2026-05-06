@@ -18,7 +18,6 @@ import re
 from fastapi.testclient import TestClient
 
 from backend.app.report_exports import (
-    UNSAFE_PATTERNS,
     build_human_research_consent,
     build_report_html,
     build_report_markdown,
@@ -27,7 +26,6 @@ from backend.app.report_exports import (
     sanitize_report_text,
     scan_for_unsafe_content,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -171,7 +169,9 @@ def test_markdown_report_has_editable_markers(client: TestClient) -> None:
         md = build_report_markdown(case_id, db)
 
     editable_sections = re.findall(r"<!-- EDITABLE: [\w-]+ -->", md)
-    assert len(editable_sections) >= 5, f"Expected ≥5 editable markers, got {len(editable_sections)}"
+    assert len(editable_sections) >= 5, (
+        f"Expected ≥5 editable markers, got {len(editable_sections)}"
+    )
 
     closing_markers = re.findall(r"<!-- /EDITABLE: [\w-]+ -->", md)
     assert len(closing_markers) == len(editable_sections)

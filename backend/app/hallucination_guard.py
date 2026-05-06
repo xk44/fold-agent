@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Known legitimate sources
@@ -174,8 +173,7 @@ HALLUCINATION_PATTERNS: list[dict] = [
 
 # Pre-compile patterns
 _COMPILED_PATTERNS: list[tuple[dict, re.Pattern]] = [
-    (p, re.compile(p["pattern"], re.IGNORECASE))
-    for p in HALLUCINATION_PATTERNS
+    (p, re.compile(p["pattern"], re.IGNORECASE)) for p in HALLUCINATION_PATTERNS
 ]
 
 # Pattern to extract cited source names from report text
@@ -219,7 +217,7 @@ def check_source_citation(citation: str) -> dict:
         }
 
     # Near-miss: find closest known source
-    best_match: Optional[str] = None
+    best_match: str | None = None
     best_score: float = 0.0
     for known_lower, canonical in _KNOWN_SOURCES_LOWER.items():
         score = SequenceMatcher(None, key, known_lower).ratio()

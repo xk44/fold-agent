@@ -37,7 +37,11 @@ def test_submit_job_uses_threadpool_when_backend_forced(monkeypatch) -> None:
         "demo",
         timeout_seconds=15,
         celery_task_name="backend.app.worker.tasks.pipeline_run",
-        celery_kwargs={"job_id": "job-threadpool", "case_id": "case-1", "payload": {"case_id": "case-1"}},
+        celery_kwargs={
+            "job_id": "job-threadpool",
+            "case_id": "case-1",
+            "payload": {"case_id": "case-1"},
+        },
     )
 
     assert future is expected_future
@@ -73,19 +77,29 @@ def test_submit_job_uses_celery_when_auto_backend_has_broker(monkeypatch) -> Non
         lambda: {"status": "unused"},
         timeout_seconds=30,
         celery_task_name="backend.app.worker.tasks.pipeline_run",
-        celery_kwargs={"job_id": "job-celery", "case_id": "case-2", "payload": {"case_id": "case-2"}},
+        celery_kwargs={
+            "job_id": "job-celery",
+            "case_id": "case-2",
+            "payload": {"case_id": "case-2"},
+        },
     )
 
     assert result is expected_result
     assert called == {
         "job_id": "job-celery",
         "task_name": "backend.app.worker.tasks.pipeline_run",
-        "task_kwargs": {"job_id": "job-celery", "case_id": "case-2", "payload": {"case_id": "case-2"}},
+        "task_kwargs": {
+            "job_id": "job-celery",
+            "case_id": "case-2",
+            "payload": {"case_id": "case-2"},
+        },
         "timeout_seconds": 30,
     }
 
 
-def test_submit_job_falls_back_to_threadpool_when_auto_backend_lacks_celery_metadata(monkeypatch) -> None:
+def test_submit_job_falls_back_to_threadpool_when_auto_backend_lacks_celery_metadata(
+    monkeypatch,
+) -> None:
     called: dict = {}
     expected_future = Future()
 

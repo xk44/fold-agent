@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from frontend.app.consent_tracker import (
     build_consent_case_table_row,
     build_consent_timeline,
@@ -140,7 +138,12 @@ class TestSummarizeConsentState:
         assert summary["needs_attention"] is False
 
     def test_redaction_flag(self):
-        case = {"id": "c1", "consent_status": "pending", "review_status": "unreviewed", "species": "demo"}
+        case = {
+            "id": "c1",
+            "consent_status": "pending",
+            "review_status": "unreviewed",
+            "species": "demo",
+        }
         audit = [
             {
                 "action": "case.redacted",

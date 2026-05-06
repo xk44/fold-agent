@@ -6,19 +6,20 @@ utilities for the FoldAgent bioinformatics pipeline.
 
 from __future__ import annotations
 
+import functools
+import logging
 import re
 import shutil
 import subprocess
 import tempfile
 import time
-import functools
-import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
 from io import StringIO
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -300,14 +301,74 @@ class AlignmentStep(PipelineStep):
 
         output_bam = input_data.get("output_bam", "output.bam")
 
-        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 3600))
-        if rc != 0:
+        samtools_path = shutil.which("samtools")
+        if not samtools_path:
+            return {**fallback, "error": "samtools not found on PATH"}
+
+        # Pipe: bwa mem ... | samtools sort -o output.bam
+        # Use two Popen objects to avoid shell=True
+        timeout = input_data.get("timeout_seconds", 3600)
+        try:
+            bwa_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            sort_proc = subprocess.Popen(
+                [samtools_path, "sort", "-o", output_bam],
+                stdin=bwa_proc.stdout,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            # Allow bwa_proc to receive SIGPIPE if sort_proc exits early
+            bwa_proc.stdout.close()  # type: ignore[union-attr]
+            sort_stdout, sort_stderr = sort_proc.communicate(timeout=timeout)
+            bwa_proc.wait(timeout=10)
+            bwa_stderr = bwa_proc.stderr.read().decode(errors="replace")  # type: ignore[union-attr]
+            rc_bwa = bwa_proc.returncode
+            rc_sort = sort_proc.returncode
+        except subprocess.TimeoutExpired:
             return {
                 "tool": "bwa",
-                "error": f"bwa mem exited with code {rc}",
+                "error": "bwa mem | samtools sort timed out",
+                "fallback": False,
+            }
+        except OSError as exc:
+            return {
+                "tool": "bwa",
+                "error": str(exc),
+                "fallback": False,
+            }
+
+        stderr = bwa_stderr
+        if rc_bwa != 0:
+            return {
+                "tool": "bwa",
+                "error": f"bwa mem exited with code {rc_bwa}",
                 "stderr": stderr,
                 "fallback": False,
             }
+        if rc_sort != 0:
+            return {
+                "tool": "bwa",
+                "error": f"samtools sort exited with code {rc_sort}",
+                "stderr": sort_stderr.decode(errors="replace"),
+                "fallback": False,
+            }
+
+        import os
+
+        if not os.path.exists(output_bam):
+            return {
+                "tool": "bwa",
+                "error": f"expected BAM not found after sort: {output_bam}",
+                "fallback": False,
+            }
+
+        # Index the BAM
+        idx_rc, _, idx_err = _run_subprocess([samtools_path, "index", output_bam], timeout=300)
+        if idx_rc != 0:
+            logger.warning("samtools index failed: %s", idx_err)
 
         # Parse mapping rate from bwa mem stderr summary lines like:
         #   "N reads; of these: ... N (X%) were mapped"
@@ -325,7 +386,7 @@ class AlignmentStep(PipelineStep):
             "tool": "bwa",
             "aligned_bam": output_bam,
             "mapping_rate": mapping_rate,
-            "stdout": stdout,
+            "stdout": "",
             "stderr": stderr,
             "fallback": False,
         }
@@ -367,7 +428,34 @@ class VariantCallingStep(PipelineStep):
             cmd.extend(["-R", reference])
         normal_bam = input_data.get("normal_bam")
         if normal_bam:
-            cmd.extend(["-I", normal_bam, "--normal-sample", normal_bam])
+            # --normal-sample expects a sample name, not a BAM path.
+            # Prefer explicit normal_sample field; fall back to extracting from
+            # the BAM @RG SM: tag; if samtools is unavailable, default to "NORMAL".
+            normal_sample = input_data.get("normal_sample")
+            if not normal_sample:
+                samtools_path = shutil.which("samtools")
+                if samtools_path:
+                    try:
+                        rg_result = subprocess.run(
+                            [samtools_path, "view", "-H", normal_bam],
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                            check=False,
+                        )
+                        for rg_line in rg_result.stdout.splitlines():
+                            if rg_line.startswith("@RG"):
+                                for field in rg_line.split("\t"):
+                                    if field.startswith("SM:"):
+                                        normal_sample = field[3:].strip()
+                                        break
+                            if normal_sample:
+                                break
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
+            if not normal_sample:
+                normal_sample = "NORMAL"
+            cmd.extend(["-I", normal_bam, "--normal-sample", normal_sample])
         tumor_sample = input_data.get("tumor_sample")
         if tumor_sample:
             cmd.extend(["--tumor-sample", tumor_sample])
@@ -390,10 +478,20 @@ class VariantCallingStep(PipelineStep):
                 "fallback": False,
             }
 
-        # Count variant records in VCF stdout (non-header lines)
-        somatic_count = sum(
-            1 for line in stdout.splitlines() if line and not line.startswith("#")
-        )
+        # Count variant records from the output VCF file (non-header lines)
+        import os
+
+        somatic_count = 0
+        if os.path.exists(output_vcf):
+            try:
+                with open(output_vcf) as _vcf:
+                    somatic_count = sum(
+                        1 for line in _vcf if line.strip() and not line.startswith("#")
+                    )
+            except OSError:
+                pass
+        else:
+            logger.warning("Mutect2 output VCF not found: %s", output_vcf)
 
         return {
             "tool": "gatk-mutect2",
@@ -463,19 +561,30 @@ class AnnotationStep(PipelineStep):
                 "fallback": False,
             }
 
-        # VEP writes summary stats to stderr; count annotated variants from stdout VCF
-        annotated_count = sum(
-            1 for line in stdout.splitlines() if line and not line.startswith("#")
-        )
-        # Also try to parse "Lines of output written: N" from stderr
-        for line in stderr.splitlines():
-            m = re.search(r"Lines of output written:\s*(\d+)", line, re.IGNORECASE)
-            if m:
-                try:
-                    annotated_count = int(m.group(1))
-                except ValueError:
-                    pass
-                break
+        # VEP writes output to a file; count annotated variants from the output file.
+        # Fall back to parsing "Lines of output written: N" from stderr.
+        import os
+
+        annotated_count = 0
+        if os.path.exists(output_vcf):
+            try:
+                with open(output_vcf) as _vcf:
+                    annotated_count = sum(
+                        1 for line in _vcf if line.strip() and not line.startswith("#")
+                    )
+            except OSError:
+                pass
+        else:
+            logger.warning("VEP output file not found: %s", output_vcf)
+            # Try to parse "Lines of output written: N" from stderr as fallback
+            for line in stderr.splitlines():
+                m = re.search(r"Lines of output written:\s*(\d+)", line, re.IGNORECASE)
+                if m:
+                    try:
+                        annotated_count = int(m.group(1))
+                    except ValueError:
+                        pass
+                    break
 
         return {
             "tool": "vep",
@@ -513,12 +622,14 @@ def _parse_netmhcpan_output(stdout: str) -> list[dict]:
         if len(parts) < 3:
             continue
         try:
-            predictions.append({
-                "allele": parts[1] if len(parts) > 1 else "unknown",
-                "peptide": parts[2] if len(parts) > 2 else "",
-                "ic50": float(parts[-3]) if len(parts) > 3 else 0.0,
-                "rank": float(parts[-2]) if len(parts) > 2 else 1.0,
-            })
+            predictions.append(
+                {
+                    "allele": parts[1] if len(parts) > 1 else "unknown",
+                    "peptide": parts[2] if len(parts) > 2 else "",
+                    "ic50": float(parts[-3]) if len(parts) > 3 else 0.0,
+                    "rank": float(parts[-2]) if len(parts) > 2 else 1.0,
+                }
+            )
         except (ValueError, IndexError):
             continue
     return predictions
@@ -552,41 +663,51 @@ class BindingPredictionStep(PipelineStep):
         if not peptides or not alleles:
             return {**fallback, "error": "missing 'peptides' or 'alleles' in input_data"}
 
-        # Write peptides to a temp file
+        # Write peptides to a temp file; always clean up in finally
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".pep", delete=False
-            ) as pep_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".pep", delete=False) as pep_file:
                 pep_file.write("\n".join(peptides) + "\n")
                 pep_path = pep_file.name
         except OSError as exc:
             return {**fallback, "error": f"could not create peptide temp file: {exc}"}
 
-        cmd = [
-            netmhcpan_path,
-            "-f", pep_path,
-            "-a", ",".join(alleles),
-            "-BA",  # include binding affinity
-        ]
+        try:
+            cmd = [
+                netmhcpan_path,
+                "-f",
+                pep_path,
+                "-a",
+                ",".join(alleles),
+                "-BA",  # include binding affinity
+            ]
 
-        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 1800))
-        if rc != 0:
+            rc, stdout, stderr = _run_subprocess(
+                cmd, timeout=input_data.get("timeout_seconds", 1800)
+            )
+            if rc != 0:
+                return {
+                    "tool": "netMHCpan",
+                    "error": f"netMHCpan exited with code {rc}",
+                    "stderr": stderr,
+                    "fallback": False,
+                }
+
+            candidates = _parse_netmhcpan_output(stdout)
             return {
                 "tool": "netMHCpan",
-                "error": f"netMHCpan exited with code {rc}",
+                "candidates": candidates,
+                "candidate_count": len(candidates),
+                "stdout": stdout,
                 "stderr": stderr,
                 "fallback": False,
             }
+        finally:
+            import os as _os
 
-        candidates = _parse_netmhcpan_output(stdout)
-        return {
-            "tool": "netMHCpan",
-            "candidates": candidates,
-            "candidate_count": len(candidates),
-            "stdout": stdout,
-            "stderr": stderr,
-            "fallback": False,
-        }
+            try:
+                _os.unlink(pep_path)
+            except OSError:
+                pass
 
 
 def _parse_netmhciipan_output(stdout: str) -> list[dict]:
@@ -614,14 +735,16 @@ def _parse_netmhciipan_output(stdout: str) -> list[dict]:
         try:
             ic50 = float(parts[-3]) if len(parts) > 3 else 0.0
             rank = float(parts[-2]) if len(parts) > 2 else 1.0
-            predictions.append({
-                "allele": parts[0],
-                "peptide": parts[1] if len(parts) > 1 else "",
-                "ic50": ic50,
-                "rank": rank,
-                "strong_binder": ic50 < 500,
-                "weak_binder": ic50 < 2000,
-            })
+            predictions.append(
+                {
+                    "allele": parts[0],
+                    "peptide": parts[1] if len(parts) > 1 else "",
+                    "ic50": ic50,
+                    "rank": rank,
+                    "strong_binder": ic50 < 500,
+                    "weak_binder": ic50 < 2000,
+                }
+            )
         except (ValueError, IndexError):
             continue
     return predictions
@@ -679,11 +802,9 @@ class NetMHCIIpanStep(PipelineStep):
                 "fallback": True,
             }
 
-        # Write peptides to a temp file
+        # Write peptides to a temp file; always clean up in finally
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".pep", delete=False
-            ) as pep_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".pep", delete=False) as pep_file:
                 pep_file.write("\n".join(peptides) + "\n")
                 pep_path = pep_file.name
         except OSError as exc:
@@ -693,32 +814,44 @@ class NetMHCIIpanStep(PipelineStep):
                 "fallback": False,
             }
 
-        cmd = [
-            netmhciipan_path,
-            "-f", pep_path,
-            "-a", ",".join(alleles),
-            "-BA",
-        ]
+        try:
+            cmd = [
+                netmhciipan_path,
+                "-f",
+                pep_path,
+                "-a",
+                ",".join(alleles),
+                "-BA",
+            ]
 
-        rc, stdout, stderr = _run_subprocess(cmd, timeout=input_data.get("timeout_seconds", 1800))
-        if rc != 0:
+            rc, stdout, stderr = _run_subprocess(
+                cmd, timeout=input_data.get("timeout_seconds", 1800)
+            )
+            if rc != 0:
+                return {
+                    "tool": "netmhciipan",
+                    "error": f"netMHCIIpan exited with code {rc}",
+                    "stderr": stderr,
+                    "fallback": False,
+                }
+
+            predictions = _parse_netmhciipan_output(stdout)
             return {
                 "tool": "netmhciipan",
-                "error": f"netMHCIIpan exited with code {rc}",
+                "predictions": predictions,
+                "peptide_count": len(peptides),
+                "allele_count": len(alleles),
+                "stdout": stdout,
                 "stderr": stderr,
                 "fallback": False,
             }
+        finally:
+            import os as _os
 
-        predictions = _parse_netmhciipan_output(stdout)
-        return {
-            "tool": "netmhciipan",
-            "predictions": predictions,
-            "peptide_count": len(peptides),
-            "allele_count": len(alleles),
-            "stdout": stdout,
-            "stderr": stderr,
-            "fallback": False,
-        }
+            try:
+                _os.unlink(pep_path)
+            except OSError:
+                pass
 
 
 class RNAExpressionValidationStep(PipelineStep):
@@ -749,7 +882,9 @@ class RNAExpressionValidationStep(PipelineStep):
 
         for gene, tpm in expression_data.items():
             if not isinstance(tpm, (int, float)):
-                raise TypeError(f"TPM value for gene '{gene}' must be numeric, got {type(tpm).__name__}")
+                raise TypeError(
+                    f"TPM value for gene '{gene}' must be numeric, got {type(tpm).__name__}"
+                )
             if tpm >= self.LOW_EXPRESSION_THRESHOLD:
                 validated_genes.append(gene)
             else:
@@ -855,13 +990,16 @@ class MHCMetadataStep(PipelineStep):
             allele = pred.get("allele", "")
             if not allele:
                 continue
-            entry = allele_binding.setdefault(allele, {
-                "prediction_count": 0,
-                "strong_binders": 0,
-                "weak_binders": 0,
-                "best_ic50": float("inf"),
-                "best_rank": float("inf"),
-            })
+            entry = allele_binding.setdefault(
+                allele,
+                {
+                    "prediction_count": 0,
+                    "strong_binders": 0,
+                    "weak_binders": 0,
+                    "best_ic50": float("inf"),
+                    "best_rank": float("inf"),
+                },
+            )
             entry["prediction_count"] += 1
             ic50 = pred.get("ic50", float("inf"))
             rank = pred.get("rank", float("inf"))
@@ -891,8 +1029,12 @@ class MHCMetadataStep(PipelineStep):
                     "prediction_count": binding["prediction_count"],
                     "strong_binders": binding["strong_binders"],
                     "weak_binders": binding["weak_binders"],
-                    "best_ic50": binding["best_ic50"] if binding["best_ic50"] != float("inf") else None,
-                    "best_rank": binding["best_rank"] if binding["best_rank"] != float("inf") else None,
+                    "best_ic50": binding["best_ic50"]
+                    if binding["best_ic50"] != float("inf")
+                    else None,
+                    "best_rank": binding["best_rank"]
+                    if binding["best_rank"] != float("inf")
+                    else None,
                 }
             metadata.append(entry)
 
@@ -944,10 +1086,8 @@ class PipelineRunner:
             results.append(result)
             if result.status == "failed":
                 # Mark remaining steps as skipped
-                for remaining in self.steps[len(results):]:
-                    results.append(
-                        StepResult(step_name=remaining.name, status="skipped")
-                    )
+                for remaining in self.steps[len(results) :]:
+                    results.append(StepResult(step_name=remaining.name, status="skipped"))
                 break
             context.update(result.output)
         return results
@@ -974,9 +1114,7 @@ def run_parallel_steps(
     results: list[StepResult | None] = [None] * len(steps)
 
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        future_to_idx = {
-            pool.submit(step.run, context): idx for idx, step in enumerate(steps)
-        }
+        future_to_idx = {pool.submit(step.run, context): idx for idx, step in enumerate(steps)}
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
             try:

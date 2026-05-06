@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.structure_analysis_ext import (
-    AMINO_ACID_FLEXIBILITY,
     CALIBRATION_DATA,
-    MSAConformationalState,
+    DynamicsProfile,
     MSAEnsembleResult,
     MSASubsample,
-    DynamicsProfile,
-    DynamicsResidue,
-    CalibrationCurve,
     ProteinClass,
     annotate_structure_with_dynamics,
     auto_calibrate,
@@ -25,7 +20,6 @@ from backend.app.structure_analysis_ext import (
     predict_dynamics,
     run_msa_ensemble,
 )
-
 
 SEQ_GLOBULAR = "ACDEFGHIKLMNPQRSTVWY"  # 20 AA, one of each
 SEQ_HYDROPHOBIC = "VVVVVVVLLLLLLIIIIIMMMFFFWWW"  # all hydrophobic
@@ -419,13 +413,17 @@ def test_api_msa_ensemble(client: TestClient) -> None:
 
 
 def test_api_msa_ensemble_custom_n(client: TestClient) -> None:
-    resp = client.post("/structure-ext/msa-ensemble", json={"sequence": SEQ_GLOBULAR, "n_subsamples": 5})
+    resp = client.post(
+        "/structure-ext/msa-ensemble", json={"sequence": SEQ_GLOBULAR, "n_subsamples": 5}
+    )
     assert resp.status_code == 200
     assert resp.json()["n_subsamples"] == 5
 
 
 def test_api_msa_subsamples(client: TestClient) -> None:
-    resp = client.post("/structure-ext/msa-subsamples", json={"sequence": SEQ_GLOBULAR, "n_subsamples": 8})
+    resp = client.post(
+        "/structure-ext/msa-subsamples", json={"sequence": SEQ_GLOBULAR, "n_subsamples": 8}
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["n_subsamples"] == 8

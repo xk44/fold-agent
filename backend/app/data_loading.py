@@ -7,9 +7,7 @@ format-specific metadata registration, and data inventory helpers.
 from __future__ import annotations
 
 import hashlib
-import re
 from pathlib import Path
-from typing import Optional
 
 import structlog
 from sqlalchemy.orm import Session
@@ -187,18 +185,26 @@ def detect_missing_data(db: Session, case_id: str) -> dict:
     if not has_tumor and not variants:
         issues.append("No tumor sample or variants — cannot identify neoantigen candidates.")
     if not has_rna:
-        warnings.append("No RNA-seq data — expression validation of candidates will be unavailable.")
+        warnings.append(
+            "No RNA-seq data — expression validation of candidates will be unavailable."
+        )
 
     if not variants and samples:
-        warnings.append("Samples registered but no variants called yet — run the bioinformatics pipeline.")
+        warnings.append(
+            "Samples registered but no variants called yet — run the bioinformatics pipeline."
+        )
     if variants and not candidates:
         warnings.append("Variants exist but no candidates ranked — run candidate prediction.")
     if candidates and not structure_jobs:
-        warnings.append("Candidates exist but no structure predictions — consider running AlphaFold.")
+        warnings.append(
+            "Candidates exist but no structure predictions — consider running AlphaFold."
+        )
 
     for s in samples:
         if not s.checksum:
-            warnings.append(f"Sample '{s.id[:8]}' ({s.sample_type.value}) has no checksum recorded.")
+            warnings.append(
+                f"Sample '{s.id[:8]}' ({s.sample_type.value}) has no checksum recorded."
+            )
 
     return {
         "case_id": case_id,
@@ -220,36 +226,48 @@ def build_missing_data_checklist(db: Session, case_id: str) -> list[dict]:
     report = detect_missing_data(db, case_id)
     checklist = []
 
-    checklist.append({
-        "item": "Register tumor sample",
-        "done": report["has_tumor"],
-        "priority": "high",
-    })
-    checklist.append({
-        "item": "Register matched-normal sample",
-        "done": report["has_normal"],
-        "priority": "high",
-    })
-    checklist.append({
-        "item": "Register RNA-seq sample (optional but recommended)",
-        "done": report["has_rna"],
-        "priority": "medium",
-    })
-    checklist.append({
-        "item": "Run variant calling pipeline",
-        "done": report["variant_count"] > 0,
-        "priority": "high",
-    })
-    checklist.append({
-        "item": "Generate candidate antigen predictions",
-        "done": report["candidate_count"] > 0,
-        "priority": "high",
-    })
-    checklist.append({
-        "item": "Run structure prediction (AlphaFold)",
-        "done": report["structure_job_count"] > 0,
-        "priority": "medium",
-    })
+    checklist.append(
+        {
+            "item": "Register tumor sample",
+            "done": report["has_tumor"],
+            "priority": "high",
+        }
+    )
+    checklist.append(
+        {
+            "item": "Register matched-normal sample",
+            "done": report["has_normal"],
+            "priority": "high",
+        }
+    )
+    checklist.append(
+        {
+            "item": "Register RNA-seq sample (optional but recommended)",
+            "done": report["has_rna"],
+            "priority": "medium",
+        }
+    )
+    checklist.append(
+        {
+            "item": "Run variant calling pipeline",
+            "done": report["variant_count"] > 0,
+            "priority": "high",
+        }
+    )
+    checklist.append(
+        {
+            "item": "Generate candidate antigen predictions",
+            "done": report["candidate_count"] > 0,
+            "priority": "high",
+        }
+    )
+    checklist.append(
+        {
+            "item": "Run structure prediction (AlphaFold)",
+            "done": report["structure_job_count"] > 0,
+            "priority": "medium",
+        }
+    )
 
     return checklist
 

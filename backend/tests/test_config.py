@@ -5,15 +5,12 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
-
 from backend.app.config import (
     AlphaFoldBackendName,
     DbInitMode,
     Settings,
     SpeciesMode,
 )
-
 
 # ---------------------------------------------------------------------------
 # Default values

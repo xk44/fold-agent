@@ -6,17 +6,15 @@ execution, retry decorator, error classification, and the 3 new API endpoints.
 
 from __future__ import annotations
 
-import time
-
 import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.pipeline.framework import (
+    FRAMEWORK_STEPS,
     AlignmentStep,
     AnnotationStep,
     BindingPredictionStep,
     ErrorCategory,
-    FRAMEWORK_STEPS,
     PipelineError,
     PipelineRunner,
     PipelineStep,
@@ -27,7 +25,6 @@ from backend.app.pipeline.framework import (
     run_parallel_steps,
     with_retry,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures

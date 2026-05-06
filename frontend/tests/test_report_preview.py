@@ -194,11 +194,7 @@ def test_format_candidate_review_operator_summary_produces_readable_text() -> No
     assert "top_gene=TP53" in text
     assert "review_status=unreviewed" in text
     assert "structure=completed" in text
-    assert (
-        "warnings" in text.lower()
-        or "attention" in text.lower()
-        or "review" in text.lower()
-    )
+    assert "warnings" in text.lower() or "attention" in text.lower() or "review" in text.lower()
 
 
 def test_format_candidate_review_operator_summary_handles_minimal() -> None:
@@ -278,9 +274,7 @@ def test_format_ethics_package_preview_surfaces_sections() -> None:
             "case_id": "case-456",
             "content_json": {
                 "species": "dog",
-                "consent_templates": {
-                    "owner_or_subject_consent": "Owner consent required"
-                },
+                "consent_templates": {"owner_or_subject_consent": "Owner consent required"},
                 "privacy_notices": ["Local-first storage preferred"],
                 "risk_benefit_summary": {
                     "risks": ["privacy exposure"],
@@ -306,9 +300,7 @@ def test_summarize_ethics_package_operator_state_flags_governance_attention() ->
             "case_id": "case-456",
             "content_json": {
                 "species": "dog",
-                "consent_templates": {
-                    "owner_or_subject_consent": "Owner consent required"
-                },
+                "consent_templates": {"owner_or_subject_consent": "Owner consent required"},
                 "privacy_notices": ["Local-first storage preferred"],
                 "risk_benefit_summary": {
                     "risks": ["privacy exposure"],

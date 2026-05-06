@@ -6,10 +6,10 @@ endpoints that apply redaction levels, scramble PII, and log to audit.
 
 from fastapi.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _create_demo_case(client: TestClient) -> str:
     response = client.post(
@@ -48,6 +48,7 @@ def _create_sample(client: TestClient, case_id: str, subject_id: str | None = No
 # ---------------------------------------------------------------------------
 # Case-level redaction
 # ---------------------------------------------------------------------------
+
 
 class TestCaseRedaction:
     """Tests for POST /cases/{id}/redact."""
@@ -105,7 +106,10 @@ class TestCaseRedaction:
             json={"redaction_level": "deidentify", "confirm": False},
         )
         assert response.status_code == 400
-        assert "confirm" in response.json()["detail"].lower() or "confirmation" in response.json()["detail"].lower()
+        assert (
+            "confirm" in response.json()["detail"].lower()
+            or "confirmation" in response.json()["detail"].lower()
+        )
 
     def test_redact_case_rejects_invalid_level(self, client: TestClient) -> None:
         case_id = _create_demo_case(client)
@@ -187,6 +191,7 @@ class TestCaseRedaction:
 # Subject-level redaction
 # ---------------------------------------------------------------------------
 
+
 class TestSubjectRedaction:
     """Tests for POST /cases/{id}/subjects/{sid}/redact."""
 
@@ -244,6 +249,7 @@ class TestSubjectRedaction:
 # ---------------------------------------------------------------------------
 # Case deletion
 # ---------------------------------------------------------------------------
+
 
 class TestCaseDeletion:
     """Tests for DELETE /cases/{id}."""

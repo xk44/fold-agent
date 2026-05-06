@@ -29,7 +29,12 @@ def build_case_inventory_summary(
 
 
 def _inventory_timestamp(item: dict) -> str | None:
-    return item.get("saved_at") or item.get("started_at") or item.get("generated_at") or item.get("created_at")
+    return (
+        item.get("saved_at")
+        or item.get("started_at")
+        or item.get("generated_at")
+        or item.get("created_at")
+    )
 
 
 def build_inventory_rows(
@@ -62,7 +67,10 @@ def build_inventory_rows(
             {
                 "entity_type": "sample",
                 "id": sample.get("id"),
-                "label": " · ".join(part for part in [sample.get("sample_type"), sample.get("source_lab")] if part) or sample.get("id"),
+                "label": " · ".join(
+                    part for part in [sample.get("sample_type"), sample.get("source_lab")] if part
+                )
+                or sample.get("id"),
                 "status": sample.get("sample_type"),
                 "timestamp": _inventory_timestamp(sample),
             }
@@ -73,7 +81,11 @@ def build_inventory_rows(
             {
                 "entity_type": "variant",
                 "id": variant.get("id"),
-                "label": " · ".join(part for part in [variant.get("gene"), variant.get("protein_change")] if part) or variant.get("genomic_coordinates") or variant.get("id"),
+                "label": " · ".join(
+                    part for part in [variant.get("gene"), variant.get("protein_change")] if part
+                )
+                or variant.get("genomic_coordinates")
+                or variant.get("id"),
                 "status": variant.get("review_status"),
                 "timestamp": _inventory_timestamp(variant),
             }
@@ -117,7 +129,12 @@ def build_inventory_rows(
             {
                 "entity_type": "artifact",
                 "id": artifact.get("id") or artifact.get("path"),
-                "label": " · ".join(part for part in [artifact.get("artifact_type"), artifact.get("filename")] if part) or artifact.get("path"),
+                "label": " · ".join(
+                    part
+                    for part in [artifact.get("artifact_type"), artifact.get("filename")]
+                    if part
+                )
+                or artifact.get("path"),
                 "status": artifact.get("format") or artifact.get("artifact_type"),
                 "timestamp": _inventory_timestamp(artifact),
             }
@@ -128,10 +145,20 @@ def build_inventory_rows(
             {
                 "entity_type": "execution",
                 "id": execution.get("id"),
-                "label": execution.get("adapter_name") or execution.get("backend_name") or execution.get("id"),
+                "label": execution.get("adapter_name")
+                or execution.get("backend_name")
+                or execution.get("id"),
                 "status": execution.get("status"),
                 "timestamp": _inventory_timestamp(execution),
             }
         )
 
-    return sorted(rows, key=lambda row: (row.get("timestamp") or "", row.get("entity_type") or "", row.get("id") or ""), reverse=True)
+    return sorted(
+        rows,
+        key=lambda row: (
+            row.get("timestamp") or "",
+            row.get("entity_type") or "",
+            row.get("id") or "",
+        ),
+        reverse=True,
+    )

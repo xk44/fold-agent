@@ -8,13 +8,11 @@ These tests target the pure parsing helpers extracted from main.py, covering:
 - filter_structure_evidence: canonical key filtering
 - STRUCTURE_EVIDENCE_KEYS: constant shape verification
 """
+
 from __future__ import annotations
 
 import json
 import textwrap
-from pathlib import Path
-
-import pytest
 
 from backend.app.alphafold.output_parsers import (
     STRUCTURE_EVIDENCE_KEYS,
@@ -31,10 +29,10 @@ from backend.app.alphafold.output_parsers import (
     parse_alphafold_stdout,
 )
 
-
 # ---------------------------------------------------------------------------
 # STRUCTURE_EVIDENCE_KEYS
 # ---------------------------------------------------------------------------
+
 
 class TestStructureEvidenceKeys:
     def test_keys_is_a_tuple_of_strings(self):
@@ -72,6 +70,7 @@ class TestStructureEvidenceKeys:
 # ---------------------------------------------------------------------------
 # parse_alphafold_stdout
 # ---------------------------------------------------------------------------
+
 
 class TestParseAlphafoldStdout:
     def test_valid_json(self):
@@ -112,6 +111,7 @@ class TestParseAlphafoldStdout:
 # extract_inline_structure
 # ---------------------------------------------------------------------------
 
+
 class TestExtractInlineStructure:
     def test_returns_structure_when_present(self):
         parsed = {"structure": {"backend": "colabfold", "status": "completed", "pLDDT_mean": 91.2}}
@@ -151,6 +151,7 @@ class TestExtractInlineStructure:
 # harvest_af3_output_dir
 # ---------------------------------------------------------------------------
 
+
 class TestHarvestAf3OutputDir:
     def test_nonexistent_dir_returns_none(self, tmp_path):
         missing = tmp_path / "no_such_dir"
@@ -183,7 +184,9 @@ class TestHarvestAf3OutputDir:
         out.mkdir()
         summary = out / "fold1_summary_confidences.json"
         summary.write_text(
-            json.dumps({"ptm": 0.85, "iptm": 0.72, "ranking_score": 0.91, "chain_pair_iptm": {"A": 0.7}}),
+            json.dumps(
+                {"ptm": 0.85, "iptm": 0.72, "ranking_score": 0.91, "chain_pair_iptm": {"A": 0.7}}
+            ),
             encoding="utf-8",
         )
 
@@ -251,7 +254,9 @@ class TestHarvestAf3OutputDir:
         out.mkdir()
         (out / "fold1_model.cif").write_text("# mmCIF", encoding="utf-8")
         summary = out / "fold1_summary_confidences.json"
-        summary.write_text(json.dumps({"ptm": 0.91, "iptm": 0.81, "ranking_score": 0.99}), encoding="utf-8")
+        summary.write_text(
+            json.dumps({"ptm": 0.91, "iptm": 0.81, "ranking_score": 0.99}), encoding="utf-8"
+        )
         ranking_csv = out / "fold1_ranking_scores.csv"
         ranking_csv.write_text(
             textwrap.dedent(
@@ -290,20 +295,23 @@ class TestHarvestAf3OutputDir:
 # extract_alphafold_structure_payload (top-level orchestrator)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractAlphafoldStructurePayload:
     def test_inline_structure_from_stdout(self):
         payload = {
             "backend": "colabfold",
             "status": "completed",
-            "stdout": json.dumps({
-                "structure": {
-                    "backend": "colabfold",
-                    "status": "completed",
-                    "pdb_file": "/tmp/demo_out/predicted_structure.pdb",
-                    "pLDDT_mean": 91.2,
-                    "pAE_mean": 4.8,
+            "stdout": json.dumps(
+                {
+                    "structure": {
+                        "backend": "colabfold",
+                        "status": "completed",
+                        "pdb_file": "/tmp/demo_out/predicted_structure.pdb",
+                        "pLDDT_mean": 91.2,
+                        "pAE_mean": 4.8,
+                    }
                 }
-            }),
+            ),
         }
         result = extract_alphafold_structure_payload(payload)
         assert result is not None
@@ -368,6 +376,7 @@ class TestExtractAlphafoldStructurePayload:
 # filter_structure_evidence
 # ---------------------------------------------------------------------------
 
+
 class TestFilterStructureEvidence:
     def test_filters_to_canonical_keys(self):
         source = {
@@ -410,6 +419,7 @@ class TestFilterStructureEvidence:
 # ---------------------------------------------------------------------------
 # ParsedStructurePayload TypedDict verification
 # ---------------------------------------------------------------------------
+
 
 class TestParsedStructurePayload:
     def test_typed_dict_fields_include_all_evidence_keys(self):
@@ -821,7 +831,9 @@ class TestHarvestAf3OutputDirExtended:
         out.mkdir()
         (out / "fold1_model.cif").write_text("# mmCIF", encoding="utf-8")
         data_file = out / "fold1_data.json"
-        data_file.write_text(json.dumps({"ranking_score": 0.95, "sequences": "ACGT"}), encoding="utf-8")
+        data_file.write_text(
+            json.dumps({"ranking_score": 0.95, "sequences": "ACGT"}), encoding="utf-8"
+        )
 
         result = harvest_af3_output_dir(out, backend="alphafold3_local", status="completed")
         assert result is not None
@@ -887,7 +899,9 @@ class TestHarvestAf3OutputDirExtended:
         # Summary confidences
         summary = out / "fold1_summary_confidences.json"
         summary.write_text(
-            json.dumps({"ptm": 0.88, "iptm": 0.75, "ranking_score": 0.95, "chain_pair_iptm": {"A_B": 0.74}}),
+            json.dumps(
+                {"ptm": 0.88, "iptm": 0.75, "ranking_score": 0.95, "chain_pair_iptm": {"A_B": 0.74}}
+            ),
             encoding="utf-8",
         )
 
@@ -903,7 +917,9 @@ class TestHarvestAf3OutputDirExtended:
 
         # Data JSON
         data_file = out / "fold1_data.json"
-        data_file.write_text(json.dumps({"ranking_score": 0.50, "sequences": "MMM"}), encoding="utf-8")
+        data_file.write_text(
+            json.dumps({"ranking_score": 0.50, "sequences": "MMM"}), encoding="utf-8"
+        )
 
         # Seed/sample dirs
         (out / "seed-1" / "sample-0").mkdir(parents=True)

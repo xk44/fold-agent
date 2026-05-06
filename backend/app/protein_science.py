@@ -10,7 +10,6 @@ import hashlib
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 PROTEIN_SCIENCE_DISCLAIMER = (
     "RESEARCH ONLY — not for clinical or diagnostic use. "
@@ -23,26 +22,74 @@ PROTEIN_SCIENCE_DISCLAIMER = (
 
 # Parker hydrophilicity scale (1986)
 PARKER_HYDROPHILICITY: dict[str, float] = {
-    "A": -0.5, "C": -1.0, "D": 3.0, "E": 3.0, "F": -2.5,
-    "G": 0.0, "H": -0.5, "I": -1.8, "K": 3.0, "L": -1.8,
-    "M": -1.3, "N": 0.2, "P": 0.0, "Q": 0.2, "R": 3.0,
-    "S": 0.3, "T": -0.4, "V": -1.5, "W": -3.4, "Y": -2.3,
+    "A": -0.5,
+    "C": -1.0,
+    "D": 3.0,
+    "E": 3.0,
+    "F": -2.5,
+    "G": 0.0,
+    "H": -0.5,
+    "I": -1.8,
+    "K": 3.0,
+    "L": -1.8,
+    "M": -1.3,
+    "N": 0.2,
+    "P": 0.0,
+    "Q": 0.2,
+    "R": 3.0,
+    "S": 0.3,
+    "T": -0.4,
+    "V": -1.5,
+    "W": -3.4,
+    "Y": -2.3,
 }
 
 # Emini surface accessibility propensity
 EMINI_ACCESSIBILITY: dict[str, float] = {
-    "A": 0.49, "C": 0.26, "D": 1.59, "E": 1.45, "F": 0.42,
-    "G": 0.72, "H": 0.84, "I": 0.37, "K": 1.69, "L": 0.40,
-    "M": 0.74, "N": 1.33, "P": 1.37, "Q": 1.35, "R": 1.56,
-    "S": 1.12, "T": 0.96, "V": 0.40, "W": 0.51, "Y": 0.91,
+    "A": 0.49,
+    "C": 0.26,
+    "D": 1.59,
+    "E": 1.45,
+    "F": 0.42,
+    "G": 0.72,
+    "H": 0.84,
+    "I": 0.37,
+    "K": 1.69,
+    "L": 0.40,
+    "M": 0.74,
+    "N": 1.33,
+    "P": 1.37,
+    "Q": 1.35,
+    "R": 1.56,
+    "S": 1.12,
+    "T": 0.96,
+    "V": 0.40,
+    "W": 0.51,
+    "Y": 0.91,
 }
 
 # MHC binding likelihood (simplified T-cell scoring)
 T_CELL_PROPENSITY: dict[str, float] = {
-    "A": 0.4, "C": 0.3, "D": 0.2, "E": 0.3, "F": 0.9,
-    "G": 0.2, "H": 0.5, "I": 0.8, "K": 0.4, "L": 0.9,
-    "M": 0.7, "N": 0.2, "P": 0.1, "Q": 0.3, "R": 0.4,
-    "S": 0.3, "T": 0.4, "V": 0.7, "W": 0.8, "Y": 0.7,
+    "A": 0.4,
+    "C": 0.3,
+    "D": 0.2,
+    "E": 0.3,
+    "F": 0.9,
+    "G": 0.2,
+    "H": 0.5,
+    "I": 0.8,
+    "K": 0.4,
+    "L": 0.9,
+    "M": 0.7,
+    "N": 0.2,
+    "P": 0.1,
+    "Q": 0.3,
+    "R": 0.4,
+    "S": 0.3,
+    "T": 0.4,
+    "V": 0.7,
+    "W": 0.8,
+    "Y": 0.7,
 }
 
 
@@ -64,7 +111,7 @@ class EpitopeMapResult:
     total_epitopes: int
     continuous_epitopes: list[EpitopeRegion] = field(default_factory=list)
     discontinuous_epitopes: list[EpitopeRegion] = field(default_factory=list)
-    immunodominant_region: Optional[tuple[int, int]] = None
+    immunodominant_region: tuple[int, int] | None = None
     surface_accessibility_profile: list[float] = field(default_factory=list)
 
 
@@ -102,7 +149,7 @@ def _surface_profile(sequence: str) -> list[float]:
     n = len(sequence)
     profile: list[float] = []
     for i in range(n):
-        window = sequence[max(0, i - 1): i + 2]
+        window = sequence[max(0, i - 1) : i + 2]
         profile.append(_emini_score(window))
     return profile
 
@@ -121,24 +168,26 @@ def map_epitopes(
     # sliding window for continuous epitopes
     for length in range(min_length, min(max_length + 1, n + 1)):
         for start in range(n - length + 1):
-            peptide = seq[start: start + length]
+            peptide = seq[start : start + length]
             parker = _parker_score(peptide)
             emini = _emini_score(peptide)
             # threshold: hydrophilic + accessible
             if parker >= 1.0 and emini >= 0.4:
                 b_score = min((parker / 3.0 + emini) / 2.0, 1.0)
                 t_score = _t_cell_score(peptide)
-                immuno = (b_score * 0.6 + t_score * 0.4)
-                continuous.append(EpitopeRegion(
-                    start=start,
-                    end=start + length - 1,
-                    residues=peptide,
-                    epitope_type="continuous",
-                    solvent_accessibility=emini,
-                    immunogenicity_score=round(immuno, 4),
-                    b_cell_score=round(b_score, 4),
-                    t_cell_score=round(t_score, 4),
-                ))
+                immuno = b_score * 0.6 + t_score * 0.4
+                continuous.append(
+                    EpitopeRegion(
+                        start=start,
+                        end=start + length - 1,
+                        residues=peptide,
+                        epitope_type="continuous",
+                        solvent_accessibility=emini,
+                        immunogenicity_score=round(immuno, 4),
+                        b_cell_score=round(b_score, 4),
+                        t_cell_score=round(t_score, 4),
+                    )
+                )
 
     # deduplicate: keep highest-scoring non-overlapping windows
     continuous.sort(key=lambda e: e.immunogenicity_score, reverse=True)
@@ -178,22 +227,24 @@ def map_epitopes(
             b_score = min((parker / 3.0 + emini) / 2.0, 1.0) if parker > 0 else emini * 0.5
             t_score = _t_cell_score(residues)
             immuno = b_score * 0.5 + t_score * 0.5
-            discontinuous.append(EpitopeRegion(
-                start=start,
-                end=end,
-                residues=residues,
-                epitope_type="discontinuous",
-                solvent_accessibility=round(emini, 4),
-                immunogenicity_score=round(immuno, 4),
-                b_cell_score=round(b_score, 4),
-                t_cell_score=round(t_score, 4),
-            ))
+            discontinuous.append(
+                EpitopeRegion(
+                    start=start,
+                    end=end,
+                    residues=residues,
+                    epitope_type="discontinuous",
+                    solvent_accessibility=round(emini, 4),
+                    immunogenicity_score=round(immuno, 4),
+                    b_cell_score=round(b_score, 4),
+                    t_cell_score=round(t_score, 4),
+                )
+            )
 
     all_epitopes = continuous + discontinuous
 
     # immunodominant region: span of top-3 epitopes by immunogenicity
     top3 = sorted(all_epitopes, key=lambda e: e.immunogenicity_score, reverse=True)[:3]
-    immunodominant: Optional[tuple[int, int]] = None
+    immunodominant: tuple[int, int] | None = None
     if top3:
         immunodominant = (min(e.start for e in top3), max(e.end for e in top3))
 
@@ -219,18 +270,50 @@ def rank_epitopes(result: EpitopeMapResult) -> list[EpitopeRegion]:
 
 # Average ΔΔG (kcal/mol) upon Ala substitution — empirically derived
 AMINO_ACID_ALANINE_DDG: dict[str, float] = {
-    "W": 4.5, "F": 3.2, "Y": 2.8, "R": 2.5, "L": 2.3,
-    "I": 2.1, "M": 1.9, "H": 1.8, "V": 1.6, "K": 1.5,
-    "T": 1.2, "E": 1.1, "Q": 1.0, "N": 0.9, "D": 0.8,
-    "C": 0.7, "S": 0.6, "P": 0.5, "A": 0.0, "G": -0.3,
+    "W": 4.5,
+    "F": 3.2,
+    "Y": 2.8,
+    "R": 2.5,
+    "L": 2.3,
+    "I": 2.1,
+    "M": 1.9,
+    "H": 1.8,
+    "V": 1.6,
+    "K": 1.5,
+    "T": 1.2,
+    "E": 1.1,
+    "Q": 1.0,
+    "N": 0.9,
+    "D": 0.8,
+    "C": 0.7,
+    "S": 0.6,
+    "P": 0.5,
+    "A": 0.0,
+    "G": -0.3,
 }
 
 # Buried surface area contribution per AA (Å²) — approximate
 BURIED_SURFACE_AREA: dict[str, float] = {
-    "W": 285.0, "F": 218.0, "Y": 220.0, "R": 202.0, "L": 175.0,
-    "I": 169.0, "M": 185.0, "H": 181.0, "V": 142.0, "K": 171.0,
-    "T": 122.0, "E": 151.0, "Q": 156.0, "N": 135.0, "D": 124.0,
-    "C": 117.0, "S": 95.0, "P": 130.0, "A": 92.0, "G": 66.0,
+    "W": 285.0,
+    "F": 218.0,
+    "Y": 220.0,
+    "R": 202.0,
+    "L": 175.0,
+    "I": 169.0,
+    "M": 185.0,
+    "H": 181.0,
+    "V": 142.0,
+    "K": 171.0,
+    "T": 122.0,
+    "E": 151.0,
+    "Q": 156.0,
+    "N": 135.0,
+    "D": 124.0,
+    "C": 117.0,
+    "S": 95.0,
+    "P": 130.0,
+    "A": 92.0,
+    "G": 66.0,
 }
 
 HOT_SPOT_DDG_THRESHOLD = 2.0  # kcal/mol
@@ -284,7 +367,7 @@ def _infer_interface_residues(sequence: str) -> list[int]:
 
 def predict_hot_spots(
     sequence: str,
-    interface_residues: Optional[list[int]] = None,
+    interface_residues: list[int] | None = None,
 ) -> PPIHotSpotResult:
     """Computational alanine scanning on interface residues."""
     seq = sequence.upper()
@@ -302,14 +385,16 @@ def predict_hot_spots(
         ddg = AMINO_ACID_ALANINE_DDG.get(aa, 0.5)
         bsa = BURIED_SURFACE_AREA.get(aa, 100.0)
         total_energy += ddg
-        residue_data.append(HotSpotResidue(
-            position=pos,
-            residue=aa,
-            alanine_ddg=round(ddg, 3),
-            energy_contribution_pct=0.0,  # filled below
-            is_hot_spot=ddg >= HOT_SPOT_DDG_THRESHOLD,
-            buried_surface_area=round(bsa, 1),
-        ))
+        residue_data.append(
+            HotSpotResidue(
+                position=pos,
+                residue=aa,
+                alanine_ddg=round(ddg, 3),
+                energy_contribution_pct=0.0,  # filled below
+                is_hot_spot=ddg >= HOT_SPOT_DDG_THRESHOLD,
+                buried_surface_area=round(bsa, 1),
+            )
+        )
 
     # compute energy contribution percentages
     for rd in residue_data:
@@ -361,16 +446,16 @@ def assess_interface_druggability(result: PPIHotSpotResult) -> dict:
         clusters.append(current_cluster)
 
     largest_cluster = max((len(c) for c in clusters), default=0)
-    mean_ddg = (
-        sum(h.alanine_ddg for h in hs) / n_hs if n_hs else 0.0
-    )
+    mean_ddg = sum(h.alanine_ddg for h in hs) / n_hs if n_hs else 0.0
     aromatic_count = sum(1 for h in hs if h.residue in "WFY")
 
     # pocket geometry proxy: total BSA of hot spots
     total_bsa = sum(h.buried_surface_area for h in hs)
 
-    confidence = "high" if result.druggability_score >= 0.6 else (
-        "medium" if result.druggability_score >= 0.35 else "low"
+    confidence = (
+        "high"
+        if result.druggability_score >= 0.6
+        else ("medium" if result.druggability_score >= 0.35 else "low")
     )
 
     return {
@@ -385,8 +470,10 @@ def assess_interface_druggability(result: PPIHotSpotResult) -> dict:
         "estimated_pocket_bsa_A2": round(total_bsa, 1),
         "hot_spot_fraction": result.hot_spot_fraction,
         "recommendation": (
-            "Strong PPI inhibitor target" if result.druggability_score >= 0.6
-            else "Moderate target — may need allosteric approach" if result.druggability_score >= 0.35
+            "Strong PPI inhibitor target"
+            if result.druggability_score >= 0.6
+            else "Moderate target — may need allosteric approach"
+            if result.druggability_score >= 0.35
             else "Challenging target — consider orthosteric alternatives"
         ),
     }
@@ -399,39 +486,56 @@ def assess_interface_druggability(result: PPIHotSpotResult) -> dict:
 # Pre-computed top coevolving pairs for known genes (mock EVcouplings data)
 KNOWN_COEVOLUTION_DATA: dict[str, list[tuple[int, int, float, str]]] = {
     "TP53": [
-        (175, 248, 0.92, "structural"), (220, 272, 0.85, "catalytic"),
-        (245, 249, 0.88, "catalytic"), (179, 273, 0.77, "structural"),
-        (133, 282, 0.71, "allosteric"), (163, 237, 0.68, "structural"),
+        (175, 248, 0.92, "structural"),
+        (220, 272, 0.85, "catalytic"),
+        (245, 249, 0.88, "catalytic"),
+        (179, 273, 0.77, "structural"),
+        (133, 282, 0.71, "allosteric"),
+        (163, 237, 0.68, "structural"),
     ],
     "BRCA1": [
-        (1699, 1703, 0.89, "structural"), (220, 227, 0.81, "catalytic"),
-        (508, 1861, 0.74, "allosteric"), (300, 1700, 0.69, "structural"),
+        (1699, 1703, 0.89, "structural"),
+        (220, 227, 0.81, "catalytic"),
+        (508, 1861, 0.74, "allosteric"),
+        (300, 1700, 0.69, "structural"),
     ],
     "KRAS": [
-        (12, 61, 0.94, "catalytic"), (13, 116, 0.87, "catalytic"),
-        (61, 146, 0.82, "structural"), (12, 146, 0.79, "catalytic"),
+        (12, 61, 0.94, "catalytic"),
+        (13, 116, 0.87, "catalytic"),
+        (61, 146, 0.82, "structural"),
+        (12, 146, 0.79, "catalytic"),
         (18, 57, 0.71, "allosteric"),
     ],
     "EGFR": [
-        (719, 858, 0.90, "catalytic"), (746, 790, 0.85, "structural"),
-        (719, 790, 0.80, "catalytic"), (858, 861, 0.76, "structural"),
+        (719, 858, 0.90, "catalytic"),
+        (746, 790, 0.85, "structural"),
+        (719, 790, 0.80, "catalytic"),
+        (858, 861, 0.76, "structural"),
         (719, 861, 0.72, "allosteric"),
     ],
     "BRAF": [
-        (600, 601, 0.93, "catalytic"), (464, 600, 0.86, "structural"),
-        (469, 594, 0.79, "allosteric"), (597, 600, 0.74, "catalytic"),
+        (600, 601, 0.93, "catalytic"),
+        (464, 600, 0.86, "structural"),
+        (469, 594, 0.79, "allosteric"),
+        (597, 600, 0.74, "catalytic"),
     ],
     "MYC": [
-        (58, 62, 0.88, "structural"), (370, 402, 0.82, "allosteric"),
-        (402, 439, 0.75, "structural"), (62, 96, 0.70, "unknown"),
+        (58, 62, 0.88, "structural"),
+        (370, 402, 0.82, "allosteric"),
+        (402, 439, 0.75, "structural"),
+        (62, 96, 0.70, "unknown"),
     ],
     "PIK3CA": [
-        (542, 1047, 0.91, "catalytic"), (545, 1049, 0.87, "catalytic"),
-        (420, 542, 0.78, "structural"), (726, 1047, 0.73, "allosteric"),
+        (542, 1047, 0.91, "catalytic"),
+        (545, 1049, 0.87, "catalytic"),
+        (420, 542, 0.78, "structural"),
+        (726, 1047, 0.73, "allosteric"),
     ],
     "PTEN": [
-        (130, 173, 0.89, "catalytic"), (129, 131, 0.85, "catalytic"),
-        (173, 233, 0.77, "structural"), (36, 130, 0.71, "allosteric"),
+        (130, 173, 0.89, "catalytic"),
+        (129, 131, 0.85, "catalytic"),
+        (173, 233, 0.77, "structural"),
+        (36, 130, 0.71, "allosteric"),
     ],
 }
 
@@ -462,10 +566,26 @@ def _conservation_from_sequence(sequence: str) -> list[float]:
     """
     # amino acid frequency in natural proteins (approximate)
     aa_freq: dict[str, float] = {
-        "A": 0.074, "C": 0.025, "D": 0.054, "E": 0.054, "F": 0.047,
-        "G": 0.074, "H": 0.026, "I": 0.068, "K": 0.058, "L": 0.099,
-        "M": 0.025, "N": 0.045, "P": 0.039, "Q": 0.034, "R": 0.052,
-        "S": 0.057, "T": 0.051, "V": 0.073, "W": 0.013, "Y": 0.032,
+        "A": 0.074,
+        "C": 0.025,
+        "D": 0.054,
+        "E": 0.054,
+        "F": 0.047,
+        "G": 0.074,
+        "H": 0.026,
+        "I": 0.068,
+        "K": 0.058,
+        "L": 0.099,
+        "M": 0.025,
+        "N": 0.045,
+        "P": 0.039,
+        "Q": 0.034,
+        "R": 0.052,
+        "S": 0.057,
+        "T": 0.051,
+        "V": 0.073,
+        "W": 0.013,
+        "Y": 0.032,
     }
     scores = []
     for aa in sequence.upper():
@@ -511,13 +631,15 @@ def _generate_coupling_pairs(sequence: str, n_pairs: int = 20) -> list[Coevolvin
         contact_prob = round(min(coupling * 0.9 + seed_score * 0.1, 1.0), 4)
         constraint = constraint_types[int(seed_type * 4) % 4]
 
-        pairs.append(CoevolvingPair(
-            residue_i=i,
-            residue_j=j,
-            coupling_score=coupling,
-            contact_probability=contact_prob,
-            functional_constraint=constraint,
-        ))
+        pairs.append(
+            CoevolvingPair(
+                residue_i=i,
+                residue_j=j,
+                coupling_score=coupling,
+                contact_probability=contact_prob,
+                functional_constraint=constraint,
+            )
+        )
 
     pairs.sort(key=lambda p: p.coupling_score, reverse=True)
     return pairs
@@ -577,19 +699,21 @@ def predict_coevolution(
                 # only include if positions are valid for this sequence
                 if i < n and j < n:
                     cp = 0.95  # known pairs have high contact probability
-                    known_pairs.append(CoevolvingPair(
-                        residue_i=i, residue_j=j,
-                        coupling_score=score,
-                        contact_probability=round(score * cp, 4),
-                        functional_constraint=constraint,
-                    ))
+                    known_pairs.append(
+                        CoevolvingPair(
+                            residue_i=i,
+                            residue_j=j,
+                            coupling_score=score,
+                            contact_probability=round(score * cp, 4),
+                            functional_constraint=constraint,
+                        )
+                    )
             break
 
     # merge: known pairs take precedence
     known_positions = {(p.residue_i, p.residue_j) for p in known_pairs}
     merged = known_pairs + [
-        p for p in generated_pairs
-        if (p.residue_i, p.residue_j) not in known_positions
+        p for p in generated_pairs if (p.residue_i, p.residue_j) not in known_positions
     ]
     merged.sort(key=lambda p: p.coupling_score, reverse=True)
     top_pairs = merged[:20]
@@ -615,7 +739,7 @@ def predict_coevolution(
 
 def map_constraints_to_structure(
     coev_result: CoevolutionResult,
-    variants: Optional[list[int]] = None,
+    variants: list[int] | None = None,
 ) -> dict:
     """Flag which variant positions disrupt coevolutionary constraints."""
     constrained = set(coev_result.functionally_constrained_positions)
@@ -634,24 +758,31 @@ def map_constraints_to_structure(
             if v in constrained:
                 # find which pairs are disrupted
                 disrupted_pairs = [
-                    {"pair": (p.residue_i, p.residue_j), "coupling": p.coupling_score,
-                     "constraint": p.functional_constraint}
+                    {
+                        "pair": (p.residue_i, p.residue_j),
+                        "coupling": p.coupling_score,
+                        "constraint": p.functional_constraint,
+                    }
                     for p in coev_result.top_pairs
                     if (v == p.residue_i or v == p.residue_j) and p.coupling_score >= 0.7
                 ]
-                disrupted_variants.append({
-                    "position": v,
-                    "disrupts_n_pairs": len(disrupted_pairs),
-                    "disrupted_pairs": disrupted_pairs,
-                    "severity": "high" if len(disrupted_pairs) >= 2 else "moderate",
-                })
+                disrupted_variants.append(
+                    {
+                        "position": v,
+                        "disrupts_n_pairs": len(disrupted_pairs),
+                        "disrupted_pairs": disrupted_pairs,
+                        "severity": "high" if len(disrupted_pairs) >= 2 else "moderate",
+                    }
+                )
             elif v in all_coev_positions:
-                disrupted_variants.append({
-                    "position": v,
-                    "disrupts_n_pairs": 0,
-                    "disrupted_pairs": [],
-                    "severity": "low",
-                })
+                disrupted_variants.append(
+                    {
+                        "position": v,
+                        "disrupts_n_pairs": 0,
+                        "disrupted_pairs": [],
+                        "severity": "low",
+                    }
+                )
             else:
                 safe_variants.append(v)
 
@@ -877,7 +1008,7 @@ def _na_binding_score(
 def predict_na_binding(
     protein_sequence: str,
     nucleic_acid_type: NucleicAcidType,
-    nucleic_acid_sequence: Optional[str] = None,
+    nucleic_acid_sequence: str | None = None,
 ) -> NABindingResult:
     """
     Predict protein-nucleic acid binding using positively charged/aromatic patch detection.
@@ -893,7 +1024,7 @@ def predict_na_binding(
     interface_area = round(len(binding_residues) * 150.0, 1)
 
     # check against known binding proteins (simple hash-based similarity)
-    na_partner: Optional[str] = None
+    na_partner: str | None = None
     best_sim = 0.0
     for known in KNOWN_NA_BINDING_PROTEINS:
         if known["na_type"] != nucleic_acid_type and nucleic_acid_type != NucleicAcidType.hybrid:
@@ -903,8 +1034,7 @@ def predict_na_binding(
         sim = _seq_hash_float(seq + ":" + known_name + ":sim")
         # boost if key residues exist in sequence
         matches = sum(
-            1 for pos in known.get("key_residues", [])
-            if pos < n and seq[pos] in "RKHWFY"
+            1 for pos in known.get("key_residues", []) if pos < n and seq[pos] in "RKHWFY"
         )
         sim_adjusted = sim * 0.3 + (matches / max(len(known.get("key_residues", [1])), 1)) * 0.7
         if sim_adjusted > best_sim:
@@ -916,8 +1046,7 @@ def predict_na_binding(
     # if nucleic_acid_sequence provided, adjust score based on complementarity
     if nucleic_acid_sequence:
         gc_content = (
-            nucleic_acid_sequence.upper().count("G")
-            + nucleic_acid_sequence.upper().count("C")
+            nucleic_acid_sequence.upper().count("G") + nucleic_acid_sequence.upper().count("C")
         ) / max(len(nucleic_acid_sequence), 1)
         # GC-rich sequences form stronger interactions with aromatic stacking
         n_aromatic = sum(1 for aa in seq if aa in NA_BINDING_AROMATIC)
@@ -943,4 +1072,4 @@ class NABindingResult:
     binding_score: float
     interface_area: float
     specificity: str  # "sequence_specific" | "non_specific" | "structure_specific"
-    nucleic_acid_partner: Optional[str]
+    nucleic_acid_partner: str | None

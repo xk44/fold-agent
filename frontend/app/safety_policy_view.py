@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SAFETY_POLICY_PATH = ROOT / "SAFETY_POLICY.md"
 
@@ -90,7 +89,10 @@ def parse_safety_policy_markdown(markdown: str) -> dict:
 def build_safety_policy_metrics(policy: dict) -> list[dict[str, str]]:
     return [
         {"label": "Blocked outputs", "value": str(len(policy.get("must_not_generate") or []))},
-        {"label": "Export requirements", "value": str(len(policy.get("must_include_on_every_export") or []))},
+        {
+            "label": "Export requirements",
+            "value": str(len(policy.get("must_include_on_every_export") or [])),
+        },
         {"label": "Preflight checks", "value": str(len(policy.get("preflight_checks") or []))},
         {"label": "Mode profiles", "value": str(len(policy.get("mode_restrictions") or {}))},
     ]
@@ -148,7 +150,11 @@ def derive_safety_policy_references(error_payload: dict, policy: dict) -> list[s
                 add("Safety Preflight System", item)
         for item in policy.get("future_sequence_export_requirements") or []:
             lowered = item.lower()
-            if "expert mode" in lowered or "approval checkpoint" in lowered or "attestation" in lowered:
+            if (
+                "expert mode" in lowered
+                or "approval checkpoint" in lowered
+                or "attestation" in lowered
+            ):
                 add("mRNA / Construct Handling", item)
 
     if "external upload" in text:

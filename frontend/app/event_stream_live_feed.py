@@ -8,19 +8,12 @@ available and falls back to SSE snapshot polling if the WebSocket connection
 fails or is unavailable.  The active transport is tracked in session-state
 metadata so the dashboard can display it.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
 from typing import Literal
-
-from skills.shared.event_stream_client import (
-    EventBuffer,
-    EventStreamClient,
-    SSEEvent,
-    WebSocketEventClient,
-)
-from skills.shared.foldagent_client import DEFAULT_BASE_URL
 
 from frontend.app.event_stream_auto_refresh import (
     AutoRefreshConfig,
@@ -30,6 +23,13 @@ from frontend.app.event_stream_format import (
     format_sse_event_feed,
     format_sse_event_table_rows,
 )
+from skills.shared.event_stream_client import (
+    EventBuffer,
+    EventStreamClient,
+    SSEEvent,
+    WebSocketEventClient,
+)
+from skills.shared.foldagent_client import DEFAULT_BASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -396,7 +396,9 @@ class LiveEventFeed:
         if meta.get("error"):
             target.warning("Last poll encountered a connection error.")
         elif meta.get("last_poll"):
-            target.caption(f"Last poll: {meta['last_poll']} ({meta.get('fetched_count', 0)} fetched)")
+            target.caption(
+                f"Last poll: {meta['last_poll']} ({meta.get('fetched_count', 0)} fetched)"
+            )
 
         if events:
             target.code(format_sse_event_feed(events, limit=show_count))
@@ -404,7 +406,9 @@ class LiveEventFeed:
                 rows = format_sse_event_table_rows(events)
                 target.dataframe(rows, width="stretch", hide_index=True)
         else:
-            target.info("No live events received yet. Auto-refresh will populate events when available.")
+            target.info(
+                "No live events received yet. Auto-refresh will populate events when available."
+            )
 
         return events
 
@@ -412,6 +416,7 @@ class LiveEventFeed:
 # ---------------------------------------------------------------------------
 # Auto-refresh renderer — thin Streamlit bridge
 # ---------------------------------------------------------------------------
+
 
 def render_auto_refresh(interval_seconds: int, key: str = "auto_refresh") -> None:
     """Render a lightweight auto-refresh timer using a hidden HTML component.

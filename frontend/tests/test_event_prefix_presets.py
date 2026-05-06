@@ -10,7 +10,6 @@ from frontend.app.event_prefix_presets import (
     DASHBOARD_PREFIXES,
     OPERATOR_PREFIXES,
     PIPELINE_PREFIXES,
-    SAFETY_PREFIXES,
     PREFIX_AGENT_TASK,
     PREFIX_ALPHAFOLD,
     PREFIX_BACKGROUND_JOB,
@@ -20,6 +19,7 @@ from frontend.app.event_prefix_presets import (
     PREFIX_REPORT,
     PREFIX_SAFETY,
     PREFIX_STRUCTURE_JOB,
+    SAFETY_PREFIXES,
     merge_prefixes,
     prefixes_for_families,
     resolve_prefixes,
@@ -131,8 +131,15 @@ class TestLiveEventFeedPrefixIntegration:
         fake_streamlit = SimpleNamespace(session_state={})
         monkeypatch.setitem(sys.modules, "streamlit", fake_streamlit)
 
-        feed = LiveEventFeed(api_url="http://localhost:8000", poll_limit=5, event_prefixes=OPERATOR_PREFIXES, transport="sse")
-        feed._sse_client = _FakeSSEClient([[SSEEvent(event="pipeline.started", data={"timestamp": "t1"}, event_id="evt-1")]])
+        feed = LiveEventFeed(
+            api_url="http://localhost:8000",
+            poll_limit=5,
+            event_prefixes=OPERATOR_PREFIXES,
+            transport="sse",
+        )
+        feed._sse_client = _FakeSSEClient(
+            [[SSEEvent(event="pipeline.started", data={"timestamp": "t1"}, event_id="evt-1")]]
+        )
         feed.poll()
 
         assert feed._sse_client.calls[0] == (

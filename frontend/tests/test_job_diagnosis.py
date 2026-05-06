@@ -6,6 +6,7 @@ Covers:
 - diagnosis integration with derive_job_detail
 - format_job_detail includes diagnosis when present
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,18 +14,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     derive_blocked_failed_diagnosis,
     derive_job_detail,
     format_blocked_failed_diagnosis,
     format_job_detail,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -94,8 +95,8 @@ def _make_pipeline_event(
 # derive_blocked_failed_diagnosis
 # ---------------------------------------------------------------------------
 
-class TestDeriveBlockedFailedDiagnosis:
 
+class TestDeriveBlockedFailedDiagnosis:
     def test_failed_with_error(self):
         api_job = _make_api_job(status="failed", error="GPU OOM", attempt=2, max_retries=3)
         card = _make_card_from_api_job(api_job)
@@ -192,8 +193,10 @@ class TestDeriveBlockedFailedDiagnosis:
         card = _make_card_from_api_job(api_job)
         events = [
             _make_pipeline_event(
-                case_id="c1", job_id="j1",
-                action="pipeline.failed", detail="exit code 137",
+                case_id="c1",
+                job_id="j1",
+                action="pipeline.failed",
+                detail="exit code 137",
             ),
         ]
         result = derive_blocked_failed_diagnosis(card, api_job=api_job, events=events)
@@ -203,14 +206,20 @@ class TestDeriveBlockedFailedDiagnosis:
     def test_lifecycle_detail_truncated(self):
         long_detail = "d" * 200
         api_job = _make_api_job(
-            status="failed", error="err", attempt=1, max_retries=2,
-            case_id="c1", job_id="j1",
+            status="failed",
+            error="err",
+            attempt=1,
+            max_retries=2,
+            case_id="c1",
+            job_id="j1",
         )
         card = _make_card_from_api_job(api_job)
         events = [
             _make_pipeline_event(
-                case_id="c1", job_id="j1",
-                action="pipeline.failed", detail=long_detail,
+                case_id="c1",
+                job_id="j1",
+                action="pipeline.failed",
+                detail=long_detail,
             ),
         ]
         result = derive_blocked_failed_diagnosis(card, api_job=api_job, events=events)
@@ -273,8 +282,8 @@ class TestDeriveBlockedFailedDiagnosis:
 # format_blocked_failed_diagnosis
 # ---------------------------------------------------------------------------
 
-class TestFormatBlockedFailedDiagnosis:
 
+class TestFormatBlockedFailedDiagnosis:
     def test_non_empty_diagnosis(self):
         result = format_blocked_failed_diagnosis("FAILED | err=GPU OOM")
         assert result == "Diagnosis: FAILED | err=GPU OOM"
@@ -293,12 +302,14 @@ class TestFormatBlockedFailedDiagnosis:
 # Integration: derive_job_detail includes diagnosis
 # ---------------------------------------------------------------------------
 
-class TestDiagnosisInJobDetail:
 
+class TestDiagnosisInJobDetail:
     def test_failed_job_detail_includes_diagnosis(self):
         api_job = _make_api_job(
-            status="failed", error="GPU OOM",
-            attempt=2, max_retries=3,
+            status="failed",
+            error="GPU OOM",
+            attempt=2,
+            max_retries=3,
         )
         card = _make_card_from_api_job(api_job)
         detail = derive_job_detail(card, api_job=api_job)
@@ -314,8 +325,10 @@ class TestDiagnosisInJobDetail:
 
     def test_blocked_job_detail_includes_diagnosis(self):
         api_job = _make_api_job(
-            status="blocked", error="safety gate",
-            attempt=1, max_retries=2,
+            status="blocked",
+            error="safety gate",
+            attempt=1,
+            max_retries=2,
         )
         card = _make_card_from_api_job(api_job)
         detail = derive_job_detail(card, api_job=api_job)
@@ -324,8 +337,10 @@ class TestDiagnosisInJobDetail:
 
     def test_timed_out_job_includes_timeout_flag(self):
         api_job = _make_api_job(
-            status="timed_out", timed_out=True,
-            attempt=2, max_retries=3,
+            status="timed_out",
+            timed_out=True,
+            attempt=2,
+            max_retries=3,
         )
         card = _make_card_from_api_job(api_job)
         detail = derive_job_detail(card, api_job=api_job)
@@ -338,12 +353,14 @@ class TestDiagnosisInJobDetail:
 # Integration: format_job_detail includes diagnosis
 # ---------------------------------------------------------------------------
 
-class TestFormatJobDetailWithDiagnosis:
 
+class TestFormatJobDetailWithDiagnosis:
     def test_format_includes_diagnosis_for_failed(self):
         api_job = _make_api_job(
-            status="failed", error="GPU OOM",
-            attempt=2, max_retries=3,
+            status="failed",
+            error="GPU OOM",
+            attempt=2,
+            max_retries=3,
         )
         card = _make_card_from_api_job(api_job)
         detail = derive_job_detail(card, api_job=api_job)

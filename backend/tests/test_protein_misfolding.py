@@ -12,18 +12,17 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.protein_misfolding import (
-    AggregationRegion,
-    ChaperoneTarget,
-    HYDROPHOBICITY,
     BETA_PROPENSITY,
+    HYDROPHOBICITY,
     KNOWN_CHAPERONE_TARGETS,
     LYSOSOMAL_STORAGE_DISORDERS,
-    LSDAnalysis,
     MISFOLDING_DISEASES,
+    AggregationRegion,
+    ChaperoneTarget,
+    LSDAnalysis,
     MisfoldingRisk,
     NeurodegAnalysis,
     PrionDomain,
@@ -34,7 +33,6 @@ from backend.app.modes.protein_misfolding import (
     find_chaperone_targets,
     identify_aggregation_regions,
 )
-
 
 # ---------------------------------------------------------------------------
 # MisfoldingRisk assessment
@@ -384,7 +382,11 @@ class TestMisfoldingAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert data["found"] is True
-        assert data["target"]["mechanism"] in {"stabilization", "folding_correction", "trafficking_rescue"}
+        assert data["target"]["mechanism"] in {
+            "stabilization",
+            "folding_correction",
+            "trafficking_rescue",
+        }
 
     def test_chaperone_targets_unknown_gene(self, client: TestClient):
         resp = client.post("/misfolding/chaperone-targets", json={"gene": "NOPE99"})

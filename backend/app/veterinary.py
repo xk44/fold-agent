@@ -8,11 +8,9 @@ RESEARCH USE ONLY — not for clinical veterinary use without DVM oversight.
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # Feature 1: Species-specific MHC allele database
@@ -35,7 +33,7 @@ class MHCAllele:
     locus: str  # "MHC-I" | "MHC-II"
     source_db: str
     binding_data_available: bool
-    cross_species_equivalent: Optional[str] = None
+    cross_species_equivalent: str | None = None
 
 
 # fmt: off
@@ -152,14 +150,14 @@ class CalibrationWarning:
 
 # Mapping (source_species → target_species) → warning level
 _CROSS_SPECIES_WARNING_MATRIX: dict[tuple[str, str], str] = {
-    ("human", "murine"):  "medium",
-    ("murine", "human"):  "medium",
-    ("human", "canine"):  "medium",
-    ("canine", "human"):  "medium",
-    ("human", "feline"):  "high",
-    ("feline", "human"):  "high",
-    ("human", "equine"):  "high",
-    ("equine", "human"):  "high",
+    ("human", "murine"): "medium",
+    ("murine", "human"): "medium",
+    ("human", "canine"): "medium",
+    ("canine", "human"): "medium",
+    ("human", "feline"): "high",
+    ("feline", "human"): "high",
+    ("human", "equine"): "high",
+    ("equine", "human"): "high",
     ("human", "porcine"): "low",
     ("porcine", "human"): "low",
     ("canine", "feline"): "medium",
@@ -168,16 +166,16 @@ _CROSS_SPECIES_WARNING_MATRIX: dict[tuple[str, str], str] = {
     ("murine", "canine"): "high",
     ("canine", "equine"): "high",
     ("equine", "canine"): "high",
-    ("canine", "porcine"):"high",
-    ("porcine", "canine"):"high",
+    ("canine", "porcine"): "high",
+    ("porcine", "canine"): "high",
     ("feline", "murine"): "high",
     ("murine", "feline"): "high",
     ("feline", "equine"): "high",
     ("equine", "feline"): "high",
-    ("murine", "porcine"):"high",
-    ("porcine", "murine"):"high",
-    ("equine", "porcine"):"high",
-    ("porcine", "equine"):"high",
+    ("murine", "porcine"): "high",
+    ("porcine", "murine"): "high",
+    ("equine", "porcine"): "high",
+    ("porcine", "equine"): "high",
 }
 
 _RECOMMENDED_ACTIONS: dict[str, str] = {
@@ -399,7 +397,7 @@ class OrthologComparison:
     ortholog_gene: str
     sequence_identity_pct: float
     structural_conservation: float
-    variant_conserved: Optional[bool]
+    variant_conserved: bool | None
     model_quality_score: float
     recommendation: str
 
@@ -420,8 +418,7 @@ def compare_orthologs(gene: str, target_species: str) -> OrthologComparison:
             variant_conserved=None,
             model_quality_score=0.0,
             recommendation=(
-                f"Gene '{gene}' not found in ortholog database. "
-                "Manual literature review required."
+                f"Gene '{gene}' not found in ortholog database. Manual literature review required."
             ),
         )
 
@@ -440,7 +437,7 @@ def compare_orthologs(gene: str, target_species: str) -> OrthologComparison:
     )
 
 
-def rank_animal_models(gene: str, variant: Optional[str] = None) -> list[OrthologComparison]:
+def rank_animal_models(gene: str, variant: str | None = None) -> list[OrthologComparison]:
     """Rank all available species by structural conservation for *gene*."""
     non_human = [s.value for s in Species if s.value != "human"]
     comparisons = [compare_orthologs(gene, sp) for sp in non_human]
@@ -663,7 +660,7 @@ Attending Veterinarian: ____________________________  License No.: ____________
 
 Witness: ____________________________  Date: ____________
 
-AVMA Reference: {AVMA_GUIDELINES['informed_consent']}
+AVMA Reference: {AVMA_GUIDELINES["informed_consent"]}
 
 --- RESEARCH USE ONLY — NOT FOR CLINICAL USE WITHOUT LICENSED DVM OVERSIGHT ---
 """
@@ -681,7 +678,7 @@ def generate_compassionate_use_doc(
     """Generate a veterinary compassionate use document (USDA/AVMA-aligned)."""
     sp = species.lower()
     sp_display = species.capitalize()
-    now = datetime.now(tz=timezone.utc).isoformat()
+    now = datetime.now(tz=UTC).isoformat()
 
     attestation = (
         f"I, {vet_name} (License No.: {vet_license}), a licensed veterinarian, hereby attest that:\n"
@@ -739,12 +736,12 @@ OWNER CONSENT
   (See attached Owner Consent Form)
 
 REGULATORY NOTICES
-  {''.join(f"  • {n}" + chr(10) for n in regulatory_notices)}
+  {"".join(f"  • {n}" + chr(10) for n in regulatory_notices)}
 USDA REQUIREMENTS
-  {''.join(f"  • {r}" + chr(10) for r in usda_reqs)}
+  {"".join(f"  • {r}" + chr(10) for r in usda_reqs)}
 AVMA GUIDELINES REFERENCE
-  {AVMA_GUIDELINES['compassionate_use']}
-  {AVMA_GUIDELINES['record_keeping']}
+  {AVMA_GUIDELINES["compassionate_use"]}
+  {AVMA_GUIDELINES["record_keeping"]}
 
 ================================================================================
 DISCLAIMER: This document is generated for research and administrative purposes

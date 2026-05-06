@@ -33,8 +33,12 @@ def test_manual_variant_creation_with_sample_linkage(client: TestClient) -> None
 
 
 def test_variant_creation_rejects_sample_from_other_case(client: TestClient) -> None:
-    case_a = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case a"}).json()["id"]
-    case_b = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case b"}).json()["id"]
+    case_a = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case a"}).json()[
+        "id"
+    ]
+    case_b = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case b"}).json()[
+        "id"
+    ]
 
     sample = client.post(
         f"/cases/{case_a}/samples",

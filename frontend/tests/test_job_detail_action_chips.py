@@ -6,6 +6,7 @@ Covers:
 - format_action_chip_summary: renders chips as a multi-line detail summary
 - Integration with derive_job_detail: action_chips field populated automatically
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,10 +25,10 @@ from frontend.app.event_stream import (
     format_action_chips,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -77,6 +78,7 @@ def _make_card_from_api_job(api_job: dict) -> dict:
 # ---------------------------------------------------------------------------
 # derive_job_detail_actions — retry chip
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveRetryChip:
     """Retry chip appears when the job is retry-eligible."""
@@ -145,6 +147,7 @@ class TestDeriveRetryChip:
 # derive_job_detail_actions — view_structure chip
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveViewStructureChip:
     """View structure chip appears when derive_structure_linkback returns a result."""
 
@@ -203,6 +206,7 @@ class TestDeriveViewStructureChip:
 # ---------------------------------------------------------------------------
 # derive_job_detail_actions — view_report chip
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveViewReportChip:
     """View report chip appears when report is derivable from payload/result."""
@@ -286,6 +290,7 @@ class TestDeriveViewReportChip:
 # derive_job_detail_actions — view_artifacts chip
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveViewArtifactsChip:
     """View artifacts chip appears when artifact paths are derivable or job type produces artifacts."""
 
@@ -338,7 +343,10 @@ class TestDeriveViewArtifactsChip:
         api_job = _make_api_job(
             job_type="shell_execution",
             status="completed",
-            result={"status": "completed", "execution": {"output_path": "/tmp/out.txt", "log_path": "/tmp/log.txt"}},
+            result={
+                "status": "completed",
+                "execution": {"output_path": "/tmp/out.txt", "log_path": "/tmp/log.txt"},
+            },
         )
         card = _make_card_from_api_job(api_job)
         chips = derive_job_detail_actions(card, api_job=api_job)
@@ -375,6 +383,7 @@ class TestDeriveViewArtifactsChip:
 # ---------------------------------------------------------------------------
 # derive_job_detail_actions — combined / multi-chip scenarios
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveJobDetailActionsCombined:
     """Test that multiple chip types can co-exist on a single job."""
@@ -481,26 +490,41 @@ class TestDeriveJobDetailActionsCombined:
 # format_action_chips
 # ---------------------------------------------------------------------------
 
+
 class TestFormatActionChips:
     def test_empty_chips(self):
         assert format_action_chips([]) == "No actions available."
 
     def test_single_chip(self):
-        chips = [{
-            "action": CHIP_RETRY,
-            "label": "Retry",
-            "description": "Re-dispatch this failed job",
-            "enabled": True,
-            "data": {"job_id": "j1"},
-        }]
+        chips = [
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "Re-dispatch this failed job",
+                "enabled": True,
+                "data": {"job_id": "j1"},
+            }
+        ]
         result = format_action_chips(chips)
         assert "↻" in result
         assert "Retry" in result
 
     def test_multiple_chips_joined_by_separator(self):
         chips = [
-            {"action": CHIP_RETRY, "label": "Retry", "description": "", "enabled": True, "data": {}},
-            {"action": CHIP_VIEW_STRUCTURE, "label": "View structure", "description": "", "enabled": True, "data": {}},
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
+            {
+                "action": CHIP_VIEW_STRUCTURE,
+                "label": "View structure",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
         ]
         result = format_action_chips(chips)
         assert " · " in result
@@ -508,22 +532,48 @@ class TestFormatActionChips:
         assert "🔬" in result
 
     def test_disabled_chip_shows_unavailable(self):
-        chips = [{
-            "action": CHIP_RETRY,
-            "label": "Retry",
-            "description": "",
-            "enabled": False,
-            "data": {},
-        }]
+        chips = [
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "",
+                "enabled": False,
+                "data": {},
+            }
+        ]
         result = format_action_chips(chips)
         assert "unavailable" in result
 
     def test_all_icon_types(self):
         chips = [
-            {"action": CHIP_RETRY, "label": "Retry", "description": "", "enabled": True, "data": {}},
-            {"action": CHIP_VIEW_STRUCTURE, "label": "View structure", "description": "", "enabled": True, "data": {}},
-            {"action": CHIP_VIEW_REPORT, "label": "View report", "description": "", "enabled": True, "data": {}},
-            {"action": CHIP_VIEW_ARTIFACTS, "label": "View artifacts", "description": "", "enabled": True, "data": {}},
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
+            {
+                "action": CHIP_VIEW_STRUCTURE,
+                "label": "View structure",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
+            {
+                "action": CHIP_VIEW_REPORT,
+                "label": "View report",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
+            {
+                "action": CHIP_VIEW_ARTIFACTS,
+                "label": "View artifacts",
+                "description": "",
+                "enabled": True,
+                "data": {},
+            },
         ]
         result = format_action_chips(chips)
         assert "↻" in result
@@ -536,18 +586,21 @@ class TestFormatActionChips:
 # format_action_chip_summary
 # ---------------------------------------------------------------------------
 
+
 class TestFormatActionChipSummary:
     def test_empty_chips(self):
         assert format_action_chip_summary([]) == "No actions available."
 
     def test_single_chip_summary(self):
-        chips = [{
-            "action": CHIP_RETRY,
-            "label": "Retry",
-            "description": "Re-dispatch this failed job (2 attempt(s) remaining)",
-            "enabled": True,
-            "data": {},
-        }]
+        chips = [
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "Re-dispatch this failed job (2 attempt(s) remaining)",
+                "enabled": True,
+                "data": {},
+            }
+        ]
         result = format_action_chip_summary(chips)
         assert "1 chip(s)" in result
         assert "[retry]" in result
@@ -556,8 +609,20 @@ class TestFormatActionChipSummary:
 
     def test_multiple_chips_summary(self):
         chips = [
-            {"action": CHIP_RETRY, "label": "Retry", "description": "Re-dispatch", "enabled": True, "data": {}},
-            {"action": CHIP_VIEW_STRUCTURE, "label": "View structure", "description": "Open explorer", "enabled": True, "data": {}},
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "Re-dispatch",
+                "enabled": True,
+                "data": {},
+            },
+            {
+                "action": CHIP_VIEW_STRUCTURE,
+                "label": "View structure",
+                "description": "Open explorer",
+                "enabled": True,
+                "data": {},
+            },
         ]
         result = format_action_chip_summary(chips)
         assert "2 chip(s)" in result
@@ -565,13 +630,15 @@ class TestFormatActionChipSummary:
         assert "[view_structure]" in result
 
     def test_disabled_chip_summary(self):
-        chips = [{
-            "action": CHIP_RETRY,
-            "label": "Retry",
-            "description": "Cannot retry",
-            "enabled": False,
-            "data": {},
-        }]
+        chips = [
+            {
+                "action": CHIP_RETRY,
+                "label": "Retry",
+                "description": "Cannot retry",
+                "enabled": False,
+                "data": {},
+            }
+        ]
         result = format_action_chip_summary(chips)
         assert "unavailable" in result
 
@@ -579,6 +646,7 @@ class TestFormatActionChipSummary:
 # ---------------------------------------------------------------------------
 # Integration: derive_job_detail populates action_chips
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveJobDetailActionChipsIntegration:
     """Verify that derive_job_detail automatically includes action_chips."""
@@ -613,6 +681,7 @@ class TestDeriveJobDetailActionChipsIntegration:
     def test_format_job_detail_includes_actions(self):
         """format_job_detail should include the actions line when chips exist."""
         from frontend.app.event_stream import format_job_detail as _fmt
+
         api_job = _make_api_job(
             job_type="pipeline_run",
             status="completed",

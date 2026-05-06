@@ -2,34 +2,31 @@
 
 from __future__ import annotations
 
-import pytest
-
 from backend.app.protein_science import (
-    # Epitope mapping
-    EpitopeRegion,
-    EpitopeMapResult,
-    map_epitopes,
-    rank_epitopes,
-    # Hot-spot prediction
-    HotSpotResidue,
-    PPIHotSpotResult,
     AMINO_ACID_ALANINE_DDG,
-    predict_hot_spots,
-    assess_interface_druggability,
+    KNOWN_COEVOLUTION_DATA,
+    KNOWN_NA_BINDING_PROTEINS,
+    CoevolutionResult,
     # Coevolution
     CoevolvingPair,
-    CoevolutionResult,
-    KNOWN_COEVOLUTION_DATA,
-    predict_coevolution,
-    map_constraints_to_structure,
+    EpitopeMapResult,
+    # Epitope mapping
+    EpitopeRegion,
+    # Hot-spot prediction
+    HotSpotResidue,
+    NABindingResult,
     # NA binding
     NucleicAcidType,
-    NABindingResult,
-    KNOWN_NA_BINDING_PROTEINS,
-    predict_na_binding,
+    PPIHotSpotResult,
+    assess_interface_druggability,
     identify_binding_residues,
+    map_constraints_to_structure,
+    map_epitopes,
+    predict_coevolution,
+    predict_hot_spots,
+    predict_na_binding,
+    rank_epitopes,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -60,10 +57,13 @@ TP53_SEQ = (
 # Feature 1: Epitope mapping
 # ---------------------------------------------------------------------------
 
+
 class TestEpitopeRegionDataclass:
     def test_fields_present(self):
         ep = EpitopeRegion(
-            start=0, end=9, residues="MDERERKDDD",
+            start=0,
+            end=9,
+            residues="MDERERKDDD",
             epitope_type="continuous",
             solvent_accessibility=0.7,
             immunogenicity_score=0.65,
@@ -77,7 +77,9 @@ class TestEpitopeRegionDataclass:
 
     def test_discontinuous_type(self):
         ep = EpitopeRegion(
-            start=5, end=40, residues="DKRDKS",
+            start=5,
+            end=40,
+            residues="DKRDKS",
             epitope_type="discontinuous",
             solvent_accessibility=0.5,
             immunogenicity_score=0.4,
@@ -198,6 +200,7 @@ class TestRankEpitopes:
 # Feature 2: PPI hot-spot prediction
 # ---------------------------------------------------------------------------
 
+
 class TestAminoAcidAlanineDDG:
     def test_all_20_canonical_present(self):
         aa_list = "ACDEFGHIKLMNPQRSTVWY"
@@ -264,8 +267,7 @@ class TestPredictHotSpots:
                 for r in result.interface_residues
             ]
         total_pct = sum(
-            AMINO_ACID_ALANINE_DDG.get(KRAS_SEQ[r].upper(), 0.5)
-            for r in result.interface_residues
+            AMINO_ACID_ALANINE_DDG.get(KRAS_SEQ[r].upper(), 0.5) for r in result.interface_residues
         )
         # Just check hot spots have reasonable contribution pct
         for hs in result.hot_spots:
@@ -299,10 +301,17 @@ class TestAssessInterfaceDruggability:
         result = predict_hot_spots(KRAS_SEQ)
         report = assess_interface_druggability(result)
         for key in [
-            "druggable", "druggability_score", "confidence",
-            "n_hot_spots", "largest_cluster_size", "n_clusters",
-            "mean_alanine_ddg", "aromatic_hot_spots",
-            "estimated_pocket_bsa_A2", "hot_spot_fraction", "recommendation",
+            "druggable",
+            "druggability_score",
+            "confidence",
+            "n_hot_spots",
+            "largest_cluster_size",
+            "n_clusters",
+            "mean_alanine_ddg",
+            "aromatic_hot_spots",
+            "estimated_pocket_bsa_A2",
+            "hot_spot_fraction",
+            "recommendation",
         ]:
             assert key in report
 
@@ -329,10 +338,12 @@ class TestAssessInterfaceDruggability:
 # Feature 3: Coevolution constraint mapping
 # ---------------------------------------------------------------------------
 
+
 class TestCoevolvingPair:
     def test_fields(self):
         pair = CoevolvingPair(
-            residue_i=10, residue_j=50,
+            residue_i=10,
+            residue_j=50,
             coupling_score=0.85,
             contact_probability=0.80,
             functional_constraint="catalytic",
@@ -432,8 +443,12 @@ class TestMapConstraintsToStructure:
         coev = predict_coevolution(TP53_SEQ, gene="TP53")
         result = map_constraints_to_structure(coev, variants=[10, 50])
         for key in [
-            "total_constrained_positions", "total_coevolving_positions",
-            "n_sectors", "disrupted_variants", "safe_variants", "variants_analyzed",
+            "total_constrained_positions",
+            "total_coevolving_positions",
+            "n_sectors",
+            "disrupted_variants",
+            "safe_variants",
+            "variants_analyzed",
         ]:
             assert key in result
 
@@ -467,6 +482,7 @@ class TestMapConstraintsToStructure:
 # ---------------------------------------------------------------------------
 # Feature 4: Protein-nucleic acid interaction prediction
 # ---------------------------------------------------------------------------
+
 
 class TestNucleicAcidType:
     def test_enum_values(self):
@@ -565,7 +581,9 @@ class TestPredictNABinding:
 
     def test_with_nucleic_acid_sequence(self):
         gc_rich = "GCGCGCGCGCGCGCGC"
-        result = predict_na_binding(NA_BINDING_SEQ, NucleicAcidType.dna, nucleic_acid_sequence=gc_rich)
+        result = predict_na_binding(
+            NA_BINDING_SEQ, NucleicAcidType.dna, nucleic_acid_sequence=gc_rich
+        )
         assert isinstance(result, NABindingResult)
         assert 0.0 <= result.binding_score <= 1.0
 
@@ -599,6 +617,7 @@ class TestPredictNABinding:
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_map_epitopes_single_char(self):

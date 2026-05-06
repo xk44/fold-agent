@@ -93,6 +93,7 @@ def decrypt_data(data: bytes, key: bytes) -> bytes:
 # Key derivation
 # ---------------------------------------------------------------------------
 
+
 def derive_key(password: str, salt: bytes) -> bytes:
     """Derive a 32-byte key from *password* and *salt* using PBKDF2-SHA256.
 
@@ -114,6 +115,7 @@ def derive_key(password: str, salt: bytes) -> bytes:
 # Status
 # ---------------------------------------------------------------------------
 
+
 def check_encryption_status() -> dict:
     """Return current encryption configuration status."""
     from backend.app.config import settings
@@ -124,7 +126,5 @@ def check_encryption_status() -> dict:
         "key_derivation": "PBKDF2-SHA256",
         "crypto_library_available": _CRYPTO_AVAILABLE,
         "key_set": settings.encryption_key is not None,
-        "note": (
-            "Production scaffold only — integrate with a proper KMS before enabling."
-        ),
+        "note": ("Production scaffold only — integrate with a proper KMS before enabling."),
     }

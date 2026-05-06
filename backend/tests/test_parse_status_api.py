@@ -34,7 +34,11 @@ def test_pipeline_execution_records_parsed_ok_status(client: TestClient, monkeyp
 
     run_response = client.post(
         "/pipeline/adapters/vep/run",
-        json={"case_id": case_id, "input_vcf": "/tmp/mock.vcf", "output_path": "/tmp/mock.vep.json"},
+        json={
+            "case_id": case_id,
+            "input_vcf": "/tmp/mock.vcf",
+            "output_path": "/tmp/mock.vep.json",
+        },
     )
     assert run_response.status_code == 200
 
@@ -71,7 +75,11 @@ def test_pipeline_execution_records_parse_failure_details(client: TestClient, mo
 
     run_response = client.post(
         "/pipeline/adapters/vep/run",
-        json={"case_id": case_id, "input_vcf": "/tmp/mock.vcf", "output_path": "/tmp/mock.output.json"},
+        json={
+            "case_id": case_id,
+            "input_vcf": "/tmp/mock.vcf",
+            "output_path": "/tmp/mock.output.json",
+        },
     )
     assert run_response.status_code == 200
 
@@ -81,7 +89,9 @@ def test_pipeline_execution_records_parse_failure_details(client: TestClient, mo
     assert "variant" in execution["parse_error"]
 
 
-def test_pipeline_execution_records_skipped_parse_for_non_completed_runs(client: TestClient, monkeypatch) -> None:
+def test_pipeline_execution_records_skipped_parse_for_non_completed_runs(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "parse skipped case"},
@@ -140,7 +150,9 @@ def test_alphafold_execution_records_parse_failure_details(client: TestClient, m
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run_response = client.post(
         "/alphafold/backends/colabfold/run",

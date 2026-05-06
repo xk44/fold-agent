@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.research_assistance import (
@@ -11,23 +10,23 @@ from backend.app.research_assistance import (
     MSA_DEPTH_THRESHOLDS,
     PLDDT_COLOR_SCHEME,
     SIGNAL_PEPTIDE_PATTERNS,
-    MSAQualityResult,
     LiteratureResult,
+    MSAQualityResult,
+    SecretionAnalysis,
+    SignalPeptide,
     StructureViewerData,
     VisualizationAnnotation,
-    SignalPeptide,
-    SecretionAnalysis,
-    screen_msa_quality,
-    suggest_prediction_strategy,
-    search_literature,
-    cross_reference_prediction,
-    identify_knowledge_gaps,
-    generate_viewer_data,
-    plddt_to_color,
-    generate_molstar_config,
-    predict_signal_peptide,
     analyze_secretion_pathway,
     assess_therapeutic_suitability,
+    cross_reference_prediction,
+    generate_molstar_config,
+    generate_viewer_data,
+    identify_knowledge_gaps,
+    plddt_to_color,
+    predict_signal_peptide,
+    screen_msa_quality,
+    search_literature,
+    suggest_prediction_strategy,
 )
 
 # ---------------------------------------------------------------------------
@@ -44,6 +43,7 @@ SEQ_KRAS = "MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVID"
 # ---------------------------------------------------------------------------
 # Feature 1: MSA Quality
 # ---------------------------------------------------------------------------
+
 
 class TestMSADepthThresholds:
     def test_thresholds_all_present(self):
@@ -130,7 +130,13 @@ class TestSuggestPredictionStrategy:
     def test_has_required_keys(self):
         q = screen_msa_quality(SEQ_LONG)
         strategy = suggest_prediction_strategy(q)
-        for key in ("primary_backend", "use_templates", "msa_required", "alternative_backends", "rationale"):
+        for key in (
+            "primary_backend",
+            "use_templates",
+            "msa_required",
+            "alternative_backends",
+            "rationale",
+        ):
             assert key in strategy
 
     def test_sparse_quality_recommends_esmfold(self):
@@ -148,12 +154,22 @@ class TestSuggestPredictionStrategy:
 # Feature 2: Literature Cross-referencing
 # ---------------------------------------------------------------------------
 
+
 class TestMockLiteratureDB:
     def test_has_40_entries(self):
         assert len(MOCK_LITERATURE_DB) >= 40
 
     def test_each_entry_has_required_fields(self):
-        required = {"gene", "pubmed_id", "title", "journal", "year", "relevance_score", "topics", "cited_by"}
+        required = {
+            "gene",
+            "pubmed_id",
+            "title",
+            "journal",
+            "year",
+            "relevance_score",
+            "topics",
+            "cited_by",
+        }
         for entry in MOCK_LITERATURE_DB:
             assert required <= set(entry.keys()), f"Missing fields in entry {entry}"
 
@@ -247,7 +263,13 @@ class TestIdentifyKnowledgeGaps:
 
     def test_has_required_keys(self):
         result = identify_knowledge_gaps("TP53")
-        for key in ("gene", "knowledge_gap_score", "covered_categories", "gap_categories", "specific_gaps"):
+        for key in (
+            "gene",
+            "knowledge_gap_score",
+            "covered_categories",
+            "gap_categories",
+            "specific_gaps",
+        ):
             assert key in result
 
     def test_unknown_gene_has_specific_gaps(self):
@@ -266,6 +288,7 @@ class TestIdentifyKnowledgeGaps:
 # ---------------------------------------------------------------------------
 # Feature 3: Structure Viewer Metadata
 # ---------------------------------------------------------------------------
+
 
 class TestPLDDTColorScheme:
     def test_four_bands(self):
@@ -381,6 +404,7 @@ class TestGenerateMolstarConfig:
 # Feature 4: Signal Peptide
 # ---------------------------------------------------------------------------
 
+
 class TestSignalPeptidePatterns:
     def test_has_three_regions(self):
         for key in ("n_region", "h_region", "c_region"):
@@ -442,7 +466,12 @@ class TestAnalyzeSecretionPathway:
         for seq in (SEQ_LONG, SEQ_SHORT, SEQ_SIGNAL, SEQ_HYDRO):
             r = analyze_secretion_pathway(seq)
             assert r.predicted_localization in (
-                "extracellular", "membrane", "cytoplasmic", "nuclear", "er", "golgi"
+                "extracellular",
+                "membrane",
+                "cytoplasmic",
+                "nuclear",
+                "er",
+                "golgi",
             ), f"Invalid localization {r.predicted_localization}"
 
     def test_tm_helices_nonnegative(self):
@@ -463,7 +492,9 @@ class TestAnalyzeSecretionPathway:
         }
         for seq in (SEQ_LONG, SEQ_SHORT, SEQ_SIGNAL, SEQ_HYDRO):
             r = analyze_secretion_pathway(seq)
-            assert r.therapeutic_suitability in valid, f"Invalid suitability: {r.therapeutic_suitability}"
+            assert r.therapeutic_suitability in valid, (
+                f"Invalid suitability: {r.therapeutic_suitability}"
+            )
 
     def test_warnings_is_list(self):
         result = analyze_secretion_pathway(SEQ_KRAS)
@@ -477,8 +508,12 @@ class TestAnalyzeSecretionPathway:
 class TestAssessTherapeuticSuitability:
     def test_secreted_suitable(self):
         sp = SignalPeptide(
-            detected=True, cleavage_site=20, signal_type="sec_spi",
-            probability=0.9, mature_protein_start=21, signal_sequence="MKTLLL"
+            detected=True,
+            cleavage_site=20,
+            signal_type="sec_spi",
+            probability=0.9,
+            mature_protein_start=21,
+            signal_sequence="MKTLLL",
         )
         analysis = SecretionAnalysis(
             signal_peptide=sp,
@@ -492,8 +527,12 @@ class TestAssessTherapeuticSuitability:
 
     def test_membrane_soluble_form(self):
         sp = SignalPeptide(
-            detected=False, cleavage_site=None, signal_type="none",
-            probability=0.1, mature_protein_start=1, signal_sequence=None
+            detected=False,
+            cleavage_site=None,
+            signal_type="none",
+            probability=0.1,
+            mature_protein_start=1,
+            signal_sequence=None,
         )
         analysis = SecretionAnalysis(
             signal_peptide=sp,
@@ -507,8 +546,12 @@ class TestAssessTherapeuticSuitability:
 
     def test_no_signal_requires_addition(self):
         sp = SignalPeptide(
-            detected=False, cleavage_site=None, signal_type="none",
-            probability=0.05, mature_protein_start=1, signal_sequence=None
+            detected=False,
+            cleavage_site=None,
+            signal_type="none",
+            probability=0.05,
+            mature_protein_start=1,
+            signal_sequence=None,
         )
         analysis = SecretionAnalysis(
             signal_peptide=sp,
@@ -524,6 +567,7 @@ class TestAssessTherapeuticSuitability:
 # ---------------------------------------------------------------------------
 # API endpoint tests
 # ---------------------------------------------------------------------------
+
 
 class TestMSAQualityEndpoint:
     def test_msa_quality_ok(self, client: TestClient):

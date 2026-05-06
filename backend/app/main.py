@@ -5,29 +5,65 @@ Local-first, safety-gated research coordination platform.
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 import asyncio
-from datetime import UTC, datetime
 import hashlib
 import json
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+import structlog
 from fastapi import Depends, FastAPI, HTTPException, Query
-from pydantic import ValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
-import structlog
 
+from backend.app.alphafold import shells as alphafold_shells
+from backend.app.alphafold.schemas import parse_alphafold_request
+from backend.app.alphafold.shells import (
+    build_alphafold_dry_run,
+    execute_alphafold_backend,
+    get_shell_backend_status,
+    list_alphafold_shell_statuses,
+)
 from backend.app.config import settings
 from backend.app.db import get_db, init_db
-from backend.app.models import AgentTask, Artifact, AuditLog, CandidateAntigen, Case, CaseTask, ExecutionRun, PipelineRun, Report, Sample, StructureJob, Subject, Variant
+from backend.app.mock_analysis import ensure_mock_analysis_data
+from backend.app.models import (
+    AgentTask,
+    Artifact,
+    AuditLog,
+    CandidateAntigen,
+    Case,
+    CaseTask,
+    ExecutionRun,
+    PipelineRun,
+    Report,
+    Sample,
+    StructureJob,
+    Subject,
+    Variant,
+)
+from backend.app.pipeline.base import run_mock_pipeline
+from backend.app.pipeline.shells import (
+    build_pipeline_dry_run,
+    execute_pipeline_adapter,
+    list_pipeline_adapter_statuses,
+)
+from backend.app.reports import (
+    RESEARCH_LABEL,
+    build_candidate_review_report,
+    build_ethics_package_report,
+)
+from backend.app.safety.audit import log_action
+from backend.app.safety.preflight import PreflightResult, preflight_action
 from backend.app.schemas import (
-    AlphaFoldValidationErrorResponse,
     AgentTaskCreate,
     AgentTaskRead,
     AgentTaskUpdate,
+    AlphaFoldValidationErrorResponse,
     AuditLogRead,
     CandidateCreate,
     CandidateRead,
@@ -44,10 +80,10 @@ from backend.app.schemas import (
     ReportExport,
     ReportRead,
     ReviewUpdate,
-    SampleCreate,
-    SampleRead,
     SafetyPreflightRequest,
     SafetyPreflightResponse,
+    SampleCreate,
+    SampleRead,
     SavedArtifact,
     StructureJobCreate,
     StructureJobRead,
@@ -57,20 +93,6 @@ from backend.app.schemas import (
     VariantCreate,
     VariantRead,
 )
-from backend.app.safety.audit import log_action
-from backend.app.safety.preflight import PreflightResult, preflight_action
-from backend.app.reports import RESEARCH_LABEL, build_candidate_review_report, build_ethics_package_report
-from backend.app.mock_analysis import ensure_mock_analysis_data
-from backend.app.alphafold import shells as alphafold_shells
-from backend.app.alphafold.shells import (
-    build_alphafold_dry_run,
-    execute_alphafold_backend,
-    get_shell_backend_status,
-    list_alphafold_shell_statuses,
-)
-from backend.app.alphafold.schemas import parse_alphafold_request
-from backend.app.pipeline.base import run_mock_pipeline
-from backend.app.pipeline.shells import build_pipeline_dry_run, execute_pipeline_adapter, list_pipeline_adapter_statuses
 
 logger = structlog.get_logger()
 
@@ -158,7 +180,12 @@ def apply_parsed_pipeline_output(
 ) -> tuple[str, str | None]:
     if not case_id or result.get("status") != "completed":
         reason = f"parse skipped because case_id={case_id!r} and status={result.get('status')!r}"
-        logger.info("pipeline_output_parse_skipped", adapter_name=adapter_name, execution_id=execution_id, reason=reason)
+        logger.info(
+            "pipeline_output_parse_skipped",
+            adapter_name=adapter_name,
+            execution_id=execution_id,
+            reason=reason,
+        )
         return "skipped_not_completed", reason
 
     case = db.get(Case, case_id)
@@ -176,7 +203,11 @@ def apply_parsed_pipeline_output(
         parsed = json.loads(result.get("stdout") or "{}")
     except json.JSONDecodeError:
         reason = f"invalid JSON output for {adapter_name}"
-        logger.warning("pipeline_output_parse_failed_json", adapter_name=adapter_name, execution_id=execution_id)
+        logger.warning(
+            "pipeline_output_parse_failed_json",
+            adapter_name=adapter_name,
+            execution_id=execution_id,
+        )
         return "parse_failed", reason
 
     variants, candidates = ensure_mock_analysis_data(db, case)
@@ -186,8 +217,12 @@ def apply_parsed_pipeline_output(
         variant = variants[0]
         variant.gene = variant_payload.get("gene", variant.gene)
         variant.protein_change = variant_payload.get("protein_change", variant.protein_change)
-        variant.genomic_coordinates = variant_payload.get("genomic_coordinates", variant.genomic_coordinates)
-        variant.annotation_source = variant_payload.get("annotation_source", variant.annotation_source)
+        variant.genomic_coordinates = variant_payload.get(
+            "genomic_coordinates", variant.genomic_coordinates
+        )
+        variant.annotation_source = variant_payload.get(
+            "annotation_source", variant.annotation_source
+        )
         variant.last_parsed_execution_id = execution_id
         metrics = dict(variant.quality_metrics or {})
         metrics["parsed_from"] = "vep_shell"
@@ -200,7 +235,9 @@ def apply_parsed_pipeline_output(
         candidate.last_parsed_execution_id = execution_id
         candidate.mhc_context = candidate_payload.get("mhc_context", candidate.mhc_context)
         peptide_metadata = dict(candidate.peptide_metadata or {})
-        peptide_metadata["sequence"] = candidate_payload.get("peptide_sequence", peptide_metadata.get("sequence"))
+        peptide_metadata["sequence"] = candidate_payload.get(
+            "peptide_sequence", peptide_metadata.get("sequence")
+        )
         candidate.peptide_metadata = peptide_metadata
         prediction_scores = dict(candidate.prediction_scores or {})
         if "binding_rank" in candidate_payload:
@@ -237,7 +274,11 @@ def apply_parsed_alphafold_output(
     case = db.get(Case, case_id)
     if case is None:
         reason = f"parse skipped because case {case_id} was not found"
-        logger.warning("alphafold_output_parse_skipped_missing_case", execution_id=execution_id, case_id=case_id)
+        logger.warning(
+            "alphafold_output_parse_skipped_missing_case",
+            execution_id=execution_id,
+            case_id=case_id,
+        )
         return "skipped_missing_case", reason
 
     try:
@@ -250,14 +291,22 @@ def apply_parsed_alphafold_output(
     _, candidates = ensure_mock_analysis_data(db, case)
     if not candidates or not structure_payload:
         reason = "missing expected parsed payload key 'structure' for alphafold backend"
-        logger.warning("alphafold_output_parse_failed_payload", execution_id=execution_id, has_candidates=bool(candidates))
+        logger.warning(
+            "alphafold_output_parse_failed_payload",
+            execution_id=execution_id,
+            has_candidates=bool(candidates),
+        )
         return "parse_failed", reason
 
     candidate = candidates[0]
     candidate.last_parsed_execution_id = execution_id
     structure_evidence = dict(candidate.structure_evidence or {})
-    structure_evidence["alphafold_status"] = structure_payload.get("status", structure_evidence.get("alphafold_status"))
-    structure_evidence["backend"] = structure_payload.get("backend", structure_evidence.get("backend"))
+    structure_evidence["alphafold_status"] = structure_payload.get(
+        "status", structure_evidence.get("alphafold_status")
+    )
+    structure_evidence["backend"] = structure_payload.get(
+        "backend", structure_evidence.get("backend")
+    )
     for key in (
         "pdb_file",
         "model_cif",
@@ -297,7 +346,9 @@ def enforce_preflight_or_raise(
         involves_sequence_data=involves_sequence_data,
     )
     if result.status != PreflightResult.PASS:
-        raise HTTPException(status_code=403, detail=result.reason or "Safety preflight blocked the action")
+        raise HTTPException(
+            status_code=403, detail=result.reason or "Safety preflight blocked the action"
+        )
 
 
 @asynccontextmanager
@@ -318,7 +369,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8502", "http://127.0.0.1:8502", "http://localhost:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -382,15 +433,25 @@ def pipeline_adapter_run(adapter_name: str, payload: dict, db: Session = Depends
         result=result.__dict__,
         execution_id=execution.id,
     )
-    shell_artifacts = persist_execution_artifacts(db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id)
-    execution.command = {"argv": result.__dict__["command"], "artifact_paths": [artifact.path for artifact in shell_artifacts]}
+    shell_artifacts = persist_execution_artifacts(
+        db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id
+    )
+    execution.command = {
+        "argv": result.__dict__["command"],
+        "artifact_paths": [artifact.path for artifact in shell_artifacts],
+    }
     log_action(
         db,
         case_id=case_id,
         actor="api",
         action="pipeline.adapter.run",
         inputs={"adapter": adapter_name, **payload},
-        outputs={"status": result.status, "return_code": result.return_code, "execution_id": execution.id, "artifact_count": len(shell_artifacts)},
+        outputs={
+            "status": result.status,
+            "return_code": result.return_code,
+            "execution_id": execution.id,
+            "artifact_count": len(shell_artifacts),
+        },
     )
     db.commit()
     return result.__dict__
@@ -455,11 +516,12 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
     case_id = payload.get("case_id")
     case = db.get(Case, case_id) if case_id else None
     if case is not None:
-        involves_external_upload = backend_name == "alphafold_server" and not payload.get("acknowledge_external_upload", False)
+        involves_external_upload = backend_name == "alphafold_server"
+        external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
         enforce_preflight_or_raise(
             action="alphafold_backend_run",
             species_mode=case.species.value,
-            involves_external_upload=involves_external_upload,
+            involves_external_upload=involves_external_upload and not external_upload_acknowledged,
         )
     try:
         backend_status = get_shell_backend_status(backend_name)
@@ -500,7 +562,12 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
     if case_id and payload.get("candidate_id"):
         candidate = db.get(CandidateAntigen, payload["candidate_id"])
         if candidate is not None and candidate.case_id == case_id:
-            structure_payload = json.loads(result.stdout).get("structure", {}) if result.stdout else {}
+            try:
+                structure_payload = (
+                    json.loads(result.stdout).get("structure", {}) if result.stdout else {}
+                )
+            except json.JSONDecodeError:
+                structure_payload = {}
             output_path = structure_payload.get("model_cif") or structure_payload.get("pdb_file")
             confidence_metrics = {
                 key: structure_payload[key]
@@ -529,15 +596,25 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
             )
             db.add(structure_job)
             db.flush()
-    shell_artifacts = persist_execution_artifacts(db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id)
-    execution.command = {"argv": result.__dict__["command"], "artifact_paths": [artifact.path for artifact in shell_artifacts]}
+    shell_artifacts = persist_execution_artifacts(
+        db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id
+    )
+    execution.command = {
+        "argv": result.__dict__["command"],
+        "artifact_paths": [artifact.path for artifact in shell_artifacts],
+    }
     log_action(
         db,
         case_id=case_id,
         actor="api",
         action="alphafold.backend.run",
         inputs={"backend": backend_name, **payload},
-        outputs={"status": result.status, "return_code": result.return_code, "execution_id": execution.id, "artifact_count": len(shell_artifacts)},
+        outputs={
+            "status": result.status,
+            "return_code": result.return_code,
+            "execution_id": execution.id,
+            "artifact_count": len(shell_artifacts),
+        },
     )
     db.commit()
     return result.__dict__
@@ -557,7 +634,9 @@ def list_execution_history(case_id: str, db: Session = Depends(get_db)) -> list[
     )
     artifact_map: dict[str, list[SavedArtifact]] = {}
     for record in artifact_records:
-        artifact_map.setdefault(record.execution_run_id, []).append(build_saved_artifact_record(record=record))
+        artifact_map.setdefault(record.execution_run_id, []).append(
+            build_saved_artifact_record(record=record)
+        )
 
     executions = (
         db.query(ExecutionRun)
@@ -568,7 +647,9 @@ def list_execution_history(case_id: str, db: Session = Depends(get_db)) -> list[
     payloads = []
     for execution in executions:
         item = ExecutionRunRead.model_validate(execution).model_dump()
-        item["artifacts"] = [artifact.model_dump(mode="json") for artifact in artifact_map.get(execution.id, [])]
+        item["artifacts"] = [
+            artifact.model_dump(mode="json") for artifact in artifact_map.get(execution.id, [])
+        ]
         payloads.append(ExecutionRunRead.model_validate(item))
     return payloads
 
@@ -590,58 +671,76 @@ def list_unified_runs(case_id: str, db: Session = Depends(get_db)) -> list[Unifi
     )
     artifact_map: dict[str, list[SavedArtifact]] = {}
     for record in artifact_records:
-        artifact_map.setdefault(record.execution_run_id, []).append(build_saved_artifact_record(record=record))
+        artifact_map.setdefault(record.execution_run_id, []).append(
+            build_saved_artifact_record(record=record)
+        )
 
     runs: list[UnifiedRunRead] = []
     for run in pipeline_runs:
-        runs.append(UnifiedRunRead(
-            id=run.id,
-            case_id=case_id,
-            run_kind="pipeline_run",
-            name=run.current_step or "pipeline",
-            status=run.status.value if hasattr(run.status, 'value') else str(run.status),
-            created_at=run.started_at,
-            details={"completed_steps": run.completed_steps, "total_steps": run.total_steps},
-        ))
+        runs.append(
+            UnifiedRunRead(
+                id=run.id,
+                case_id=case_id,
+                run_kind="pipeline_run",
+                name=run.current_step or "pipeline",
+                status=run.status.value if hasattr(run.status, "value") else str(run.status),
+                created_at=run.started_at,
+                details={"completed_steps": run.completed_steps, "total_steps": run.total_steps},
+            )
+        )
     for run in execution_runs:
-        runs.append(UnifiedRunRead(
-            id=run.id,
-            case_id=case_id,
-            run_kind="execution_run",
-            name=run.runner_name,
-            status=run.status,
-            created_at=run.created_at,
-            details={"runner_kind": run.runner_kind, "return_code": run.return_code},
-            artifacts=artifact_map.get(run.id, []),
-        ))
+        runs.append(
+            UnifiedRunRead(
+                id=run.id,
+                case_id=case_id,
+                run_kind="execution_run",
+                name=run.runner_name,
+                status=run.status,
+                created_at=run.created_at,
+                details={"runner_kind": run.runner_kind, "return_code": run.return_code},
+                artifacts=artifact_map.get(run.id, []),
+            )
+        )
     agent_tasks = db.query(AgentTask).filter(AgentTask.case_id == case_id).all()
     for task in agent_tasks:
-        runs.append(UnifiedRunRead(
-            id=task.id,
-            case_id=case_id,
-            run_kind="agent_task",
-            name=task.skill_name,
-            status=task.status,
-            created_at=task.created_at,
-            details={"framework": task.framework.value if hasattr(task.framework, 'value') else str(task.framework), "logs": task.logs, "artifacts": task.artifacts},
-        ))
+        runs.append(
+            UnifiedRunRead(
+                id=task.id,
+                case_id=case_id,
+                run_kind="agent_task",
+                name=task.skill_name,
+                status=task.status,
+                created_at=task.created_at,
+                details={
+                    "framework": task.framework.value
+                    if hasattr(task.framework, "value")
+                    else str(task.framework),
+                    "logs": task.logs,
+                    "artifacts": task.artifacts,
+                },
+            )
+        )
     for report in reports:
-        runs.append(UnifiedRunRead(
-            id=report.id,
-            case_id=case_id,
-            run_kind="report",
-            name=report.report_type,
-            status="generated",
-            created_at=report.generated_at,
-            details={"generated_by": report.generated_by},
-        ))
+        runs.append(
+            UnifiedRunRead(
+                id=report.id,
+                case_id=case_id,
+                run_kind="report",
+                name=report.report_type,
+                status="generated",
+                created_at=report.generated_at,
+                details={"generated_by": report.generated_by},
+            )
+        )
 
     runs.sort(key=lambda item: item.created_at, reverse=True)
     return runs
 
 
 @app.post("/cases/{case_id}/tasks", response_model=CaseTaskRead, status_code=201)
-def create_case_task(case_id: str, payload: CaseTaskCreate, db: Session = Depends(get_db)) -> CaseTask:
+def create_case_task(
+    case_id: str, payload: CaseTaskCreate, db: Session = Depends(get_db)
+) -> CaseTask:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -649,7 +748,14 @@ def create_case_task(case_id: str, payload: CaseTaskCreate, db: Session = Depend
     task = CaseTask(id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python"))
     db.add(task)
     db.flush()
-    log_action(db, case_id=case_id, actor="api", action="task.created", inputs=payload.model_dump(mode="json"), outputs={"task_id": task.id})
+    log_action(
+        db,
+        case_id=case_id,
+        actor="api",
+        action="task.created",
+        inputs=payload.model_dump(mode="json"),
+        outputs={"task_id": task.id},
+    )
     db.commit()
     db.refresh(task)
     return task
@@ -660,25 +766,41 @@ def list_case_tasks(case_id: str, db: Session = Depends(get_db)) -> list[CaseTas
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    return db.query(CaseTask).filter(CaseTask.case_id == case_id).order_by(CaseTask.created_at.desc()).all()
+    return (
+        db.query(CaseTask)
+        .filter(CaseTask.case_id == case_id)
+        .order_by(CaseTask.created_at.desc())
+        .all()
+    )
 
 
 @app.patch("/tasks/{task_id}", response_model=CaseTaskRead)
-def update_case_task(task_id: str, payload: CaseTaskUpdate, db: Session = Depends(get_db)) -> CaseTask:
+def update_case_task(
+    task_id: str, payload: CaseTaskUpdate, db: Session = Depends(get_db)
+) -> CaseTask:
     task = db.get(CaseTask, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     updates = payload.model_dump(exclude_unset=True, mode="python")
     for field, value in updates.items():
         setattr(task, field, value)
-    log_action(db, case_id=task.case_id, actor="api", action="task.updated", inputs=updates, outputs={"task_id": task.id})
+    log_action(
+        db,
+        case_id=task.case_id,
+        actor="api",
+        action="task.updated",
+        inputs=updates,
+        outputs={"task_id": task.id},
+    )
     db.commit()
     db.refresh(task)
     return task
 
 
 @app.post("/cases/{case_id}/agent-tasks", response_model=AgentTaskRead, status_code=201)
-def create_agent_task(case_id: str, payload: AgentTaskCreate, db: Session = Depends(get_db)) -> AgentTask:
+def create_agent_task(
+    case_id: str, payload: AgentTaskCreate, db: Session = Depends(get_db)
+) -> AgentTask:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -704,7 +826,12 @@ def list_agent_tasks(case_id: str, db: Session = Depends(get_db)) -> list[AgentT
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    return db.query(AgentTask).filter(AgentTask.case_id == case_id).order_by(AgentTask.created_at.desc()).all()
+    return (
+        db.query(AgentTask)
+        .filter(AgentTask.case_id == case_id)
+        .order_by(AgentTask.created_at.desc())
+        .all()
+    )
 
 
 @app.get("/agent-tasks/{task_id}", response_model=AgentTaskRead)
@@ -716,7 +843,9 @@ def get_agent_task(task_id: str, db: Session = Depends(get_db)) -> AgentTask:
 
 
 @app.patch("/agent-tasks/{task_id}", response_model=AgentTaskRead)
-def update_agent_task(task_id: str, payload: AgentTaskUpdate, db: Session = Depends(get_db)) -> AgentTask:
+def update_agent_task(
+    task_id: str, payload: AgentTaskUpdate, db: Session = Depends(get_db)
+) -> AgentTask:
     task = db.get(AgentTask, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Agent task not found")
@@ -768,7 +897,14 @@ def create_subject(case_id: str, payload: SubjectCreate, db: Session = Depends(g
     subject = Subject(id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python"))
     db.add(subject)
     db.flush()
-    log_action(db, case_id=case_id, actor="api", action="subject.created", inputs=payload.model_dump(mode="json"), outputs={"subject_id": subject.id})
+    log_action(
+        db,
+        case_id=case_id,
+        actor="api",
+        action="subject.created",
+        inputs=payload.model_dump(mode="json"),
+        outputs={"subject_id": subject.id},
+    )
     db.commit()
     db.refresh(subject)
     return subject
@@ -779,7 +915,12 @@ def list_subjects(case_id: str, db: Session = Depends(get_db)) -> list[Subject]:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    return db.query(Subject).filter(Subject.case_id == case_id).order_by(Subject.created_at.desc()).all()
+    return (
+        db.query(Subject)
+        .filter(Subject.case_id == case_id)
+        .order_by(Subject.created_at.desc())
+        .all()
+    )
 
 
 @app.get("/cases", response_model=list[CaseRead])
@@ -859,7 +1000,9 @@ def list_samples(case_id: str, db: Session = Depends(get_db)) -> list[Sample]:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    return db.query(Sample).filter(Sample.case_id == case_id).order_by(Sample.created_at.desc()).all()
+    return (
+        db.query(Sample).filter(Sample.case_id == case_id).order_by(Sample.created_at.desc()).all()
+    )
 
 
 @app.get("/cases/{case_id}/variants", response_model=list[VariantRead])
@@ -868,7 +1011,12 @@ def list_variants(case_id: str, db: Session = Depends(get_db)) -> list[Variant]:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    variants = db.query(Variant).filter(Variant.case_id == case_id).order_by(Variant.created_at.asc()).all()
+    variants = (
+        db.query(Variant)
+        .filter(Variant.case_id == case_id)
+        .order_by(Variant.created_at.asc())
+        .all()
+    )
     if variants:
         return variants
     variants, _ = ensure_mock_analysis_data(db, case)
@@ -889,7 +1037,14 @@ def create_variant(case_id: str, payload: VariantCreate, db: Session = Depends(g
     variant = Variant(id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python"))
     db.add(variant)
     db.flush()
-    log_action(db, case_id=case_id, actor="api", action="variant.created", inputs=payload.model_dump(mode="json"), outputs={"variant_id": variant.id})
+    log_action(
+        db,
+        case_id=case_id,
+        actor="api",
+        action="variant.created",
+        inputs=payload.model_dump(mode="json"),
+        outputs={"variant_id": variant.id},
+    )
     db.commit()
     db.refresh(variant)
     return variant
@@ -907,7 +1062,9 @@ def list_candidates(case_id: str, db: Session = Depends(get_db)) -> list[Candida
 
 
 @app.post("/cases/{case_id}/candidates", response_model=CandidateRead, status_code=201)
-def create_candidate(case_id: str, payload: CandidateCreate, db: Session = Depends(get_db)) -> CandidateAntigen:
+def create_candidate(
+    case_id: str, payload: CandidateCreate, db: Session = Depends(get_db)
+) -> CandidateAntigen:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -915,17 +1072,28 @@ def create_candidate(case_id: str, payload: CandidateCreate, db: Session = Depen
     if variant is None or variant.case_id != case_id:
         raise HTTPException(status_code=404, detail="Variant not found")
 
-    candidate = CandidateAntigen(id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python"))
+    candidate = CandidateAntigen(
+        id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python")
+    )
     db.add(candidate)
     db.flush()
-    log_action(db, case_id=case_id, actor="api", action="candidate.created", inputs=payload.model_dump(mode="json"), outputs={"candidate_id": candidate.id})
+    log_action(
+        db,
+        case_id=case_id,
+        actor="api",
+        action="candidate.created",
+        inputs=payload.model_dump(mode="json"),
+        outputs={"candidate_id": candidate.id},
+    )
     db.commit()
     db.refresh(candidate)
     return candidate
 
 
 @app.patch("/variants/{variant_id}/review", response_model=VariantRead)
-def review_variant(variant_id: str, payload: ReviewUpdate, db: Session = Depends(get_db)) -> Variant:
+def review_variant(
+    variant_id: str, payload: ReviewUpdate, db: Session = Depends(get_db)
+) -> Variant:
     variant = db.get(Variant, variant_id)
     if variant is None:
         raise HTTPException(status_code=404, detail="Variant not found")
@@ -946,7 +1114,9 @@ def review_variant(variant_id: str, payload: ReviewUpdate, db: Session = Depends
 
 
 @app.patch("/candidates/{candidate_id}/review", response_model=CandidateRead)
-def review_candidate(candidate_id: str, payload: ReviewUpdate, db: Session = Depends(get_db)) -> CandidateAntigen:
+def review_candidate(
+    candidate_id: str, payload: ReviewUpdate, db: Session = Depends(get_db)
+) -> CandidateAntigen:
     candidate = db.get(CandidateAntigen, candidate_id)
     if candidate is None:
         raise HTTPException(status_code=404, detail="Candidate not found")
@@ -967,7 +1137,9 @@ def review_candidate(candidate_id: str, payload: ReviewUpdate, db: Session = Dep
 
 
 @app.post("/cases/{case_id}/structure-jobs", response_model=StructureJobRead, status_code=201)
-def create_structure_job(case_id: str, payload: StructureJobCreate, db: Session = Depends(get_db)) -> StructureJob:
+def create_structure_job(
+    case_id: str, payload: StructureJobCreate, db: Session = Depends(get_db)
+) -> StructureJob:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -978,7 +1150,14 @@ def create_structure_job(case_id: str, payload: StructureJobCreate, db: Session 
     job = StructureJob(id=str(uuid4()), case_id=case_id, **payload.model_dump(mode="python"))
     db.add(job)
     db.flush()
-    log_action(db, case_id=case_id, actor="api", action="structure_job.created", inputs=payload.model_dump(mode="json"), outputs={"structure_job_id": job.id})
+    log_action(
+        db,
+        case_id=case_id,
+        actor="api",
+        action="structure_job.created",
+        inputs=payload.model_dump(mode="json"),
+        outputs={"structure_job_id": job.id},
+    )
     db.commit()
     db.refresh(job)
     return job
@@ -989,7 +1168,12 @@ def list_structure_jobs(case_id: str, db: Session = Depends(get_db)) -> list[Str
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    return db.query(StructureJob).filter(StructureJob.case_id == case_id).order_by(StructureJob.created_at.desc()).all()
+    return (
+        db.query(StructureJob)
+        .filter(StructureJob.case_id == case_id)
+        .order_by(StructureJob.created_at.desc())
+        .all()
+    )
 
 
 @app.get("/structure-jobs/{job_id}", response_model=StructureJobRead)
@@ -1114,25 +1298,57 @@ def build_case_bundle(case_id: str, db: Session) -> CaseBundleRead:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    samples = db.query(Sample).filter(Sample.case_id == case_id).order_by(Sample.created_at.desc()).all()
-    subjects = db.query(Subject).filter(Subject.case_id == case_id).order_by(Subject.created_at.desc()).all()
-    variants = db.query(Variant).filter(Variant.case_id == case_id).order_by(Variant.created_at.desc()).all()
+    samples = (
+        db.query(Sample).filter(Sample.case_id == case_id).order_by(Sample.created_at.desc()).all()
+    )
+    subjects = (
+        db.query(Subject)
+        .filter(Subject.case_id == case_id)
+        .order_by(Subject.created_at.desc())
+        .all()
+    )
+    variants = (
+        db.query(Variant)
+        .filter(Variant.case_id == case_id)
+        .order_by(Variant.created_at.desc())
+        .all()
+    )
     candidates = (
         db.query(CandidateAntigen)
         .filter(CandidateAntigen.case_id == case_id)
         .order_by(CandidateAntigen.created_at.desc())
         .all()
     )
-    tasks = db.query(CaseTask).filter(CaseTask.case_id == case_id).order_by(CaseTask.created_at.desc()).all()
-    agent_tasks = db.query(AgentTask).filter(AgentTask.case_id == case_id).order_by(AgentTask.created_at.desc()).all()
-    reports = db.query(Report).filter(Report.case_id == case_id).order_by(Report.generated_at.desc()).all()
+    tasks = (
+        db.query(CaseTask)
+        .filter(CaseTask.case_id == case_id)
+        .order_by(CaseTask.created_at.desc())
+        .all()
+    )
+    agent_tasks = (
+        db.query(AgentTask)
+        .filter(AgentTask.case_id == case_id)
+        .order_by(AgentTask.created_at.desc())
+        .all()
+    )
+    reports = (
+        db.query(Report)
+        .filter(Report.case_id == case_id)
+        .order_by(Report.generated_at.desc())
+        .all()
+    )
     latest_pipeline_run = (
         db.query(PipelineRun)
         .filter(PipelineRun.case_id == case_id)
         .order_by(PipelineRun.started_at.desc())
         .first()
     )
-    audit_log = db.query(AuditLog).filter(AuditLog.case_id == case_id).order_by(AuditLog.timestamp.desc()).all()
+    audit_log = (
+        db.query(AuditLog)
+        .filter(AuditLog.case_id == case_id)
+        .order_by(AuditLog.timestamp.desc())
+        .all()
+    )
 
     return CaseBundleRead(
         case=CaseRead.model_validate(case),
@@ -1143,7 +1359,9 @@ def build_case_bundle(case_id: str, db: Session) -> CaseBundleRead:
         tasks=[CaseTaskRead.model_validate(task) for task in tasks],
         agent_tasks=[AgentTaskRead.model_validate(task) for task in agent_tasks],
         reports=[serialize_report(report) for report in reports],
-        latest_pipeline_run=serialize_pipeline_run(latest_pipeline_run) if latest_pipeline_run else None,
+        latest_pipeline_run=serialize_pipeline_run(latest_pipeline_run)
+        if latest_pipeline_run
+        else None,
         audit_log=[AuditLogRead.model_validate(entry) for entry in audit_log],
         safety_label=RESEARCH_LABEL,
     )
@@ -1177,9 +1395,16 @@ def export_report_payload(report: Report, export_format: str) -> ReportExport:
             f"- {row.get('gene') or 'unknown'} | {row.get('protein_change') or 'n/a'} | bind={row.get('binding_rank')} | immunogenicity={row.get('immunogenicity')} | mhc={row.get('mhc_context') or 'n/a'}"
             for row in candidate_rows
         ] or ["- none"]
-        checklist_lines = [f"- [ ] {item}" for item in (content_json.get("missing_data_checklist") or [])] or ["- [ ] none"]
-        tool_lines = [f"- {name}: {version}" for name, version in (content_json.get("tool_versions") or {}).items()] or ["- none"]
-        safety_lines = [f"- {item}" for item in (content_json.get("safety_labels") or [])] or ["- none"]
+        checklist_lines = [
+            f"- [ ] {item}" for item in (content_json.get("missing_data_checklist") or [])
+        ] or ["- [ ] none"]
+        tool_lines = [
+            f"- {name}: {version}"
+            for name, version in (content_json.get("tool_versions") or {}).items()
+        ] or ["- none"]
+        safety_lines = [f"- {item}" for item in (content_json.get("safety_labels") or [])] or [
+            "- none"
+        ]
         markdown_sections.extend(
             [
                 "## Candidate antigens",
@@ -1204,11 +1429,24 @@ def export_report_payload(report: Report, export_format: str) -> ReportExport:
             ]
         )
     elif report.report_type == "ethics_package":
-        consent_lines = [f"- {name}: {value}" for name, value in (content_json.get("consent_templates") or {}).items()] or ["- none"]
-        privacy_lines = [f"- {item}" for item in (content_json.get("privacy_notices") or [])] or ["- none"]
-        risk_lines = [f"- risk: {item}" for item in ((content_json.get("risk_benefit_summary") or {}).get("risks") or [])]
-        benefit_lines = [f"- benefit: {item}" for item in ((content_json.get("risk_benefit_summary") or {}).get("benefits") or [])]
-        oversight_lines = [f"- [ ] {item}" for item in (content_json.get("professional_oversight_checklist") or [])] or ["- [ ] none"]
+        consent_lines = [
+            f"- {name}: {value}"
+            for name, value in (content_json.get("consent_templates") or {}).items()
+        ] or ["- none"]
+        privacy_lines = [f"- {item}" for item in (content_json.get("privacy_notices") or [])] or [
+            "- none"
+        ]
+        risk_lines = [
+            f"- risk: {item}"
+            for item in ((content_json.get("risk_benefit_summary") or {}).get("risks") or [])
+        ]
+        benefit_lines = [
+            f"- benefit: {item}"
+            for item in ((content_json.get("risk_benefit_summary") or {}).get("benefits") or [])
+        ]
+        oversight_lines = [
+            f"- [ ] {item}" for item in (content_json.get("professional_oversight_checklist") or [])
+        ] or ["- [ ] none"]
         markdown_sections.extend(
             [
                 "## Consent templates",
@@ -1253,9 +1491,25 @@ def export_case_bundle_payload(bundle: CaseBundleRead, export_format: str) -> Ca
             None,
         )
     latest_report_types = ", ".join(report.report_type for report in bundle.reports[:3]) or "none"
-    variant_statuses = ", ".join(sorted({variant.review_status for variant in bundle.variants})) or "none"
-    candidate_statuses = ", ".join(sorted({candidate.review_status for candidate in bundle.candidates})) or "none"
-    agent_frameworks = ", ".join(sorted({task.framework.value if hasattr(task.framework, 'value') else str(task.framework) for task in bundle.agent_tasks})) or "none"
+    variant_statuses = (
+        ", ".join(sorted({variant.review_status for variant in bundle.variants})) or "none"
+    )
+    candidate_statuses = (
+        ", ".join(sorted({candidate.review_status for candidate in bundle.candidates})) or "none"
+    )
+    agent_frameworks = (
+        ", ".join(
+            sorted(
+                {
+                    task.framework.value
+                    if hasattr(task.framework, "value")
+                    else str(task.framework)
+                    for task in bundle.agent_tasks
+                }
+            )
+        )
+        or "none"
+    )
     markdown = "\n\n".join(
         [
             f"# Case Bundle: {bundle.case.id}",
@@ -1287,7 +1541,14 @@ def export_case_bundle_payload(bundle: CaseBundleRead, export_format: str) -> Ca
     )
 
 
-def persist_artifact(*, artifact_type: str, identifier: str, export_format: str, content_text: str | None = None, content_json: dict | None = None) -> tuple[str, str]:
+def persist_artifact(
+    *,
+    artifact_type: str,
+    identifier: str,
+    export_format: str,
+    content_text: str | None = None,
+    content_json: dict | None = None,
+) -> tuple[str, str]:
     """Persist artifact to disk and return (path, sha256_hex)."""
     artifact_dir = Path(settings.artifact_root).expanduser() / artifact_type
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -1357,7 +1618,9 @@ def register_artifact_record(
     return build_saved_artifact_record(record=record)
 
 
-def persist_execution_artifacts(*, db: Session, result: dict, execution_id: str, case_id: str | None) -> list[SavedArtifact]:
+def persist_execution_artifacts(
+    *, db: Session, result: dict, execution_id: str, case_id: str | None
+) -> list[SavedArtifact]:
     artifacts: list[SavedArtifact] = []
     log_path, log_hash = persist_artifact(
         artifact_type="executions",
@@ -1369,9 +1632,9 @@ def persist_execution_artifacts(*, db: Session, result: dict, execution_id: str,
                 f"Status: {result['status']}",
                 f"Command: {' '.join(result['command'])}",
                 "## STDOUT",
-                result.get('stdout') or "",
+                result.get("stdout") or "",
                 "## STDERR",
-                result.get('stderr') or "",
+                result.get("stderr") or "",
             ]
         ),
     )
@@ -1401,7 +1664,9 @@ def persist_execution_artifacts(*, db: Session, result: dict, execution_id: str,
     )
     output_raw = output_payload.encode("utf-8")
     output_hash = hashlib.sha256(output_raw).hexdigest()
-    output_file = Path(settings.artifact_root).expanduser() / "executions" / f"{execution_id}-output.json"
+    output_file = (
+        Path(settings.artifact_root).expanduser() / "executions" / f"{execution_id}-output.json"
+    )
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_bytes(output_raw)
     artifacts.append(
@@ -1425,7 +1690,11 @@ def persist_execution_artifacts(*, db: Session, result: dict, execution_id: str,
             artifact_path = structure_payload.get(key)
             if artifact_path and Path(artifact_path).exists() and Path(artifact_path).is_file():
                 source_file = Path(artifact_path)
-                copied_file = Path(settings.artifact_root).expanduser() / "executions" / f"{execution_id}-{source_file.name}"
+                copied_file = (
+                    Path(settings.artifact_root).expanduser()
+                    / "executions"
+                    / f"{execution_id}-{source_file.name}"
+                )
                 copied_file.parent.mkdir(parents=True, exist_ok=True)
                 raw = source_file.read_bytes()
                 copied_file.write_bytes(raw)
@@ -1540,7 +1809,12 @@ def list_reports(case_id: str, db: Session = Depends(get_db)) -> list[ReportRead
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    reports = db.query(Report).filter(Report.case_id == case_id).order_by(Report.generated_at.desc()).all()
+    reports = (
+        db.query(Report)
+        .filter(Report.case_id == case_id)
+        .order_by(Report.generated_at.desc())
+        .all()
+    )
     return [serialize_report(report) for report in reports]
 
 
@@ -1564,7 +1838,9 @@ def export_report(
     case = db.get(Case, report.case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    enforce_preflight_or_raise(action="export_report", species_mode=case.species.value, is_export=True)
+    enforce_preflight_or_raise(
+        action="export_report", species_mode=case.species.value, is_export=True
+    )
     payload = export_report_payload(report, export_format)
     log_action(
         db,
@@ -1590,7 +1866,9 @@ def save_report(
     case = db.get(Case, report.case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    enforce_preflight_or_raise(action="save_report", species_mode=case.species.value, is_export=True)
+    enforce_preflight_or_raise(
+        action="save_report", species_mode=case.species.value, is_export=True
+    )
     payload = export_report_payload(report, export_format)
     path, content_hash = persist_artifact(
         artifact_type="reports",
@@ -1657,7 +1935,9 @@ def export_case_bundle(
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    enforce_preflight_or_raise(action="export_case_bundle", species_mode=case.species.value, is_export=True)
+    enforce_preflight_or_raise(
+        action="export_case_bundle", species_mode=case.species.value, is_export=True
+    )
     bundle = build_case_bundle(case_id, db)
     payload = export_case_bundle_payload(bundle, export_format)
     log_action(
@@ -1681,7 +1961,9 @@ def save_case_bundle(
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    enforce_preflight_or_raise(action="save_case_bundle", species_mode=case.species.value, is_export=True)
+    enforce_preflight_or_raise(
+        action="save_case_bundle", species_mode=case.species.value, is_export=True
+    )
     bundle = build_case_bundle(case_id, db)
     payload = export_case_bundle_payload(bundle, export_format)
     path, content_hash = persist_artifact(
@@ -1758,7 +2040,9 @@ def get_audit_log(case_id: str, db: Session = Depends(get_db)) -> list[AuditLog]
 
 
 @app.post("/safety/preflight", response_model=SafetyPreflightResponse)
-def safety_preflight(payload: SafetyPreflightRequest, db: Session = Depends(get_db)) -> SafetyPreflightResponse:
+def safety_preflight(
+    payload: SafetyPreflightRequest, db: Session = Depends(get_db)
+) -> SafetyPreflightResponse:
     result = preflight_action(
         action=payload.action,
         species_mode=payload.species_mode,
@@ -1805,16 +2089,20 @@ if _audit_catchall_idx is not None:
         db: Session = Depends(get_db),
     ):
         from backend.app.privacy import export_audit_log as _export  # noqa: PLC0415
+
         try:
             content = _export(db, case_id=case_id, format=format)
         except Exception:
             content = json.dumps({"audit_log": [], "exported_at": ""})
         if format == "markdown":
             from fastapi.responses import PlainTextResponse  # noqa: PLC0415
+
             return PlainTextResponse(content=content, media_type="text/markdown")
         return JSONResponse(content=json.loads(content))
 
-    app.routes.insert(_audit_catchall_idx, _APIRoute("/audit/export", _audit_export_fn, methods=["GET"]))
+    app.routes.insert(
+        _audit_catchall_idx, _APIRoute("/audit/export", _audit_export_fn, methods=["GET"])
+    )
 
 
 # ===========================================================================
@@ -1822,7 +2110,9 @@ if _audit_catchall_idx is not None:
 # ===========================================================================
 
 import re as _re  # noqa: E402
+
 from sqlalchemy.exc import OperationalError as _OperationalError  # noqa: E402
+
 from backend.app.db import SessionLocal as _SessionLocal  # noqa: E402
 
 
@@ -2013,16 +2303,20 @@ async def _handle_schema_drift(request, exc: _OperationalError):
 # 1. Variant Pathogenicity
 # ---------------------------------------------------------------------------
 
+
+from pydantic import BaseModel as _BaseModel  # noqa: E402
+from pydantic import field_validator
+
 from backend.app.modes.variant_pathogenicity import (  # noqa: E402
     ALPHAMISSENSE_SCORES,
-    lookup_alphamissense,
-    batch_lookup as vp_batch_lookup,
+    build_pathogenicity_report,
     classify_variant_origin,
     estimate_stability_impact,
-    build_pathogenicity_report,
+    lookup_alphamissense,
 )
-from pydantic import BaseModel as _BaseModel, field_validator  # noqa: E402
-from typing import Optional as _Optional  # noqa: E402
+from backend.app.modes.variant_pathogenicity import (
+    batch_lookup as vp_batch_lookup,
+)
 
 
 class _AlphaMissenseLookupRequest(_BaseModel):
@@ -2040,8 +2334,8 @@ class _StabilityImpactRequest(_BaseModel):
 
 
 class _ClassifyOriginRequest(_BaseModel):
-    vaf: _Optional[float] = None
-    quality_metrics: _Optional[dict] = None
+    vaf: float | None = None
+    quality_metrics: dict | None = None
 
 
 @app.get("/cases/{case_id}/variants/pathogenicity")
@@ -2056,7 +2350,13 @@ def get_case_pathogenicity_report(case_id: str, db: Session = Depends(get_db)) -
 def alphamissense_lookup(payload: _AlphaMissenseLookupRequest) -> dict:
     result = lookup_alphamissense(payload.gene, payload.mutation)
     if result is None:
-        return {"found": False, "gene": payload.gene, "mutation": payload.mutation, "score": None, "classification": None}
+        return {
+            "found": False,
+            "gene": payload.gene,
+            "mutation": payload.mutation,
+            "score": None,
+            "classification": None,
+        }
     return {
         "found": True,
         "gene": result.gene,
@@ -2125,16 +2425,16 @@ def get_known_pathogenic() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.drug_discovery import (  # noqa: E402
+    APPROVED_DRUG_LIBRARY,
+    KNOWN_DRUG_TARGETS,
+    build_drug_discovery_report,
+    find_repurposing_candidates,
+    predict_admet,
+    predict_allosteric_sites,
     predict_binding_sites,
+    predict_cofold,
     screen_compound_library,
     screen_covalent_candidates,
-    find_repurposing_candidates,
-    predict_allosteric_sites,
-    build_drug_discovery_report,
-    predict_cofold,
-    predict_admet,
-    KNOWN_DRUG_TARGETS,
-    APPROVED_DRUG_LIBRARY,
 )
 
 
@@ -2346,15 +2646,15 @@ def drug_discovery_admet(payload: _ADMETRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.vaccine_design import (  # noqa: E402
-    predict_b_cell_epitopes,
-    analyze_epitope_conservation,
-    build_multi_epitope_construct,
-    get_pathogen_targets,
-    optimize_mrna_construct,
-    rapid_response_pipeline,
-    build_vaccine_design_report,
     PATHOGEN_DATABASE,
     EpitopeCandidate,
+    analyze_epitope_conservation,
+    build_multi_epitope_construct,
+    build_vaccine_design_report,
+    get_pathogen_targets,
+    optimize_mrna_construct,
+    predict_b_cell_epitopes,
+    rapid_response_pipeline,
 )
 
 
@@ -2519,15 +2819,15 @@ def get_case_vaccine_design_report(case_id: str, db: Session = Depends(get_db)) 
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.antibody_design import (  # noqa: E402
-    dock_antibody_antigen,
-    predict_nanobody_binding,
-    design_binder,
-    analyze_checkpoint_target,
-    identify_cdr_regions,
-    assess_humanization,
-    design_bispecific,
     KNOWN_ANTIBODY_TARGETS,
     KNOWN_NANOBODIES,
+    analyze_checkpoint_target,
+    assess_humanization,
+    design_binder,
+    design_bispecific,
+    dock_antibody_antigen,
+    identify_cdr_regions,
+    predict_nanobody_binding,
 )
 
 
@@ -2568,7 +2868,9 @@ class _BispecificRequest(_BaseModel):
 
 @app.post("/antibody-design/dock")
 def antibody_dock(payload: _DockRequest) -> dict:
-    results = dock_antibody_antigen(payload.antibody_sequence, payload.antigen_gene, n_seeds=payload.n_seeds)
+    results = dock_antibody_antigen(
+        payload.antibody_sequence, payload.antigen_gene, n_seeds=payload.n_seeds
+    )
     return {
         "antigen_gene": payload.antigen_gene.upper(),
         "result_count": len(results),
@@ -2615,7 +2917,9 @@ def antibody_design_binder(payload: _DesignBinderRequest) -> dict:
 def antibody_checkpoint_analysis(payload: _CheckpointAnalysisRequest) -> dict:
     result = analyze_checkpoint_target(payload.target)
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Checkpoint target '{payload.target}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Checkpoint target '{payload.target}' not found"
+        )
     return {
         "target": result.target,
         "drug_name": result.drug_name,
@@ -2670,7 +2974,8 @@ def antibody_bispecific(payload: _BispecificRequest) -> dict:
 @app.get("/antibody-design/known-targets")
 def antibody_known_targets() -> dict:
     checkpoint_targets = [
-        t for t, info in KNOWN_ANTIBODY_TARGETS.items()
+        t
+        for t, info in KNOWN_ANTIBODY_TARGETS.items()
         if info.get("target_class") == "immune_checkpoint"
     ]
     known_nanobodies = list(KNOWN_NANOBODIES.keys())
@@ -2687,13 +2992,13 @@ def antibody_known_targets() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.gene_therapy import (  # noqa: E402
-    design_guides,
-    score_guide,
     analyze_pam_specificity,
-    recommend_serotype,
-    score_transgene_safety,
+    design_guides,
     model_base_edit,
     model_prime_edit,
+    recommend_serotype,
+    score_guide,
+    score_transgene_safety,
 )
 
 
@@ -2734,6 +3039,7 @@ class _PrimeEditRequest(_BaseModel):
 @app.get("/gene-therapy/cas-variants")
 def gene_therapy_cas_variants() -> dict:
     import backend.app.modes.gene_therapy as _gt
+
     variants_dict = {}
     _cas_db = getattr(_gt, "KNOWN_CAS_VARIANTS", None) or getattr(_gt, "CAS_VARIANTS", {})
     for k, v in _cas_db.items():
@@ -2750,7 +3056,9 @@ def gene_therapy_cas_variants() -> dict:
 
 @app.post("/gene-therapy/design-guides")
 def gene_therapy_design_guides(payload: _DesignGuidesRequest) -> dict:
-    guides = design_guides(payload.target_gene, cas_type=payload.cas_type, n_guides=payload.n_guides)
+    guides = design_guides(
+        payload.target_gene, cas_type=payload.cas_type, n_guides=payload.n_guides
+    )
     return {
         "target_gene": payload.target_gene.upper(),
         "cas_type": payload.cas_type,
@@ -2843,18 +3151,18 @@ def gene_therapy_prime_edit(payload: _PrimeEditRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.protein_misfolding import (  # noqa: E402
-    assess_misfolding_risk,
-    identify_aggregation_regions,
-    find_chaperone_targets,
-    detect_prion_domains,
     analyze_lsd,
     analyze_neurodegeneration,
+    assess_misfolding_risk,
+    detect_prion_domains,
+    find_chaperone_targets,
+    identify_aggregation_regions,
 )
 
 
 class _MisfoldingRiskRequest(_BaseModel):
     gene: str
-    mutations: _Optional[list[str]] = None
+    mutations: list[str] | None = None
 
 
 class _AggregationRegionsRequest(_BaseModel):
@@ -2987,9 +3295,12 @@ def misfolding_neurodegeneration(payload: _NeurodegenerationRequest) -> dict:
 @app.get("/misfolding/known-diseases")
 def misfolding_known_diseases() -> dict:
     import backend.app.modes.protein_misfolding as _pm
+
     diseases = []
     if hasattr(_pm, "MISFOLDING_DISEASES"):
-        diseases = [{"gene": gene, "disease": desc} for gene, desc in _pm.MISFOLDING_DISEASES.items()]
+        diseases = [
+            {"gene": gene, "disease": desc} for gene, desc in _pm.MISFOLDING_DISEASES.items()
+        ]
     return {"count": len(diseases), "diseases": diseases}
 
 
@@ -2998,10 +3309,10 @@ def misfolding_known_diseases() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.ppi_mapping import (  # noqa: E402
-    predict_ppi,
     assess_interface_druggability,
     map_to_pathway,
     predict_host_pathogen_ppi,
+    predict_ppi,
     suggest_combinations,
 )
 
@@ -3101,6 +3412,7 @@ def ppi_combination_targets(payload: _CombinationTargetsRequest) -> dict:
 @app.get("/ppi/known-interactions")
 def ppi_known_interactions() -> dict:
     import backend.app.modes.ppi_mapping as _ppi_module
+
     interactions: dict = getattr(_ppi_module, "KNOWN_CANCER_PPIS", {})
     host_pathogen: dict = getattr(_ppi_module, "KNOWN_HOST_PATHOGEN_PPIS", {})
     return {
@@ -3116,10 +3428,12 @@ def ppi_known_interactions() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.enzyme_engineering import (  # noqa: E402
-    model_enzyme_substrate,
-    suggest_mutations as enzyme_suggest_mutations,
     design_ert,
     find_prodrug_system,
+    model_enzyme_substrate,
+)
+from backend.app.modes.enzyme_engineering import (
+    suggest_mutations as enzyme_suggest_mutations,
 )
 
 
@@ -3180,7 +3494,9 @@ def enzyme_suggest_mutations_endpoint(payload: _EnzymeSuggestMutationsRequest) -
 def enzyme_design_ert_endpoint(payload: _EnzymeDesignERTRequest) -> dict:
     result = design_ert(payload.enzyme_gene, payload.disease)
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Enzyme '{payload.enzyme_gene}' not found in ERT database")
+        raise HTTPException(
+            status_code=404, detail=f"Enzyme '{payload.enzyme_gene}' not found in ERT database"
+        )
     return {
         "enzyme_gene": result.enzyme_gene,
         "disease": result.disease,
@@ -3194,6 +3510,7 @@ def enzyme_design_ert_endpoint(payload: _EnzymeDesignERTRequest) -> dict:
 @app.get("/enzyme/known-therapeutic")
 def enzyme_known_therapeutic() -> dict:
     import backend.app.modes.enzyme_engineering as _ee
+
     enzymes: dict = {}
     for attr in ("KNOWN_THERAPEUTIC_ENZYMES", "THERAPEUTIC_ENZYME_DATABASE"):
         if hasattr(_ee, attr):
@@ -3205,6 +3522,7 @@ def enzyme_known_therapeutic() -> dict:
 @app.get("/enzyme/prodrug-systems")
 def enzyme_prodrug_systems() -> dict:
     import backend.app.modes.enzyme_engineering as _ee
+
     systems: dict = {}
     if hasattr(_ee, "KNOWN_PRODRUG_SYSTEMS"):
         systems = _ee.KNOWN_PRODRUG_SYSTEMS
@@ -3234,14 +3552,16 @@ def enzyme_prodrug_lookup(payload: _EnzymeProdugLookupRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.modes.tcr_pmhc import (  # noqa: E402
-    predict_ternary_complex,
-    score_tcell_response,
     analyze_cdr_loops,
-    run_multiseed_sampling,
-    predict_immunogenicity as tcr_predict_immunogenicity,
+    build_immunogenicity_report,
     get_known_tcr_pmhc_complexes,
     lookup_tcr_pmhc,
-    build_immunogenicity_report,
+    predict_ternary_complex,
+    run_multiseed_sampling,
+    score_tcell_response,
+)
+from backend.app.modes.tcr_pmhc import (
+    predict_immunogenicity as tcr_predict_immunogenicity,
 )
 
 
@@ -3281,7 +3601,9 @@ def tcr_predict_ternary(payload: _TCRRequest) -> dict:
 
 @app.post("/tcr-pmhc/score-tcell-response")
 def tcr_score_tcell_response(payload: _TCRRequest) -> dict:
-    complex_result = predict_ternary_complex(payload.peptide, payload.mhc_allele, payload.tcr_sequence)
+    complex_result = predict_ternary_complex(
+        payload.peptide, payload.mhc_allele, payload.tcr_sequence
+    )
     result = score_tcell_response(complex_result)
     return {
         "binding_geometry_score": result.binding_geometry_score,
@@ -3311,7 +3633,9 @@ def tcr_analyze_cdr_loops(payload: _TCRCDRRequest) -> dict:
 
 @app.post("/tcr-pmhc/multiseed-sampling")
 def tcr_multiseed_sampling(payload: _TCRMultiseedRequest) -> dict:
-    result = run_multiseed_sampling(payload.peptide, payload.mhc_allele, payload.tcr_sequence, n_seeds=payload.n_seeds)
+    result = run_multiseed_sampling(
+        payload.peptide, payload.mhc_allele, payload.tcr_sequence, n_seeds=payload.n_seeds
+    )
     return {
         "n_seeds": result.n_seeds,
         "mean_score": result.mean_score,
@@ -3347,7 +3671,9 @@ def tcr_known_complexes() -> dict:
 def tcr_lookup_peptide(peptide: str) -> dict:
     result = lookup_tcr_pmhc(peptide)
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Peptide '{peptide}' not found in TCR-pMHC database")
+        raise HTTPException(
+            status_code=404, detail=f"Peptide '{peptide}' not found in TCR-pMHC database"
+        )
     return {"found": True, "peptide": peptide, "complex": result}
 
 
@@ -3361,9 +3687,9 @@ def tcr_full_report(payload: _TCRRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.conformational_ensemble import (  # noqa: E402
-    sample_conformational_ensemble,
-    get_dominant_state,
     calculate_flexibility_profile,
+    get_dominant_state,
+    sample_conformational_ensemble,
 )
 
 
@@ -3425,10 +3751,10 @@ def ensemble_flexibility_profile(payload: _EnsembleFlexibilityRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.md_handoff import (  # noqa: E402
-    export_for_openmm,
-    export_for_gromacs,
-    validate_structure_for_md,
     MDExportConfig,
+    export_for_gromacs,
+    export_for_openmm,
+    validate_structure_for_md,
 )
 
 
@@ -3495,15 +3821,15 @@ def md_validate_structure(payload: _MDValidateRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.workflow_integration import (  # noqa: E402
+    TASK_CLASS_BENCHMARKS,
+    TOOL_VERSIONS,
+    check_all_versions,
     compute_ensemble_heatmap,
-    recommend_backend,
-    run_batch_prediction,
+    get_version_manifest,
     normalize_pdb,
     pin_version,
-    check_all_versions,
-    get_version_manifest,
-    TOOL_VERSIONS,
-    TASK_CLASS_BENCHMARKS,
+    recommend_backend,
+    run_batch_prediction,
 )
 
 
@@ -3544,7 +3870,7 @@ class _BatchPredictRequest(_BaseModel):
 
 class _NormalizePDBRequest(_BaseModel):
     pdb_data: str
-    chain_rename: _Optional[dict] = None
+    chain_rename: dict | None = None
 
     @field_validator("pdb_data")
     @classmethod
@@ -3555,7 +3881,7 @@ class _NormalizePDBRequest(_BaseModel):
 
 
 class _CheckVersionsRequest(_BaseModel):
-    tool_names: _Optional[list[str]] = None
+    tool_names: list[str] | None = None
 
 
 @app.post("/workflow/ensemble-heatmap")
@@ -3677,27 +4003,27 @@ def workflow_check_versions(payload: _CheckVersionsRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.clinical_variants import (  # noqa: E402
-    score_acmg_criteria,
+    get_clinvar_stats,
     get_vus_queue,
-    rescore_vus,
-    rescore_all_vus,
     lookup_clinvar,
     map_clinvar_to_structure,
-    get_clinvar_stats,
+    rescore_all_vus,
+    rescore_vus,
+    score_acmg_criteria,
 )
 
 
 class _ACMGScoreRequest(_BaseModel):
     gene: str
     variant: str
-    alphamissense_score: _Optional[float] = None
-    conservation_score: _Optional[float] = None
-    structural_context: _Optional[dict] = None
+    alphamissense_score: float | None = None
+    conservation_score: float | None = None
+    structural_context: dict | None = None
 
 
 class _ClinVarLookupRequest(_BaseModel):
     gene: str
-    variant: _Optional[str] = None
+    variant: str | None = None
 
 
 class _ClinVarMapRequest(_BaseModel):
@@ -3851,18 +4177,20 @@ def clinical_clinvar_stats() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.compliance import (  # noqa: E402
+    DataResidency,
     IRBSubmission,
-    check_irb_readiness,
+    ProfessionalCredential,
     assess_hipaa_compliance,
+    attest_credentials,
+    check_irb_readiness,
+    check_mode_access,
+    get_residency_config,
     separate_phi_fields,
-    audit_log as compliance_audit_log,
     watermark_pdb,
     watermark_report,
-    attest_credentials,
-    check_mode_access,
-    DataResidency,
-    get_residency_config,
-    ProfessionalCredential,
+)
+from backend.app.compliance import (
+    audit_log as compliance_audit_log,
 )
 
 
@@ -3937,7 +4265,9 @@ def compliance_hipaa_assess(payload: _HIPAAAssessRequest) -> dict:
         "compliant": result.compliant,
         "safeguards": [
             {
-                "field_type": s.field_type.value if hasattr(s.field_type, "value") else str(s.field_type),
+                "field_type": s.field_type.value
+                if hasattr(s.field_type, "value")
+                else str(s.field_type),
                 "access_level": s.access_level,
                 "encrypted": s.encrypted,
                 "audit_logged": s.audit_logged,
@@ -3971,7 +4301,11 @@ def compliance_audit_append(payload: _AuditAppendRequest) -> dict:
 @app.get("/compliance/audit/verify")
 def compliance_audit_verify() -> dict:
     valid, errors = compliance_audit_log.verify_chain()
-    return {"valid": valid, "errors": errors, "entry_count": len(compliance_audit_log.get_entries())}
+    return {
+        "valid": valid,
+        "errors": errors,
+        "entry_count": len(compliance_audit_log.get_entries()),
+    }
 
 
 @app.get("/compliance/audit/entries")
@@ -4022,7 +4356,9 @@ def compliance_attest_credentials(payload: _AttestCredentialsRequest) -> dict:
     _attestation_store[payload.user_id] = result
     return {
         "user_id": result.user_id,
-        "credential": result.credential.value if hasattr(result.credential, "value") else str(result.credential),
+        "credential": result.credential.value
+        if hasattr(result.credential, "value")
+        else str(result.credential),
         "institution": result.institution,
         "modes_unlocked": result.modes_unlocked,
         "attested_at": result.attested_at,
@@ -4043,7 +4379,9 @@ def compliance_residency(residency_level: str) -> dict:
         raise HTTPException(status_code=422, detail=f"Invalid residency level '{residency_level}'")
     config = get_residency_config(residency)
     return {
-        "residency": config.residency.value if hasattr(config.residency, "value") else str(config.residency),
+        "residency": config.residency.value
+        if hasattr(config.residency, "value")
+        else str(config.residency),
         "allowed_backends": config.allowed_backends,
         "blocked_backends": config.blocked_backends,
         "reason": config.reason,
@@ -4055,16 +4393,17 @@ def compliance_residency(residency_level: str) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.reproducibility import (  # noqa: E402
-    create_manifest,
-    verify_manifest as repro_verify_manifest,
-    store_manifest,
-    get_manifest,
-    list_manifests,
+    TOOL_VERSION_REGISTRY,
     capture_environment,
     create_fair_report,
+    create_manifest,
+    get_manifest,
+    list_manifests,
+    store_manifest,
     validate_fair_compliance,
-    FAIRMetadata,
-    TOOL_VERSION_REGISTRY,
+)
+from backend.app.reproducibility import (
+    verify_manifest as repro_verify_manifest,
 )
 
 
@@ -4134,6 +4473,7 @@ def reproducibility_verify_manifest(payload: _VerifyManifestRequest) -> dict:
 @app.post("/reproducibility/fair/create-report")
 def reproducibility_fair_create_report(payload: _FAIRCreateReportRequest) -> dict:
     import backend.app.reproducibility as _repro
+
     metadata = _repro.generate_fair_metadata(
         title=payload.title,
         description=payload.description,
@@ -4156,6 +4496,7 @@ def reproducibility_fair_create_report(payload: _FAIRCreateReportRequest) -> dic
 @app.post("/reproducibility/fair/validate")
 def reproducibility_fair_validate(payload: dict) -> dict:
     import backend.app.reproducibility as _repro
+
     # Re-create a report from the payload data to run compliance checks
     metadata = _repro.generate_fair_metadata(
         title=payload.get("title", ""),
@@ -4188,19 +4529,18 @@ def reproducibility_tool_registry() -> dict:
 # 16. Structure Analysis
 # ---------------------------------------------------------------------------
 
+import backend.app.structure_analysis as _structure_analysis_mod  # noqa: E402
 from backend.app.structure_analysis import (  # noqa: E402
-    analyze_disorder,
-    detect_low_plddt_regions,
-    escalate_to_idr_analysis,
-    assess_ptm_impact,
-    find_nearby_ptms,
-    predict_epistatic_effect,
-    detect_fold_switching_risk,
     IDR_PLDDT_THRESHOLD,
     KNOWN_PTM_SITES,
     EpistaticVariant,
+    analyze_disorder,
+    assess_ptm_impact,
+    detect_fold_switching_risk,
+    detect_low_plddt_regions,
+    escalate_to_idr_analysis,
+    predict_epistatic_effect,
 )
-import backend.app.structure_analysis as _structure_analysis_mod  # noqa: E402
 
 _STRUCTURE_SAFETY_LABEL = "Research only — not for clinical use"
 _PTM_IMPACT_DESC = getattr(_structure_analysis_mod, "_PTM_IMPACT_DESC", {})
@@ -4208,12 +4548,12 @@ _PTM_IMPACT_DESC = getattr(_structure_analysis_mod, "_PTM_IMPACT_DESC", {})
 
 class _AnalyzeDisorderRequest(_BaseModel):
     sequence: str
-    plddt_values: _Optional[list[float]] = None
+    plddt_values: list[float] | None = None
 
 
 class _DetectLowPLDDTRequest(_BaseModel):
     sequence: str
-    plddt_values: _Optional[list[float]] = None
+    plddt_values: list[float] | None = None
     threshold: float = IDR_PLDDT_THRESHOLD
 
 
@@ -4249,8 +4589,8 @@ class _FoldSwitchingRiskRequest(_BaseModel):
 
 class _FullStructureAnalysisRequest(_BaseModel):
     sequence: str
-    gene: _Optional[str] = None
-    variant: _Optional[str] = None
+    gene: str | None = None
+    variant: str | None = None
 
     @field_validator("sequence")
     @classmethod
@@ -4287,10 +4627,7 @@ def structure_analyze_disorder(payload: _AnalyzeDisorderRequest) -> dict:
 def structure_detect_low_plddt(payload: _DetectLowPLDDTRequest) -> dict:
     result = detect_low_plddt_regions(payload.sequence, plddt_values=payload.plddt_values)
     return {
-        "low_plddt_regions": [
-            {"start": r[0], "end": r[1]}
-            for r in result
-        ],
+        "low_plddt_regions": [{"start": r[0], "end": r[1]} for r in result],
         "region_count": len(result),
         "threshold": payload.threshold,
     }
@@ -4375,6 +4712,7 @@ def structure_fold_switching_risk(payload: _FoldSwitchingRiskRequest) -> dict:
 @app.get("/structure/known-fold-switchers")
 def structure_known_fold_switchers() -> dict:
     import backend.app.structure_analysis as _sa
+
     switchers: dict = {}
     if hasattr(_sa, "KNOWN_FOLD_SWITCHERS"):
         switchers = _sa.KNOWN_FOLD_SWITCHERS
@@ -4416,15 +4754,15 @@ def structure_full_analysis(payload: _FullStructureAnalysisRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.structure_analysis_ext import (  # noqa: E402
-    run_msa_ensemble,
-    generate_msa_subsamples,
-    predict_dynamics,
+    ProteinClass,
     annotate_structure_with_dynamics,
-    get_calibration_curve,
+    auto_calibrate,
     calibrate_confidence,
     classify_protein,
-    auto_calibrate,
-    ProteinClass,
+    generate_msa_subsamples,
+    get_calibration_curve,
+    predict_dynamics,
+    run_msa_ensemble,
 )
 
 
@@ -4436,8 +4774,8 @@ class _MSAEnsembleRequest(_BaseModel):
 class _MSASubsamplesRequest(_BaseModel):
     sequence: str
     n_subsamples: int = 20
-    depth_min: _Optional[int] = None
-    depth_max: _Optional[int] = None
+    depth_min: int | None = None
+    depth_max: int | None = None
 
 
 class _DynamicsProfileRequest(_BaseModel):
@@ -4543,7 +4881,9 @@ def structure_ext_calibration(protein_class: str) -> dict:
         raise HTTPException(status_code=422, detail=f"Unknown protein class '{protein_class}'")
     curve = get_calibration_curve(pc)
     return {
-        "protein_class": curve.protein_class.value if hasattr(curve.protein_class, "value") else str(curve.protein_class),
+        "protein_class": curve.protein_class.value
+        if hasattr(curve.protein_class, "value")
+        else str(curve.protein_class),
         "plddt_bins": curve.plddt_bins,
         "actual_accuracy": curve.actual_accuracy,
         "n_benchmarked": curve.n_benchmarked,
@@ -4558,7 +4898,9 @@ def structure_ext_calibrate_confidence(payload: _CalibrateConfidenceRequest) -> 
     try:
         pc = ProteinClass(payload.protein_class)
     except ValueError:
-        raise HTTPException(status_code=422, detail=f"Unknown protein class '{payload.protein_class}'")
+        raise HTTPException(
+            status_code=422, detail=f"Unknown protein class '{payload.protein_class}'"
+        )
     return calibrate_confidence(payload.plddt, pc)
 
 
@@ -4578,14 +4920,14 @@ def structure_ext_auto_calibrate(payload: _AutoCalibrateRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.drug_discovery_ext import (  # noqa: E402
-    predict_pockets,
-    dock_compound,
-    run_drug_pipeline,
-    detect_cryptic_sites,
-    predict_allostery,
-    run_therapeutic_reasoning,
-    predict_ddg,
     batch_predict_ddg,
+    detect_cryptic_sites,
+    dock_compound,
+    predict_allostery,
+    predict_ddg,
+    predict_pockets,
+    run_drug_pipeline,
+    run_therapeutic_reasoning,
 )
 
 
@@ -4603,7 +4945,7 @@ class _DockCompoundRequest(_BaseModel):
 
 class _FullPipelineRequest(_BaseModel):
     target_gene: str
-    compound_library: _Optional[list[dict]] = None
+    compound_library: list[dict] | None = None
 
 
 class _CrypticSitesRequest(_BaseModel):
@@ -4713,6 +5055,7 @@ def drug_ext_cryptic_sites(payload: _CrypticSitesRequest) -> dict:
 @app.get("/drug-ext/known-cryptic-sites")
 def drug_ext_known_cryptic_sites() -> dict:
     import backend.app.drug_discovery_ext as _dde
+
     proteins: dict = {}
     if hasattr(_dde, "KNOWN_CRYPTIC_SITES"):
         proteins = _dde.KNOWN_CRYPTIC_SITES
@@ -4808,6 +5151,7 @@ def drug_ext_batch_ddg(payload: _BatchDDGRequest) -> dict:
 @app.get("/drug-ext/amino-acid-properties")
 def drug_ext_amino_acid_properties() -> dict:
     from backend.app.drug_discovery_ext import AMINO_ACID_PROPERTIES as _DD_AA_PROPS
+
     return {
         "property_count": len(_DD_AA_PROPS),
         "properties": _DD_AA_PROPS,
@@ -4819,15 +5163,15 @@ def drug_ext_amino_acid_properties() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.research_assistance import (  # noqa: E402
-    screen_msa_quality,
-    suggest_prediction_strategy,
-    search_literature,
-    cross_reference_prediction,
-    identify_knowledge_gaps,
-    generate_viewer_data,
-    predict_signal_peptide,
     analyze_secretion_pathway,
     assess_therapeutic_suitability,
+    cross_reference_prediction,
+    generate_viewer_data,
+    identify_knowledge_gaps,
+    predict_signal_peptide,
+    screen_msa_quality,
+    search_literature,
+    suggest_prediction_strategy,
 )
 
 
@@ -4864,7 +5208,7 @@ class _KnowledgeGapsRequest(_BaseModel):
 
 class _ViewerDataRequest(_BaseModel):
     sequence: str
-    variants: _Optional[list[dict]] = None
+    variants: list[dict] | None = None
 
     @field_validator("sequence")
     @classmethod
@@ -5016,11 +5360,15 @@ def research_plddt_color_scheme() -> dict:
 # 20. AlphaFold Backends v2
 # ---------------------------------------------------------------------------
 
+from backend.app.alphafold_backends import (
+    BackendSelector as AfBackendSelector,
+)
+from backend.app.alphafold_backends import (
+    StructureCache,
+    predict_with_cache,
+)
 from backend.app.alphafold_backends import (  # noqa: E402
     get_backend as af_get_backend,
-    predict_with_cache,
-    StructureCache,
-    BackendSelector as AfBackendSelector,
 )
 
 _af_selector = AfBackendSelector()
@@ -5037,17 +5385,20 @@ class _AF2PredictRequest(_BaseModel):
 @app.get("/alphafold/v2/backends")
 def alphafold_v2_list_backends() -> list:
     import backend.app.alphafold_backends as _afb
+
     results = []
     for b in _afb._ALL_BACKENDS:
         v = b.validate()
-        results.append({
-            "name": b.name,
-            "available": v.available,
-            "reason": v.reason,
-            "gpu_required": v.gpu_required,
-            "cloud": v.cloud,
-            "privacy_risk": v.privacy_risk,
-        })
+        results.append(
+            {
+                "name": b.name,
+                "available": v.available,
+                "reason": v.reason,
+                "gpu_required": v.gpu_required,
+                "cloud": v.cloud,
+                "privacy_risk": v.privacy_risk,
+            }
+        )
     return results
 
 
@@ -5101,11 +5452,11 @@ def alphafold_v2_cache_stats() -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.report_exports import (  # noqa: E402
+    build_human_research_consent,
     build_report_html,
     build_report_markdown,
     build_report_version,
     build_veterinary_consent,
-    build_human_research_consent,
     scan_for_unsafe_content,
 )
 
@@ -5121,6 +5472,7 @@ def get_case_report_html(case_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Case not found")
     html = build_report_html(case_id, db)
     from fastapi.responses import HTMLResponse
+
     return HTMLResponse(content=html)
 
 
@@ -5171,20 +5523,18 @@ def reports_scan_unsafe(payload: _ScanUnsafeRequest) -> dict:
 # 22. Security
 # ---------------------------------------------------------------------------
 
+from backend.app.rbac import (  # noqa: E402
+    Role,
+    check_permission,
+    get_role_permissions,
+)
 from backend.app.security import (  # noqa: E402
+    build_upload_confirmation,
     generate_sbom,
     scan_for_secrets,
     scan_skill_directory,
-    verify_data_deletion,
-    build_upload_confirmation,
     verify_audit_chain,
-)
-from backend.app.rbac import (  # noqa: E402
-    Role,
-    Permission,
-    ROLE_PERMISSIONS,
-    check_permission,
-    get_role_permissions,
+    verify_data_deletion,
 )
 
 
@@ -5308,8 +5658,8 @@ def demo_reset(db: Session = Depends(get_db)) -> dict:
 # ---------------------------------------------------------------------------
 
 from backend.app.hallucination_guard import (  # noqa: E402
-    validate_report_sources,
     scan_for_hallucinated_content,
+    validate_report_sources,
 )
 
 
@@ -5350,11 +5700,6 @@ def hallucination_scan_endpoint(payload: _HallucinationScanRequest) -> dict:
 # 25. Infrastructure
 # ---------------------------------------------------------------------------
 
-from backend.app.gpu_worker import (  # noqa: E402
-    DEFAULT_GPU_PROFILES,
-    check_gpu_availability,
-)
-from backend.app.encryption import check_encryption_status  # noqa: E402
 from backend.app.celery_config import (  # noqa: E402
     CELERY_TASK_REGISTRY,
     check_celery_status,
@@ -5363,6 +5708,11 @@ from backend.app.container_scanning import (  # noqa: E402
     ContainerScanConfig,
     build_scan_command,
     check_scanner_available,
+)
+from backend.app.encryption import check_encryption_status  # noqa: E402
+from backend.app.gpu_worker import (  # noqa: E402
+    DEFAULT_GPU_PROFILES,
+    check_gpu_availability,
 )
 
 
@@ -5375,11 +5725,14 @@ class _ContainerScanRequest(_BaseModel):
 
 @app.get("/infrastructure/gpu-profiles")
 def infrastructure_gpu_profiles() -> dict:
-    profiles = {name: {
-        "gpu_required": p.gpu_required,
-        "gpu_type": p.gpu_type,
-        "min_vram_gb": p.min_vram_gb,
-    } for name, p in DEFAULT_GPU_PROFILES.items()}
+    profiles = {
+        name: {
+            "gpu_required": p.gpu_required,
+            "gpu_type": p.gpu_type,
+            "min_vram_gb": p.min_vram_gb,
+        }
+        for name, p in DEFAULT_GPU_PROFILES.items()
+    }
     return {"profiles": profiles}
 
 
@@ -5428,18 +5781,16 @@ def infrastructure_container_scan_build_command(payload: _ContainerScanRequest) 
 # 26. Extended Backends / Ensemble / Modes
 # ---------------------------------------------------------------------------
 
+import backend.app.alphafold_backends as _afb_mod  # noqa: E402
 from backend.app.ensemble import (  # noqa: E402
-    EnsembleResult,
     compare_backends,
     run_ensemble,
 )
 from backend.app.mode_safety import (  # noqa: E402
-    MODE_SAFETY_CONFIG,
     ResearchMode,
     check_mode_safety,
     get_mode_config,
 )
-import backend.app.alphafold_backends as _afb_mod  # noqa: E402
 
 
 class _EnsemblePredictRequest(_BaseModel):
@@ -5462,14 +5813,16 @@ def backends_all() -> list:
     results = []
     for b in _afb_mod._ALL_BACKENDS:
         v = b.validate()
-        results.append({
-            "name": b.name,
-            "description": getattr(b, "description", b.name),
-            "available": v.available,
-            "gpu_required": v.gpu_required,
-            "cloud": v.cloud,
-            "privacy_risk": v.privacy_risk,
-        })
+        results.append(
+            {
+                "name": b.name,
+                "description": getattr(b, "description", b.name),
+                "available": v.available,
+                "gpu_required": v.gpu_required,
+                "cloud": v.cloud,
+                "privacy_risk": v.privacy_risk,
+            }
+        )
     return results
 
 
@@ -5515,13 +5868,15 @@ def modes_list() -> list:
     modes = []
     for mode in ResearchMode:
         cfg = get_mode_config(mode.value)
-        modes.append({
-            "mode": mode.value,
-            "safety_level": cfg["safety_level"],
-            "requires_attestation": cfg["requires_attestation"],
-            "requires_ethics_review": cfg["requires_ethics_review"],
-            "allowed_backends": cfg.get("allowed_backends", []),
-        })
+        modes.append(
+            {
+                "mode": mode.value,
+                "safety_level": cfg["safety_level"],
+                "requires_attestation": cfg["requires_attestation"],
+                "requires_ethics_review": cfg["requires_ethics_review"],
+                "allowed_backends": cfg.get("allowed_backends", []),
+            }
+        )
     return modes
 
 
@@ -5596,6 +5951,7 @@ def get_case_fp_risk(case_id: str, db: Session = Depends(get_db)) -> dict:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     from backend.app.models import CandidateAntigen as _CA
+
     candidates = db.query(_CA).filter(_CA.case_id == case_id).all()
     fp = assess_false_positive_risk(candidates, db)
     return {
@@ -5603,8 +5959,7 @@ def get_case_fp_risk(case_id: str, db: Session = Depends(get_db)) -> dict:
         "risk": fp.risk.value,
         "overall_warnings": fp.overall_warnings,
         "per_candidate": [
-            {"candidate_id": c.candidate_id, "warnings": c.warnings}
-            for c in fp.per_candidate
+            {"candidate_id": c.candidate_id, "warnings": c.warnings} for c in fp.per_candidate
         ],
     }
 
@@ -5630,7 +5985,9 @@ def get_case_citations(case_id: str, db: Session = Depends(get_db)) -> dict:
 
 
 @app.post("/cases/{case_id}/attestation", status_code=201)
-def post_case_attestation(case_id: str, payload: _AttestationRequest, db: Session = Depends(get_db)) -> dict:
+def post_case_attestation(
+    case_id: str, payload: _AttestationRequest, db: Session = Depends(get_db)
+) -> dict:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -5664,6 +6021,7 @@ def get_case_report_enhanced(case_id: str, db: Session = Depends(get_db)) -> dic
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     from backend.app.models import CandidateAntigen as _CA2
+
     candidates = db.query(_CA2).filter(_CA2.case_id == case_id).all()
     evidence = assess_evidence_level(case_id, db)
     fp = assess_false_positive_risk(candidates, db)
@@ -5691,8 +6049,7 @@ def get_case_report_enhanced(case_id: str, db: Session = Depends(get_db)) -> dic
             "risk": fp.risk.value,
             "overall_warnings": fp.overall_warnings,
             "per_candidate": [
-                {"candidate_id": c.candidate_id, "warnings": c.warnings}
-                for c in fp.per_candidate
+                {"candidate_id": c.candidate_id, "warnings": c.warnings} for c in fp.per_candidate
             ],
         },
         "citations": [
@@ -5775,6 +6132,7 @@ def audit_export(
         content = json.dumps({"audit_log": [], "exported_at": datetime.now(UTC).isoformat()})
     if format == "markdown":
         from fastapi.responses import PlainTextResponse
+
         return PlainTextResponse(content=content, media_type="text/markdown")
     return JSONResponse(content=json.loads(content))
 
@@ -5782,6 +6140,7 @@ def audit_export(
 @app.get("/audit/system")
 def audit_system(db: Session = Depends(get_db)) -> dict:
     from backend.app.models import AuditLog as _AL
+
     count = db.query(_AL).count()
     return {"total_entries": count, "status": "ok"}
 
@@ -5833,9 +6192,9 @@ def get_ethics_professional_questions(case_id: str, db: Session = Depends(get_db
 
 from backend.app.lab_coordination import (  # noqa: E402
     EMAIL_PRIVACY_WARNING,
-    SEQUENCING_PROVIDER_CHECKLIST,
     RNA_MANUFACTURING_CHECKLIST,
     SECURE_HANDOFF_CHECKLIST,
+    SEQUENCING_PROVIDER_CHECKLIST,
     UNIVERSITY_OUTREACH_TEMPLATE,
     create_cost_entry,
     create_document_request,
@@ -5844,7 +6203,6 @@ from backend.app.lab_coordination import (  # noqa: E402
     generate_outreach_email,
     get_case_summary_packet,
     get_cost_summary,
-    list_cost_entries,
     list_document_requests,
     list_lab_contacts,
     list_timeline_entries,
@@ -5920,7 +6278,9 @@ def lab_outreach_email(payload: _OutreachEmailRequest) -> dict:
 
 
 @app.post("/cases/{case_id}/lab/contacts")
-def create_case_lab_contact(case_id: str, payload: _LabContactCreate, db: Session = Depends(get_db)) -> dict:
+def create_case_lab_contact(
+    case_id: str, payload: _LabContactCreate, db: Session = Depends(get_db)
+) -> dict:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -5970,7 +6330,9 @@ def list_case_lab_contacts(case_id: str, db: Session = Depends(get_db)) -> list:
 
 
 @app.post("/cases/{case_id}/lab/costs")
-def create_case_cost_entry(case_id: str, payload: _CostEntryCreate, db: Session = Depends(get_db)) -> dict:
+def create_case_cost_entry(
+    case_id: str, payload: _CostEntryCreate, db: Session = Depends(get_db)
+) -> dict:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -6003,7 +6365,9 @@ def get_case_cost_summary(case_id: str, db: Session = Depends(get_db)) -> dict:
 
 
 @app.post("/cases/{case_id}/lab/timeline")
-def create_case_timeline_entry(case_id: str, payload: _TimelineEntryCreate, db: Session = Depends(get_db)) -> dict:
+def create_case_timeline_entry(
+    case_id: str, payload: _TimelineEntryCreate, db: Session = Depends(get_db)
+) -> dict:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -6047,7 +6411,9 @@ def list_case_timeline(case_id: str, db: Session = Depends(get_db)) -> list:
 
 
 @app.post("/cases/{case_id}/lab/document-requests")
-def create_case_document_request(case_id: str, payload: _DocumentRequestCreate, db: Session = Depends(get_db)) -> dict:
+def create_case_document_request(
+    case_id: str, payload: _DocumentRequestCreate, db: Session = Depends(get_db)
+) -> dict:
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -6171,13 +6537,13 @@ def get_case_data_checklist(case_id: str, db: Session = Depends(get_db)) -> list
 # 32. API Hardening (openapi-export, dry-run, approval-required, error-catalog)
 # ---------------------------------------------------------------------------
 
-from backend.app.openapi_export import export_openapi_spec  # noqa: E402
 from backend.app.agent_errors import AGENT_ERROR_CATALOG  # noqa: E402
 from backend.app.dry_run import (  # noqa: E402
     APPROVAL_REQUIRED_ACTIONS,
     check_approval_required,
     dry_run_action,
 )
+from backend.app.openapi_export import export_openapi_spec  # noqa: E402
 
 
 class _DryRunRequest(_BaseModel):
@@ -6297,7 +6663,9 @@ def get_job(job_id: str, db: Session = Depends(get_db)) -> dict:
         job = db.get(BackgroundJob, job_id)
     except Exception as exc:
         if "no such table" in str(exc).lower() or "background_jobs" in str(exc).lower():
-            raise HTTPException(status_code=503, detail="background_jobs table not available — run migrations")
+            raise HTTPException(
+                status_code=503, detail="background_jobs table not available — run migrations"
+            )
         raise
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -6310,7 +6678,9 @@ def cancel_job_endpoint(job_id: str, db: Session = Depends(get_db)) -> dict:
         job = db.get(BackgroundJob, job_id)
     except Exception as exc:
         if "no such table" in str(exc).lower() or "background_jobs" in str(exc).lower():
-            raise HTTPException(status_code=503, detail="background_jobs table not available — run migrations")
+            raise HTTPException(
+                status_code=503, detail="background_jobs table not available — run migrations"
+            )
         raise
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -6334,7 +6704,9 @@ def retry_job_endpoint(job_id: str, db: Session = Depends(get_db)) -> dict:
         job = db.get(BackgroundJob, job_id)
     except Exception as exc:
         if "no such table" in str(exc).lower() or "background_jobs" in str(exc).lower():
-            raise HTTPException(status_code=503, detail="background_jobs table not available — run migrations")
+            raise HTTPException(
+                status_code=503, detail="background_jobs table not available — run migrations"
+            )
         raise
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -6355,6 +6727,7 @@ def retry_job_endpoint(job_id: str, db: Session = Depends(get_db)) -> dict:
                 run_pipeline_sync=_run_pipeline_sync,
                 pipeline_mode="retry",
             )
+
         submit_job(updated.id, _pipeline_fn, timeout_seconds=updated.timeout_seconds)
     elif updated.job_type == "alphafold_backend":
         _payload = updated.payload or {}
@@ -6370,6 +6743,7 @@ def retry_job_endpoint(job_id: str, db: Session = Depends(get_db)) -> dict:
                 payload={k: v for k, v in _payload.items() if k != "backend_name"},
                 run_alphafold_sync=_run_alphafold_sync,
             )
+
         submit_job(updated.id, _af_fn, timeout_seconds=updated.timeout_seconds)
     log_action(
         db,
@@ -6509,8 +6883,7 @@ class _PipelineDryRunRequest(_BaseModel):
 @app.get("/pipeline/steps")
 def pipeline_steps_list() -> list:
     return [
-        {"name": s.name, "description": getattr(s, "description", s.name)}
-        for s in FRAMEWORK_STEPS
+        {"name": s.name, "description": getattr(s, "description", s.name)} for s in FRAMEWORK_STEPS
     ]
 
 
@@ -6531,7 +6904,7 @@ def pipeline_dry_run(payload: _PipelineDryRunRequest) -> dict:
 # 35. Global agent task routes + skills + events + dry-run
 # ---------------------------------------------------------------------------
 
-from backend.app.event_stream import publish_event, subscribe  # noqa: E402
+from backend.app.event_stream import subscribe  # noqa: E402
 
 
 class _GlobalAgentTaskCreate(_BaseModel):
@@ -6555,6 +6928,7 @@ class _AgentTaskDryRunRequest(_BaseModel):
 def _is_known_skill(skill_name: str) -> bool:
     """Check if a skill exists in the skills directory."""
     from pathlib import Path as _Path
+
     skills_root = _Path(__file__).resolve().parents[2] / "skills"
     for framework_dir in skills_root.iterdir():
         if framework_dir.is_dir():
@@ -6565,7 +6939,9 @@ def _is_known_skill(skill_name: str) -> bool:
 
 
 @app.post("/agent/tasks", response_model=AgentTaskRead, status_code=201)
-def create_agent_task_global(payload: _GlobalAgentTaskCreate, db: Session = Depends(get_db)) -> AgentTask:
+def create_agent_task_global(
+    payload: _GlobalAgentTaskCreate, db: Session = Depends(get_db)
+) -> AgentTask:
     # Safety gate: human cases require approval before agent task creation
     if payload.case_id:
         case = db.get(Case, payload.case_id)
@@ -6622,6 +6998,7 @@ def list_agent_tasks_global(
         query = query.filter(AgentTask.case_id == case_id)
     tasks = query.order_by(AgentTask.created_at.desc()).all()
     from backend.app.schemas import AgentTaskRead as _ATR  # noqa: PLC0415
+
     return [_ATR.model_validate(t).model_dump() for t in tasks]
 
 
@@ -6634,7 +7011,9 @@ def get_agent_task_global(task_id: str, db: Session = Depends(get_db)) -> AgentT
 
 
 @app.patch("/agent/tasks/{task_id}", response_model=AgentTaskRead)
-def update_agent_task_global(task_id: str, payload: AgentTaskUpdate, db: Session = Depends(get_db)) -> AgentTask:
+def update_agent_task_global(
+    task_id: str, payload: AgentTaskUpdate, db: Session = Depends(get_db)
+) -> AgentTask:
     task = db.get(AgentTask, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Agent task not found")
@@ -6708,6 +7087,7 @@ def agent_task_dry_run(payload: _AgentTaskDryRunRequest, db: Session = Depends(g
 def agent_skills_list() -> list:
     """List all available agent skills from the skills directory."""
     from pathlib import Path as _Path  # noqa: PLC0415
+
     import yaml  # noqa: PLC0415
 
     skills_root = _Path(__file__).resolve().parents[2] / "skills"
@@ -6744,9 +7124,16 @@ def agent_skills_list() -> list:
 
             # Extract safety boundaries and required endpoints from markdown body
             import re as _re  # noqa: PLC0415
-            _safety_kws = ("not administerable", "no dosing", "research only",
-                           "professional review", "safety", "not for clinical",
-                           "research candidate")
+
+            _safety_kws = (
+                "not administerable",
+                "no dosing",
+                "research only",
+                "professional review",
+                "safety",
+                "not for clinical",
+                "research candidate",
+            )
             for line in content.splitlines():
                 stripped = line.strip()
                 # Bullet points: "- text" or numbered "1. text"
@@ -6758,19 +7145,21 @@ def agent_skills_list() -> list:
                 if stripped.startswith("- `") and "/safety/preflight" in stripped:
                     required_api_endpoints.append("POST /safety/preflight")
                 elif stripped.startswith("- `POST ") or stripped.startswith("- `GET "):
-                    endpoint = stripped[3:stripped.index("`", 3)] if "`" in stripped[3:] else ""
+                    endpoint = stripped[3 : stripped.index("`", 3)] if "`" in stripped[3:] else ""
                     if endpoint:
                         required_api_endpoints.append(endpoint)
 
-            results.append({
-                "framework": framework_name,
-                "skill_name": name,
-                "skill_path": str(skill_dir.relative_to(skills_root.parent)),
-                "available": True,
-                "description": description,
-                "safety_boundaries": safety_boundaries,
-                "required_api_endpoints": list(dict.fromkeys(required_api_endpoints)),
-            })
+            results.append(
+                {
+                    "framework": framework_name,
+                    "skill_name": name,
+                    "skill_path": str(skill_dir.relative_to(skills_root.parent)),
+                    "available": True,
+                    "description": description,
+                    "safety_boundaries": safety_boundaries,
+                    "required_api_endpoints": list(dict.fromkeys(required_api_endpoints)),
+                }
+            )
 
     return results
 
@@ -6784,6 +7173,7 @@ def agent_events_stream(
 ):
     """SSE stream of recent agent events from the audit log."""
     from fastapi.responses import StreamingResponse  # noqa: PLC0415
+
     from backend.app.models import AuditLog as _AL  # noqa: PLC0415
 
     # Fetch recent audit entries and format as SSE
@@ -6793,14 +7183,17 @@ def agent_events_stream(
     except Exception as _exc:
         if "no such table" in str(_exc).lower() or "audit_log" in str(_exc).lower():
             from fastapi.responses import Response  # noqa: PLC0415
-            return Response(content="", media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+            return Response(
+                content="", media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
+            )
         raise
 
     # Apply after_event_id cursor: drop all entries up to and including the cursor
     if after_event_id:
         cursor_idx = next((i for i, e in enumerate(entries) if e.id == after_event_id), None)
         if cursor_idx is not None:
-            entries = entries[cursor_idx + 1:]
+            entries = entries[cursor_idx + 1 :]
 
     prefixes_filter = None
     if prefix:
@@ -6867,12 +7260,12 @@ def safety_mrna_gate(payload: _MrnaGateRequest) -> dict:
 # Section 36b: Pipeline framework adapter API
 # ---------------------------------------------------------------------------
 
+
 @app.get("/pipeline/framework/adapters")
 def list_framework_adapters() -> list:
     """List all registered pipeline framework step adapters."""
     return [
-        {"name": s.name, "description": getattr(s, "description", s.name)}
-        for s in FRAMEWORK_STEPS
+        {"name": s.name, "description": getattr(s, "description", s.name)} for s in FRAMEWORK_STEPS
     ]
 
 
@@ -6910,7 +7303,9 @@ class _CaseRedactRequest(_BaseModel):
     @classmethod
     def _check_level(cls, v: str) -> str:
         if v not in _VALID_REDACTION_LEVELS:
-            raise ValueError(f"Invalid redaction_level: {v}. Must be one of {_VALID_REDACTION_LEVELS}")
+            raise ValueError(
+                f"Invalid redaction_level: {v}. Must be one of {_VALID_REDACTION_LEVELS}"
+            )
         return v
 
 
@@ -6968,9 +7363,7 @@ def redact_subject(
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    subject = db.query(Subject).filter(
-        Subject.id == subject_id, Subject.case_id == case_id
-    ).first()
+    subject = db.query(Subject).filter(Subject.id == subject_id, Subject.case_id == case_id).first()
     if subject is None:
         raise HTTPException(status_code=404, detail="Subject not found")
     if not payload.confirm:
@@ -7112,12 +7505,14 @@ async def agent_events_ws(
 # ---------------------------------------------------------------------------
 
 # Import engine so it can be patched in tests via backend.app.main.engine
-from backend.app.db import engine as engine, get_db_health_snapshot  # noqa: E402,F811
+from backend.app.db import engine as engine  # noqa: E402,F811
+from backend.app.db import get_db_health_snapshot
 
 
 def _run_pipeline_sync(case_id: str) -> dict:
     """Module-level wrapper so tests can monkeypatch backend.app.main._run_pipeline_sync."""
     import asyncio as _asyncio  # noqa: PLC0415
+
     from backend.app.pipeline.base import run_mock_pipeline as _rmp  # noqa: PLC0415
 
     step_results = _asyncio.run(_rmp(case_id))
@@ -7156,8 +7551,14 @@ def _run_alphafold_sync(backend_name: str, payload: dict) -> dict:
 
 # Remove the old /health route registered in the sacred zone, then add a richer one.
 app.router.routes = [
-    r for r in app.router.routes
-    if not (hasattr(r, "path") and r.path == "/health" and hasattr(r, "endpoint") and r.endpoint.__name__ == "health")
+    r
+    for r in app.router.routes
+    if not (
+        hasattr(r, "path")
+        and r.path == "/health"
+        and hasattr(r, "endpoint")
+        and r.endpoint.__name__ == "health"
+    )
 ]
 
 
@@ -7186,10 +7587,13 @@ async def health_with_db_snapshot() -> JSONResponse:
 # ---------------------------------------------------------------------------
 
 app.router.routes = [
-    r for r in app.router.routes
+    r
+    for r in app.router.routes
     if not (
-        hasattr(r, "path") and r.path == "/cases/{case_id}/pipeline/run"
-        and hasattr(r, "endpoint") and r.endpoint.__name__ == "run_pipeline"
+        hasattr(r, "path")
+        and r.path == "/cases/{case_id}/pipeline/run"
+        and hasattr(r, "endpoint")
+        and r.endpoint.__name__ == "run_pipeline"
     )
 ]
 
@@ -7236,7 +7640,9 @@ def run_pipeline_with_step_audit(case_id: str, db: Session = Depends(get_db)) ->
     db.add(pipeline_run)
     db.flush()
     for step in serialized_steps:
-        step_action = "pipeline.step.failed" if step["status"] == "failed" else "pipeline.step.completed"
+        step_action = (
+            "pipeline.step.failed" if step["status"] == "failed" else "pipeline.step.completed"
+        )
         log_action(
             db,
             case_id=case_id,
@@ -7263,10 +7669,13 @@ def run_pipeline_with_step_audit(case_id: str, db: Session = Depends(get_db)) ->
 # ---------------------------------------------------------------------------
 
 app.router.routes = [
-    r for r in app.router.routes
+    r
+    for r in app.router.routes
     if not (
-        hasattr(r, "path") and r.path == "/alphafold/backends/{backend_name}/run"
-        and hasattr(r, "endpoint") and r.endpoint.__name__ == "alphafold_backend_run"
+        hasattr(r, "path")
+        and r.path == "/alphafold/backends/{backend_name}/run"
+        and hasattr(r, "endpoint")
+        and r.endpoint.__name__ == "alphafold_backend_run"
     )
 ]
 
@@ -7276,12 +7685,14 @@ class _AlphaFoldValidationErrorResponse(_BaseModel):
     validation_ok: bool
     validation_reason: str
 
+
 _AF_RUN_BODY_EXAMPLE = {
     "case_id": "abc-123",
     "candidate_id": "cand-001",
     "sequence": "MVLSPADKTNVKAAWGKVGAH",
     "options": {"max_template_date": "2024-01-01"},
 }
+
 
 @app.post(
     "/alphafold/backends/{backend_name}/run",
@@ -7316,16 +7727,19 @@ _AF_RUN_BODY_EXAMPLE = {
         },
     },
 )
-def alphafold_backend_run_with_audit(backend_name: str, payload: dict, db: Session = Depends(get_db)) -> dict:
+def alphafold_backend_run_with_audit(
+    backend_name: str, payload: dict, db: Session = Depends(get_db)
+) -> dict:
     validate_alphafold_payload_or_422(backend_name, payload)
     case_id = payload.get("case_id")
     case = db.get(Case, case_id) if case_id else None
     if case is not None:
-        involves_external_upload = backend_name == "alphafold_server" and not payload.get("acknowledge_external_upload", False)
+        involves_external_upload = backend_name == "alphafold_server"
+        external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
         enforce_preflight_or_raise(
             action="alphafold_backend_run",
             species_mode=case.species.value,
-            involves_external_upload=involves_external_upload,
+            involves_external_upload=involves_external_upload and not external_upload_acknowledged,
         )
     try:
         backend_status = get_shell_backend_status(backend_name)
@@ -7373,14 +7787,26 @@ def alphafold_backend_run_with_audit(backend_name: str, payload: dict, db: Sessi
     if case_id and payload.get("candidate_id"):
         candidate = db.get(CandidateAntigen, payload["candidate_id"])
         if candidate is not None and candidate.case_id == case_id:
-            structure_payload = json.loads(result.stdout).get("structure", {}) if result.stdout else {}
+            try:
+                structure_payload = (
+                    json.loads(result.stdout).get("structure", {}) if result.stdout else {}
+                )
+            except json.JSONDecodeError:
+                structure_payload = {}
             output_path = structure_payload.get("model_cif") or structure_payload.get("pdb_file")
             confidence_metrics = {
                 key: structure_payload[key]
                 for key in (
-                    "pLDDT_mean", "pAE_mean", "ranking_score", "ptm", "iptm",
-                    "chain_pair_iptm", "source_url", "summary_confidences_json",
-                    "output_format", "accession",
+                    "pLDDT_mean",
+                    "pAE_mean",
+                    "ranking_score",
+                    "ptm",
+                    "iptm",
+                    "chain_pair_iptm",
+                    "source_url",
+                    "summary_confidences_json",
+                    "output_format",
+                    "accession",
                 )
                 if key in structure_payload
             }
@@ -7395,8 +7821,13 @@ def alphafold_backend_run_with_audit(backend_name: str, payload: dict, db: Sessi
             )
             db.add(structure_job)
             db.flush()
-    shell_artifacts = persist_execution_artifacts(db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id)
-    execution.command = {"argv": result.__dict__["command"], "artifact_paths": [artifact.path for artifact in shell_artifacts]}
+    shell_artifacts = persist_execution_artifacts(
+        db=db, result=result.__dict__, execution_id=execution.id, case_id=case_id
+    )
+    execution.command = {
+        "argv": result.__dict__["command"],
+        "artifact_paths": [artifact.path for artifact in shell_artifacts],
+    }
     log_action(
         db,
         case_id=case_id,
@@ -7419,7 +7850,12 @@ def alphafold_backend_run_with_audit(backend_name: str, payload: dict, db: Sessi
         actor="api",
         action="alphafold.backend.run",
         inputs={"backend": backend_name, **payload},
-        outputs={"status": result.status, "return_code": result.return_code, "execution_id": execution.id, "artifact_count": len(shell_artifacts)},
+        outputs={
+            "status": result.status,
+            "return_code": result.return_code,
+            "execution_id": execution.id,
+            "artifact_count": len(shell_artifacts),
+        },
     )
     db.commit()
     return result.__dict__
@@ -7435,7 +7871,9 @@ def _patched_openapi():
     schema = _original_openapi()
     schemas = schema.setdefault("components", {}).setdefault("schemas", {})
     if "AlphaFoldValidationErrorResponse" not in schemas:
-        schemas["AlphaFoldValidationErrorResponse"] = _AlphaFoldValidationErrorResponse.model_json_schema()
+        schemas["AlphaFoldValidationErrorResponse"] = (
+            _AlphaFoldValidationErrorResponse.model_json_schema()
+        )
     return schema
 
 

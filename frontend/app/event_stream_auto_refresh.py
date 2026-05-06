@@ -3,14 +3,15 @@
 Extracted from event_stream.py for modularity.  The :class:`LiveEventFeed`
 class in ``event_stream_live_feed`` uses these helpers.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 # ---------------------------------------------------------------------------
 # Auto-refresh configuration — pure, fully testable
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AutoRefreshConfig:
@@ -30,9 +31,9 @@ class AutoRefreshConfig:
 
 
 # Heuristic interval brackets (seconds)
-_FAST_INTERVAL: int = 5        # active work (running/pending jobs)
+_FAST_INTERVAL: int = 5  # active work (running/pending jobs)
 _MODERATE_INTERVAL: int = 15  # blocked jobs, idle with events
-_IDLE_INTERVAL: int = 30      # no active work, no errors
+_IDLE_INTERVAL: int = 30  # no active work, no errors
 _ERROR_BACKOFF_INTERVAL: int = 20  # connection errors, no active work
 
 _ACTIVE_STATUSES: set[str] = {"running", "pending"}
@@ -73,9 +74,7 @@ def compute_auto_refresh_config(
         return AutoRefreshConfig(interval_seconds=0, enabled=False, mode="disabled")
 
     if interval_seconds is not None:
-        return AutoRefreshConfig(
-            interval_seconds=interval_seconds, enabled=True, mode="manual"
-        )
+        return AutoRefreshConfig(interval_seconds=interval_seconds, enabled=True, mode="manual")
 
     # Determine if any jobs are actively running or pending
     has_active_jobs = False
@@ -90,9 +89,7 @@ def compute_auto_refresh_config(
 
     # Priority 1: active jobs → fast
     if has_active_jobs:
-        return AutoRefreshConfig(
-            interval_seconds=_FAST_INTERVAL, enabled=True, mode="heuristic"
-        )
+        return AutoRefreshConfig(interval_seconds=_FAST_INTERVAL, enabled=True, mode="heuristic")
 
     # Priority 2: connection error without active jobs → backoff
     if has_connection_error:
@@ -107,9 +104,7 @@ def compute_auto_refresh_config(
         )
 
     # Default: idle
-    return AutoRefreshConfig(
-        interval_seconds=_IDLE_INTERVAL, enabled=True, mode="heuristic"
-    )
+    return AutoRefreshConfig(interval_seconds=_IDLE_INTERVAL, enabled=True, mode="heuristic")
 
 
 def format_auto_refresh_mode_label(config: AutoRefreshConfig) -> str:

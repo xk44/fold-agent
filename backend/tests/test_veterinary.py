@@ -3,30 +3,29 @@
 import pytest
 
 from backend.app.veterinary import (
-    # Feature 1
-    CalibrationWarning,
-    MHCAllele,
-    MHC_ALLELE_DATABASE,
-    Species,
-    find_cross_species_equivalent,
-    get_alleles_for_species,
-    get_calibration_warning,
-    # Feature 2
-    ORTHOLOG_DATABASE,
-    OrthologComparison,
-    check_variant_conservation,
-    compare_orthologs,
-    rank_animal_models,
     # Feature 3
     AVMA_GUIDELINES,
-    CompassionateUseDocument,
+    MHC_ALLELE_DATABASE,
+    # Feature 2
+    ORTHOLOG_DATABASE,
     USDA_REQUIREMENTS_BY_SPECIES,
+    # Feature 1
+    CalibrationWarning,
+    CompassionateUseDocument,
+    MHCAllele,
+    OrthologComparison,
+    Species,
     VetAttestationRequirements,
+    check_variant_conservation,
+    compare_orthologs,
+    find_cross_species_equivalent,
     generate_compassionate_use_doc,
     generate_owner_consent_form,
+    get_alleles_for_species,
     get_attestation_requirements,
+    get_calibration_warning,
+    rank_animal_models,
 )
-
 
 # ============================================================================
 # Feature 1: Species-specific MHC allele database
@@ -456,6 +455,7 @@ class TestGenerateCompassionateUseDoc:
 
     def test_generated_at_iso_format(self, sample_doc):
         from datetime import datetime
+
         # Should parse without error
         datetime.fromisoformat(sample_doc.generated_at)
 

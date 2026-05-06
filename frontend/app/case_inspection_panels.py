@@ -9,13 +9,19 @@ reusable render functions:
 All functions accept their data as explicit arguments.  Behaviour and
 ``st.session_state`` keys are kept identical to the original dashboard code.
 """
+
 from __future__ import annotations
 
+from datetime import UTC
 from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from frontend.app.audit_viewer import build_audit_action_options, filter_audit_entries, format_audit_entry_preview
+from frontend.app.audit_viewer import (
+    build_audit_action_options,
+    filter_audit_entries,
+    format_audit_entry_preview,
+)
 from frontend.app.candidate_review_table import (
     apply_candidate_column_preset,
     build_candidate_column_presets,
@@ -26,7 +32,6 @@ from frontend.app.candidate_review_table import (
     format_candidate_option,
     sort_candidates,
 )
-from frontend.app.data_inventory import build_case_inventory_summary, build_inventory_rows
 from frontend.app.case_governance_actions import (
     build_case_delete_preview,
     build_case_redaction_preview,
@@ -45,6 +50,7 @@ from frontend.app.dashboard_helpers import (
     parse_due_date,
     task_sort_key,
 )
+from frontend.app.data_inventory import build_case_inventory_summary, build_inventory_rows
 from frontend.app.event_stream import (
     _CTX_PREFOCUS_ARTIFACT_KEY,
     _CTX_PREFOCUS_AUTO_OPEN_KEY,
@@ -95,6 +101,7 @@ if TYPE_CHECKING:
 # Create case
 # ---------------------------------------------------------------------------
 
+
 def render_create_case_panel(
     *,
     client: FoldAgentClient,
@@ -125,6 +132,7 @@ def render_create_case_panel(
 # Task card renderer
 # ---------------------------------------------------------------------------
 
+
 def render_task_card(task: dict) -> None:
     """Render a compact task card with overdue highlight."""
     due = parse_due_date(task.get("due_date"))
@@ -151,6 +159,7 @@ def render_task_card(task: dict) -> None:
 # Provenance summary
 # ---------------------------------------------------------------------------
 
+
 def render_provenance_summary(
     client: FoldAgentClient,
     api_url: str,
@@ -162,7 +171,6 @@ def render_provenance_summary(
     execution_history: list[dict] | None = None,
 ) -> None:
     """Render parsed provenance metrics, scores, and traceability shortcuts."""
-    from frontend.app.report_preview import format_safety_enforcement_error
 
     provenance = build_provenance_summary(variants, candidates)
     variant_sources = provenance["variant_sources"]
@@ -174,10 +182,18 @@ def render_provenance_summary(
 
     st.markdown("### Parsed provenance")
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Variant parsed_from", ", ".join(variant_sources) if variant_sources else "mock_only")
-    col2.metric("Candidate parsed_from", ", ".join(candidate_sources) if candidate_sources else "mock_only")
-    col3.metric("Structure backend", ", ".join(structure_backends) if structure_backends else "mock_only")
-    col4.metric("Structure status", ", ".join(structure_statuses) if structure_statuses else "mock_only")
+    col1.metric(
+        "Variant parsed_from", ", ".join(variant_sources) if variant_sources else "mock_only"
+    )
+    col2.metric(
+        "Candidate parsed_from", ", ".join(candidate_sources) if candidate_sources else "mock_only"
+    )
+    col3.metric(
+        "Structure backend", ", ".join(structure_backends) if structure_backends else "mock_only"
+    )
+    col4.metric(
+        "Structure status", ", ".join(structure_statuses) if structure_statuses else "mock_only"
+    )
 
     score_col1, score_col2, score_col3 = st.columns(3)
     score_col1.metric("Best ranking_score", provenance["best_ranking_score"])
@@ -196,13 +212,21 @@ def render_provenance_summary(
         shortcut_cols = st.columns(min(len(combined_execution_ids), 4))
         for idx, execution_id in enumerate(combined_execution_ids[:4]):
             with shortcut_cols[idx]:
-                if st.button(f"Focus {execution_id[:8]}", key=f"focus-{execution_select_key}-{execution_id}", width="stretch"):
+                if st.button(
+                    f"Focus {execution_id[:8]}",
+                    key=f"focus-{execution_select_key}-{execution_id}",
+                    width="stretch",
+                ):
                     st.session_state[execution_select_key] = execution_id
                     st.rerun()
 
         if execution_history:
-            selected_execution_id = st.session_state.get(execution_select_key) or combined_execution_ids[0]
-            selected_execution = next((item for item in execution_history if item["id"] == selected_execution_id), None)
+            selected_execution_id = (
+                st.session_state.get(execution_select_key) or combined_execution_ids[0]
+            )
+            selected_execution = next(
+                (item for item in execution_history if item["id"] == selected_execution_id), None
+            )
             if selected_execution and selected_execution.get("artifacts"):
                 primary_artifact = selected_execution["artifacts"][0]
                 st.caption("Focused execution shortcut")
@@ -219,15 +243,23 @@ def render_provenance_summary(
                         key=f"load-focused-{execution_select_key}-{selected_execution_id}",
                         width="stretch",
                     ):
-                        artifact_file, artifact_file_error = safe_call(client.download_artifact, primary_artifact["path"])
+                        artifact_file, artifact_file_error = safe_call(
+                            client.download_artifact, primary_artifact["path"]
+                        )
                         if artifact_file_error:
                             st.error(artifact_file_error)
                         else:
                             try:
-                                st.session_state[f"focused-artifact-{execution_select_key}"] = artifact_file.decode("utf-8")
+                                st.session_state[f"focused-artifact-{execution_select_key}"] = (
+                                    artifact_file.decode("utf-8")
+                                )
                             except UnicodeDecodeError:
-                                st.session_state[f"focused-artifact-{execution_select_key}"] = f"Binary artifact: {len(artifact_file)} bytes"
-                cached_focused_artifact = st.session_state.get(f"focused-artifact-{execution_select_key}")
+                                st.session_state[f"focused-artifact-{execution_select_key}"] = (
+                                    f"Binary artifact: {len(artifact_file)} bytes"
+                                )
+                cached_focused_artifact = st.session_state.get(
+                    f"focused-artifact-{execution_select_key}"
+                )
                 if cached_focused_artifact is not None:
                     st.caption("Focused execution artifact content")
                     st.code(cached_focused_artifact)
@@ -239,20 +271,32 @@ def render_provenance_summary(
         report_col2.metric(
             "Report structure provenance",
             " / ".join(
-                part for part in [content_json.get("structure_backend"), content_json.get("structure_status")] if part
-            ) or "n/a",
+                part
+                for part in [
+                    content_json.get("structure_backend"),
+                    content_json.get("structure_status"),
+                ]
+                if part
+            )
+            or "n/a",
         )
         report_score_parts = [
-            f"rank={content_json.get('ranking_score')}" if content_json.get("ranking_score") is not None else None,
+            f"rank={content_json.get('ranking_score')}"
+            if content_json.get("ranking_score") is not None
+            else None,
             f"pTM={content_json.get('ptm')}" if content_json.get("ptm") is not None else None,
             f"ipTM={content_json.get('iptm')}" if content_json.get("iptm") is not None else None,
         ]
-        report_col3.metric("Report structure scores", " · ".join(part for part in report_score_parts if part) or "n/a")
+        report_col3.metric(
+            "Report structure scores",
+            " · ".join(part for part in report_score_parts if part) or "n/a",
+        )
 
 
 # ---------------------------------------------------------------------------
 # Main case inspection
 # ---------------------------------------------------------------------------
+
 
 def render_case_inspection(
     *,
@@ -284,7 +328,9 @@ def render_case_inspection(
             st.info("No cases yet. Create one from the form on the left.")
         else:
             case_labels = {
-                case["id"]: f"{case['species']} · {case['id'][:8]} · {case.get('diagnosis_summary') or 'no summary'}"
+                case[
+                    "id"
+                ]: f"{case['species']} · {case['id'][:8]} · {case.get('diagnosis_summary') or 'no summary'}"
                 for case in cases
             }
             selected_case_id = st.selectbox(
@@ -380,6 +426,7 @@ def render_case_inspection(
 # Data inventory
 # ---------------------------------------------------------------------------
 
+
 def _render_data_inventory(
     *,
     client: FoldAgentClient,
@@ -398,19 +445,12 @@ def _render_data_inventory(
         "executions": safe_call(client.list_execution_history, selected_case_id),
         "audit_entries": safe_call(client.get_audit_log, selected_case_id),
     }
-    inventory_errors = {
-        name: error
-        for name, (_, error) in inventory_fetches.items()
-        if error
-    }
+    inventory_errors = {name: error for name, (_, error) in inventory_fetches.items() if error}
     if inventory_errors:
         st.error("Some inventory sources failed to load.")
         for name, error in inventory_errors.items():
             st.caption(f"{name}: {error}")
-    inventory_data = {
-        name: payload or []
-        for name, (payload, _) in inventory_fetches.items()
-    }
+    inventory_data = {name: payload or [] for name, (payload, _) in inventory_fetches.items()}
     # Stash for audit log (avoids double-fetch)
     st.session_state["_inv_data"] = inventory_data
     st.session_state["_inv_errors"] = inventory_errors
@@ -448,7 +488,16 @@ def _render_data_inventory(
         st.info("No inventory records for this case yet.")
 
     with st.expander("Inventory raw groups"):
-        for key in ["subjects", "samples", "variants", "candidates", "reports", "structure_jobs", "artifacts", "executions"]:
+        for key in [
+            "subjects",
+            "samples",
+            "variants",
+            "candidates",
+            "reports",
+            "structure_jobs",
+            "artifacts",
+            "executions",
+        ]:
             st.markdown(f"#### {key.replace('_', ' ').title()}")
             if inventory_data[key]:
                 st.dataframe(normalize_table_rows(inventory_data[key]), width="stretch")
@@ -459,6 +508,7 @@ def _render_data_inventory(
 # ---------------------------------------------------------------------------
 # Case governance / consent workflow
 # ---------------------------------------------------------------------------
+
 
 def _render_case_governance_panel(
     *,
@@ -508,13 +558,19 @@ def _render_case_governance_panel(
                 ),
                 key=f"subject-governance-detail-{selected_case_id}",
             )
-            selected_subject_row = next((row for row in subject_rows if row["id"] == selected_subject_id), None)
-            selected_subject_payload = next((subject for subject in subjects if subject.get("id") == selected_subject_id), None)
+            selected_subject_row = next(
+                (row for row in subject_rows if row["id"] == selected_subject_id), None
+            )
+            selected_subject_payload = next(
+                (subject for subject in subjects if subject.get("id") == selected_subject_id), None
+            )
             if selected_subject_row:
                 detail_metric1, detail_metric2, detail_metric3 = st.columns(3)
                 detail_metric1.metric("Privacy mode", selected_subject_row["privacy_mode"])
                 detail_metric2.metric("Linked samples", selected_subject_row["linked_samples"])
-                detail_metric3.metric("Sample types", selected_subject_row["sample_types"] or "none")
+                detail_metric3.metric(
+                    "Sample types", selected_subject_row["sample_types"] or "none"
+                )
                 st.code(
                     "\n".join(
                         [
@@ -529,7 +585,9 @@ def _render_case_governance_panel(
                     st.json(selected_subject_payload or {})
 
                 subject_redaction_options = ["full", "deidentify", "anonymous"]
-                subject_current_redaction = str((selected_subject_payload or {}).get("redaction_level") or "full")
+                subject_current_redaction = str(
+                    (selected_subject_payload or {}).get("redaction_level") or "full"
+                )
                 with st.expander("Subject redaction", expanded=False):
                     with st.form(f"subject-redaction-{selected_case_id}-{selected_subject_id}"):
                         subject_redaction_level = st.selectbox(
@@ -541,12 +599,16 @@ def _render_case_governance_panel(
                                 else 0
                             ),
                         )
-                        subject_redaction_reason = st.text_area("Subject redaction reason", value="")
+                        subject_redaction_reason = st.text_area(
+                            "Subject redaction reason", value=""
+                        )
                         subject_redaction_confirm = st.checkbox(
                             "I understand this changes subject privacy state",
                             value=False,
                         )
-                        subject_redaction_submit = st.form_submit_button("Apply subject redaction", width="stretch")
+                        subject_redaction_submit = st.form_submit_button(
+                            "Apply subject redaction", width="stretch"
+                        )
                     subject_redaction_preview = build_subject_redaction_preview(
                         selected_subject_payload or {},
                         redaction_level=subject_redaction_level,
@@ -566,7 +628,10 @@ def _render_case_governance_panel(
                         if subject_redact_error:
                             st.error(subject_redact_error)
                         else:
-                            st.success(subject_redact_result.get("message") or f"Redacted subject {selected_subject_id}")
+                            st.success(
+                                subject_redact_result.get("message")
+                                or f"Redacted subject {selected_subject_id}"
+                            )
                             st.rerun()
         else:
             st.info("No subjects linked to this case yet.")
@@ -575,9 +640,17 @@ def _render_case_governance_panel(
         consent_options = ["pending", "received", "waived", "revoked", "demo"]
         review_options = ["unreviewed", "in_review", "approved", "rejected"]
         redaction_options = ["full", "deidentify", "anonymous"]
-        current_consent = summary["consent_status"] if summary["consent_status"] in consent_options else "pending"
-        current_review = summary["review_status"] if summary["review_status"] in review_options else "unreviewed"
-        current_redaction = summary["redaction_level"] if summary["redaction_level"] in [*redaction_options, "deleted"] else "full"
+        current_consent = (
+            summary["consent_status"] if summary["consent_status"] in consent_options else "pending"
+        )
+        current_review = (
+            summary["review_status"] if summary["review_status"] in review_options else "unreviewed"
+        )
+        current_redaction = (
+            summary["redaction_level"]
+            if summary["redaction_level"] in [*redaction_options, "deleted"]
+            else "full"
+        )
         with st.form(f"case-governance-{selected_case_id}"):
             consent_status = st.selectbox(
                 "Consent status",
@@ -617,7 +690,9 @@ def _render_case_governance_panel(
         st.caption("Privacy controls")
         redaction_preview = build_case_redaction_preview(
             case_detail,
-            redaction_level=current_redaction if current_redaction in redaction_options else "anonymous",
+            redaction_level=current_redaction
+            if current_redaction in redaction_options
+            else "anonymous",
             confirm=False,
             reason="",
         )
@@ -626,7 +701,9 @@ def _render_case_governance_panel(
                 redaction_level = st.selectbox(
                     "Target redaction level",
                     options=redaction_options,
-                    index=redaction_options.index(current_redaction) if current_redaction in redaction_options else 0,
+                    index=redaction_options.index(current_redaction)
+                    if current_redaction in redaction_options
+                    else 0,
                 )
                 redaction_reason = st.text_area("Redaction reason", value="")
                 redaction_confirm = st.checkbox(
@@ -690,20 +767,23 @@ def _render_case_governance_panel(
 # Case tasks
 # ---------------------------------------------------------------------------
 
+
 def _render_case_tasks(
     *,
     client: FoldAgentClient,
     selected_case_id: str,
     safe_call,
 ) -> None:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     st.markdown("### Case tasks")
     task_left, task_right = st.columns(2)
     with task_left:
         with st.form(f"create-task-{selected_case_id}"):
             task_title = st.text_input("Task title", value="")
-            task_status = st.selectbox("Task status", ["todo", "in_progress", "done", "blocked"], index=0)
+            task_status = st.selectbox(
+                "Task status", ["todo", "in_progress", "done", "blocked"], index=0
+            )
             task_owner = st.text_input("Task owner", value="")
             task_due_date = st.text_input("Task due date (ISO)", value="")
             task_notes = st.text_area("Task notes", value="")
@@ -716,7 +796,9 @@ def _render_case_tasks(
                 "due_date": task_due_date or None,
                 "notes": task_notes or None,
             }
-            task_result, task_error = safe_call(client.create_case_task, selected_case_id, **payload)
+            task_result, task_error = safe_call(
+                client.create_case_task, selected_case_id, **payload
+            )
             if task_error:
                 st.error(task_error)
             else:
@@ -735,13 +817,15 @@ def _render_case_tasks(
                 1
                 for task in sorted_tasks
                 if parse_due_date(task.get("due_date"))
-                and parse_due_date(task.get("due_date")) < datetime.now(timezone.utc)
+                and parse_due_date(task.get("due_date")) < datetime.now(UTC)
                 and task.get("status") != "done"
             )
             task_metric1, task_metric2, task_metric3 = st.columns(3)
             task_metric1.metric("Total tasks", len(sorted_tasks))
             task_metric2.metric("Overdue", overdue_count)
-            task_metric3.metric("Done", sum(1 for task in sorted_tasks if task.get("status") == "done"))
+            task_metric3.metric(
+                "Done", sum(1 for task in sorted_tasks if task.get("status") == "done")
+            )
 
             lane_order = ["todo", "in_progress", "blocked", "done"]
             lane_columns = st.columns(len(lane_order))
@@ -760,11 +844,20 @@ def _render_case_tasks(
             selected_task_id = st.selectbox(
                 "Task update target",
                 options=[task["id"] for task in sorted_tasks],
-                format_func=lambda task_id: next((f"{task['status']} · {task['title']}" for task in sorted_tasks if task["id"] == task_id), task_id),
+                format_func=lambda task_id: next(
+                    (
+                        f"{task['status']} · {task['title']}"
+                        for task in sorted_tasks
+                        if task["id"] == task_id
+                    ),
+                    task_id,
+                ),
                 key=f"task-target-{selected_case_id}",
             )
             with st.form(f"update-task-{selected_case_id}"):
-                update_task_status = st.selectbox("Update task status", ["todo", "in_progress", "done", "blocked"], index=0)
+                update_task_status = st.selectbox(
+                    "Update task status", ["todo", "in_progress", "done", "blocked"], index=0
+                )
                 update_task_notes = st.text_area("Update task notes", value="")
                 update_task_submit = st.form_submit_button("Update task", width="stretch")
             if update_task_submit:
@@ -784,6 +877,7 @@ def _render_case_tasks(
 # ---------------------------------------------------------------------------
 # Sample intake
 # ---------------------------------------------------------------------------
+
 
 def _render_sample_intake(
     *,
@@ -820,17 +914,37 @@ def _render_sample_intake(
                 },
             }
             with st.form(f"upload-sample-{selected_case_id}"):
-                upload_sample_type = st.selectbox("Sample type", ["tumor", "normal", "rna", "other"], index=0, key=f"upload-sample-type-{selected_case_id}")
+                upload_sample_type = st.selectbox(
+                    "Sample type",
+                    ["tumor", "normal", "rna", "other"],
+                    index=0,
+                    key=f"upload-sample-type-{selected_case_id}",
+                )
                 upload_subject_mode = st.selectbox(
                     "Subject linkage",
                     options=subject_options,
                     format_func=lambda option: subject_labels.get(option, option),
                     key=f"upload-subject-mode-{selected_case_id}",
                 )
-                new_subject_name = st.text_input("New subject display name", value="", key=f"upload-subject-name-{selected_case_id}")
-                new_subject_species = st.text_input("Subject species / note", value=case_detail.get("species") if case_detail else "", key=f"upload-subject-species-{selected_case_id}")
-                privacy_mode = st.selectbox("Subject privacy mode", ["redacted", "open"], index=0, key=f"upload-privacy-mode-{selected_case_id}")
-                upload_source_lab = st.text_input("Source lab", value="", key=f"upload-source-lab-{selected_case_id}")
+                new_subject_name = st.text_input(
+                    "New subject display name",
+                    value="",
+                    key=f"upload-subject-name-{selected_case_id}",
+                )
+                new_subject_species = st.text_input(
+                    "Subject species / note",
+                    value=case_detail.get("species") if case_detail else "",
+                    key=f"upload-subject-species-{selected_case_id}",
+                )
+                privacy_mode = st.selectbox(
+                    "Subject privacy mode",
+                    ["redacted", "open"],
+                    index=0,
+                    key=f"upload-privacy-mode-{selected_case_id}",
+                )
+                upload_source_lab = st.text_input(
+                    "Source lab", value="", key=f"upload-source-lab-{selected_case_id}"
+                )
                 upload_notes = st.text_area(
                     "Chain-of-custody / intake notes",
                     value="",
@@ -843,7 +957,9 @@ def _render_sample_intake(
                     accept_multiple_files=False,
                     key=f"upload-file-{selected_case_id}",
                 )
-                upload_submit = st.form_submit_button("Stage locally and register sample", width="stretch")
+                upload_submit = st.form_submit_button(
+                    "Stage locally and register sample", width="stretch"
+                )
             if upload_submit:
                 if uploaded_file is None:
                     st.error("Choose a file before registering the sample.")
@@ -859,7 +975,9 @@ def _render_sample_intake(
                             notes=upload_notes or None,
                             privacy_mode=privacy_mode,
                         )
-                        subject_result, subject_error = safe_call(client.create_subject, selected_case_id, **subject_payload)
+                        subject_result, subject_error = safe_call(
+                            client.create_subject, selected_case_id, **subject_payload
+                        )
                         if subject_error:
                             st.error(subject_error)
                             st.stop()
@@ -881,7 +999,9 @@ def _render_sample_intake(
                         notes=upload_notes or None,
                         subject_id=subject_id,
                     )
-                    sample_result, sample_error = safe_call(client.register_sample, selected_case_id, **payload)
+                    sample_result, sample_error = safe_call(
+                        client.register_sample, selected_case_id, **payload
+                    )
                     if sample_error:
                         st.error(sample_error)
                     else:
@@ -900,7 +1020,9 @@ def _render_sample_intake(
 
         with manual_tab:
             with st.form(f"register-sample-{selected_case_id}"):
-                sample_type = st.selectbox("Sample type", ["tumor", "normal", "rna", "other"], index=0)
+                sample_type = st.selectbox(
+                    "Sample type", ["tumor", "normal", "rna", "other"], index=0
+                )
                 file_path = st.text_input("Primary file path", value="/tmp/demo.vcf")
                 checksum = st.text_input("Checksum", value="")
                 source_lab = st.text_input("Source lab", value="")
@@ -912,7 +1034,9 @@ def _render_sample_intake(
                     "checksum": checksum or None,
                     "source_lab": source_lab or None,
                 }
-                sample_result, sample_error = safe_call(client.register_sample, selected_case_id, **payload)
+                sample_result, sample_error = safe_call(
+                    client.register_sample, selected_case_id, **payload
+                )
                 if sample_error:
                     st.error(sample_error)
                 else:
@@ -941,7 +1065,9 @@ def _render_sample_intake(
                     sample_id,
                 ),
             )
-            checksum_result, checksum_error = safe_call(client.get_sample_checksum, selected_sample_id)
+            checksum_result, checksum_error = safe_call(
+                client.get_sample_checksum, selected_sample_id
+            )
             if checksum_error:
                 st.error(checksum_error)
             else:
@@ -951,6 +1077,7 @@ def _render_sample_intake(
 # ---------------------------------------------------------------------------
 # Audit log
 # ---------------------------------------------------------------------------
+
 
 def _render_audit_log(
     *,
@@ -992,11 +1119,17 @@ def _render_audit_log(
         audit_metric1.metric("Visible entries", len(filtered_audit_entries))
         audit_metric2.metric(
             "Requires approval",
-            sum(1 for entry in filtered_audit_entries if entry.get("safety_gate_result") == "requires_approval"),
+            sum(
+                1
+                for entry in filtered_audit_entries
+                if entry.get("safety_gate_result") == "requires_approval"
+            ),
         )
         audit_metric3.metric(
             "Blocked",
-            sum(1 for entry in filtered_audit_entries if entry.get("safety_gate_result") == "block"),
+            sum(
+                1 for entry in filtered_audit_entries if entry.get("safety_gate_result") == "block"
+            ),
         )
 
         if filtered_audit_entries:
@@ -1014,7 +1147,10 @@ def _render_audit_log(
                 ),
                 key=f"audit-preview-target-{selected_case_id}",
             )
-            preview_entry = next((entry for entry in filtered_audit_entries if entry.get("id") == preview_target), None)
+            preview_entry = next(
+                (entry for entry in filtered_audit_entries if entry.get("id") == preview_target),
+                None,
+            )
             if preview_entry:
                 st.code(format_audit_entry_preview(preview_entry))
                 with st.expander("Audit entry raw payload"):
@@ -1027,6 +1163,7 @@ def _render_audit_log(
 # Report generation buttons
 # ---------------------------------------------------------------------------
 
+
 def _render_report_generation(
     *,
     client: FoldAgentClient,
@@ -1038,18 +1175,28 @@ def _render_report_generation(
     report_col1, report_col2 = st.columns(2)
     with report_col1:
         if st.button("Generate candidate review", width="stretch"):
-            report_result, report_error = safe_call(client.generate_candidate_review_report, selected_case_id)
+            report_result, report_error = safe_call(
+                client.generate_candidate_review_report, selected_case_id
+            )
             if report_error:
-                render_api_error(report_error, fallback_title="Candidate review generation blocked by safety enforcement.")
+                render_api_error(
+                    report_error,
+                    fallback_title="Candidate review generation blocked by safety enforcement.",
+                )
             else:
                 st.success(f"Generated report {report_result['id']}")
                 st.session_state["last_report_id"] = report_result["id"]
                 st.rerun()
     with report_col2:
         if st.button("Generate ethics package", width="stretch"):
-            report_result, report_error = safe_call(client.generate_ethics_package, selected_case_id)
+            report_result, report_error = safe_call(
+                client.generate_ethics_package, selected_case_id
+            )
             if report_error:
-                render_api_error(report_error, fallback_title="Ethics package generation blocked by safety enforcement.")
+                render_api_error(
+                    report_error,
+                    fallback_title="Ethics package generation blocked by safety enforcement.",
+                )
             else:
                 st.success(f"Generated report {report_result['id']}")
                 st.session_state["last_report_id"] = report_result["id"]
@@ -1059,6 +1206,7 @@ def _render_report_generation(
 # ---------------------------------------------------------------------------
 # Candidate review table + provenance
 # ---------------------------------------------------------------------------
+
 
 def _render_candidate_review(
     *,
@@ -1080,7 +1228,9 @@ def _render_candidate_review(
             variants=variants or [],
             candidates=candidates or [],
             safe_call=safe_call,
-            execution_select_key=f"execution-viewer-{pipeline_case_id}" if pipeline_case_id else None,
+            execution_select_key=f"execution-viewer-{pipeline_case_id}"
+            if pipeline_case_id
+            else None,
             execution_history=execution_history or [],
         )
     reports_for_linkouts, _ = safe_call(client.list_reports, selected_case_id)
@@ -1180,7 +1330,9 @@ def _render_candidate_review(
                         st.session_state[f"candidate-filter-mhc-{selected_case_id}"] = "all"
                         st.session_state[f"candidate-ranking-min-{selected_case_id}"] = 0.0
                         st.session_state[f"candidate-binding-max-{selected_case_id}"] = 1.0
-                        st.session_state[f"candidate-review-{selected_case_id}"] = variant_linkouts["candidate_id"]
+                        st.session_state[f"candidate-review-{selected_case_id}"] = variant_linkouts[
+                            "candidate_id"
+                        ]
                         st.rerun()
                 with link_col2:
                     if variant_linkouts.get("structure_job_id") and st.button(
@@ -1188,7 +1340,9 @@ def _render_candidate_review(
                         key=f"focus-related-structure-{selected_case_id}-{selected_variant_id}",
                         width="stretch",
                     ):
-                        st.session_state[f"structure-job-{selected_case_id}"] = variant_linkouts["structure_job_id"]
+                        st.session_state[f"structure-job-{selected_case_id}"] = variant_linkouts[
+                            "structure_job_id"
+                        ]
                         st.rerun()
                 with link_col3:
                     if variant_linkouts.get("report_id") and st.button(
@@ -1310,11 +1464,15 @@ def _render_candidate_review(
         )
         if candidate_rows:
             st.dataframe(normalize_table_rows(candidate_rows), width="stretch")
-            candidate_lookup = {str(candidate["id"]): candidate for candidate in filtered_candidates}
+            candidate_lookup = {
+                str(candidate["id"]): candidate for candidate in filtered_candidates
+            }
             selected_candidate_id = st.selectbox(
                 "Candidate review target",
                 options=list(candidate_lookup.keys()),
-                format_func=lambda candidate_id: format_candidate_option(candidate_lookup[candidate_id]),
+                format_func=lambda candidate_id: format_candidate_option(
+                    candidate_lookup[candidate_id]
+                ),
                 key=f"candidate-review-{selected_case_id}",
             )
             selected_candidate = candidate_lookup[selected_candidate_id]
@@ -1341,7 +1499,9 @@ def _render_candidate_review(
                         key=f"focus-candidate-artifact-{selected_case_id}-{selected_candidate_id}",
                         width="stretch",
                     ):
-                        st.session_state[_CTX_PREFOCUS_ARTIFACT_KEY] = candidate_linkouts["artifact_path"]
+                        st.session_state[_CTX_PREFOCUS_ARTIFACT_KEY] = candidate_linkouts[
+                            "artifact_path"
+                        ]
                         st.session_state[_CTX_PREFOCUS_AUTO_OPEN_KEY] = {
                             "auto_open": True,
                             "case_id": selected_case_id,
@@ -1354,10 +1514,14 @@ def _render_candidate_review(
                         key=f"focus-structure-job-{selected_case_id}-{selected_candidate_id}",
                         width="stretch",
                     ):
-                        st.session_state[f"structure-job-{selected_case_id}"] = candidate_linkouts["structure_job_id"]
+                        st.session_state[f"structure-job-{selected_case_id}"] = candidate_linkouts[
+                            "structure_job_id"
+                        ]
                         st.rerun()
             with st.form(f"candidate-review-form-{selected_case_id}"):
-                current_candidate_status = str(selected_candidate.get("review_status") or "unreviewed")
+                current_candidate_status = str(
+                    selected_candidate.get("review_status") or "unreviewed"
+                )
                 candidate_status = st.selectbox(
                     "Candidate review status",
                     review_status_options,
@@ -1392,6 +1556,7 @@ def _render_candidate_review(
 # Structure job explorer
 # ---------------------------------------------------------------------------
 
+
 def _render_structure_job_explorer(
     *,
     client: FoldAgentClient,
@@ -1421,7 +1586,9 @@ def _render_structure_job_explorer(
             ),
             key=f"structure-job-{selected_case_id}",
         )
-        structure_job_detail, structure_job_detail_error = safe_call(client.get_structure_job, selected_structure_job_id)
+        structure_job_detail, structure_job_detail_error = safe_call(
+            client.get_structure_job, selected_structure_job_id
+        )
         if structure_job_detail_error:
             st.error(structure_job_detail_error)
         else:
@@ -1438,7 +1605,9 @@ def _render_structure_job_explorer(
             st.code(format_structure_job_preview(structure_job_detail))
             with st.expander("Raw structure job payload"):
                 st.json(structure_job_detail)
-            structure_artifacts = list_structure_artifacts((related_execution or {}).get("artifacts"))
+            structure_artifacts = list_structure_artifacts(
+                (related_execution or {}).get("artifacts")
+            )
             structure_artifact = select_structure_artifact(structure_artifacts)
             if structure_artifact:
                 st.caption("Interactive 3D structure viewer")
@@ -1449,7 +1618,10 @@ def _render_structure_job_explorer(
                         (
                             idx
                             for idx, artifact in enumerate(structure_artifacts)
-                            if artifact.get("path") == st.session_state.get(f"structure-viewer-path-{selected_structure_job_id}")
+                            if artifact.get("path")
+                            == st.session_state.get(
+                                f"structure-viewer-path-{selected_structure_job_id}"
+                            )
                         ),
                         next(
                             idx
@@ -1457,14 +1629,22 @@ def _render_structure_job_explorer(
                             if artifact.get("path") == structure_artifact.get("path")
                         ),
                     ),
-                    format_func=lambda artifact: format_structure_artifact_option(artifact, structure_job_detail),
+                    format_func=lambda artifact: format_structure_artifact_option(
+                        artifact, structure_job_detail
+                    ),
                     key=f"structure-artifact-picker-{selected_structure_job_id}",
                 )
-                st.session_state[f"structure-viewer-path-{selected_structure_job_id}"] = selected_structure_artifact.get("path")
-                structure_format = viewer_format_for_artifact(selected_structure_artifact, structure_job_detail)
+                st.session_state[f"structure-viewer-path-{selected_structure_job_id}"] = (
+                    selected_structure_artifact.get("path")
+                )
+                structure_format = viewer_format_for_artifact(
+                    selected_structure_artifact, structure_job_detail
+                )
                 overlay = format_structure_confidence_summary(structure_job_detail)
                 viewer_col1, viewer_col2, viewer_col3, viewer_col4 = st.columns(4)
-                viewer_col1.metric("Viewer artifact", selected_structure_artifact.get("filename") or "n/a")
+                viewer_col1.metric(
+                    "Viewer artifact", selected_structure_artifact.get("filename") or "n/a"
+                )
                 viewer_col2.metric("Viewer format", structure_format)
                 viewer_col3.metric("Ranking score", overlay["ranking_score"])
                 viewer_col4.metric("Output format", overlay["output_format"])
@@ -1473,14 +1653,25 @@ def _render_structure_job_explorer(
                 confidence_col2.metric("ipTM", overlay["iptm"])
                 confidence_col3.metric("Model path", overlay["model_path"])
                 st.caption(f"Source URL: {overlay['source_url']}")
-                compare_artifact = choose_compare_artifact(structure_artifacts, selected_structure_artifact)
+                compare_artifact = choose_compare_artifact(
+                    structure_artifacts, selected_structure_artifact
+                )
                 compare_enabled = st.toggle(
                     "Compare mode",
-                    value=bool(compare_artifact and st.session_state.get(f"structure-compare-enabled-{selected_structure_job_id}")),
+                    value=bool(
+                        compare_artifact
+                        and st.session_state.get(
+                            f"structure-compare-enabled-{selected_structure_job_id}"
+                        )
+                    ),
                     key=f"structure-compare-enabled-{selected_structure_job_id}",
                 )
                 selected_compare_artifact = None
-                compare_candidates = [artifact for artifact in structure_artifacts if artifact.get("path") != selected_structure_artifact.get("path")]
+                compare_candidates = [
+                    artifact
+                    for artifact in structure_artifacts
+                    if artifact.get("path") != selected_structure_artifact.get("path")
+                ]
                 if compare_candidates:
                     selected_compare_artifact = st.selectbox(
                         "Compare against",
@@ -1489,41 +1680,87 @@ def _render_structure_job_explorer(
                             (
                                 idx
                                 for idx, artifact in enumerate(compare_candidates)
-                                if artifact.get("path") == st.session_state.get(f"structure-compare-path-{selected_structure_job_id}")
+                                if artifact.get("path")
+                                == st.session_state.get(
+                                    f"structure-compare-path-{selected_structure_job_id}"
+                                )
                             ),
                             0,
                         ),
-                        format_func=lambda artifact: format_structure_artifact_option(artifact, structure_job_detail),
+                        format_func=lambda artifact: format_structure_artifact_option(
+                            artifact, structure_job_detail
+                        ),
                         key=f"structure-compare-picker-{selected_structure_job_id}",
                         disabled=not compare_enabled,
                     )
-                if st.button("Load 3D structure", key=f"load-structure-viewer-{selected_structure_job_id}", width="stretch"):
-                    artifact_file, artifact_file_error = safe_call(client.download_artifact, selected_structure_artifact["path"])
+                if st.button(
+                    "Load 3D structure",
+                    key=f"load-structure-viewer-{selected_structure_job_id}",
+                    width="stretch",
+                ):
+                    artifact_file, artifact_file_error = safe_call(
+                        client.download_artifact, selected_structure_artifact["path"]
+                    )
                     if artifact_file_error:
                         st.error(artifact_file_error)
                     else:
                         try:
-                            st.session_state[f"structure-viewer-text-{selected_structure_job_id}"] = artifact_file.decode("utf-8")
-                            st.session_state[f"structure-viewer-format-{selected_structure_job_id}"] = structure_format
-                            st.session_state[f"structure-viewer-path-{selected_structure_job_id}"] = selected_structure_artifact.get("path")
+                            st.session_state[
+                                f"structure-viewer-text-{selected_structure_job_id}"
+                            ] = artifact_file.decode("utf-8")
+                            st.session_state[
+                                f"structure-viewer-format-{selected_structure_job_id}"
+                            ] = structure_format
+                            st.session_state[
+                                f"structure-viewer-path-{selected_structure_job_id}"
+                            ] = selected_structure_artifact.get("path")
                             if compare_enabled and selected_compare_artifact:
-                                compare_file, compare_file_error = safe_call(client.download_artifact, selected_compare_artifact["path"])
+                                compare_file, compare_file_error = safe_call(
+                                    client.download_artifact, selected_compare_artifact["path"]
+                                )
                                 if compare_file_error:
                                     st.error(compare_file_error)
                                 else:
                                     try:
-                                        st.session_state[f"structure-compare-text-{selected_structure_job_id}"] = compare_file.decode("utf-8")
-                                        st.session_state[f"structure-compare-format-{selected_structure_job_id}"] = viewer_format_for_artifact(selected_compare_artifact, structure_job_detail)
-                                        st.session_state[f"structure-compare-path-{selected_structure_job_id}"] = selected_compare_artifact.get("path")
+                                        st.session_state[
+                                            f"structure-compare-text-{selected_structure_job_id}"
+                                        ] = compare_file.decode("utf-8")
+                                        st.session_state[
+                                            f"structure-compare-format-{selected_structure_job_id}"
+                                        ] = viewer_format_for_artifact(
+                                            selected_compare_artifact, structure_job_detail
+                                        )
+                                        st.session_state[
+                                            f"structure-compare-path-{selected_structure_job_id}"
+                                        ] = selected_compare_artifact.get("path")
                                     except UnicodeDecodeError:
-                                        st.error("Compare artifact is not UTF-8 text; viewer expects PDB/mmCIF text.")
+                                        st.error(
+                                            "Compare artifact is not UTF-8 text; viewer expects PDB/mmCIF text."
+                                        )
                         except UnicodeDecodeError:
-                            st.error("Structure artifact is not UTF-8 text; viewer expects PDB/mmCIF text.")
-                cached_structure_text = st.session_state.get(f"structure-viewer-text-{selected_structure_job_id}")
-                cached_structure_format = st.session_state.get(f"structure-viewer-format-{selected_structure_job_id}")
-                cached_compare_text = st.session_state.get(f"structure-compare-text-{selected_structure_job_id}")
-                cached_compare_format = st.session_state.get(f"structure-compare-format-{selected_structure_job_id}")
-                if compare_enabled and cached_structure_text and cached_structure_format and cached_compare_text and cached_compare_format and selected_compare_artifact:
+                            st.error(
+                                "Structure artifact is not UTF-8 text; viewer expects PDB/mmCIF text."
+                            )
+                cached_structure_text = st.session_state.get(
+                    f"structure-viewer-text-{selected_structure_job_id}"
+                )
+                cached_structure_format = st.session_state.get(
+                    f"structure-viewer-format-{selected_structure_job_id}"
+                )
+                cached_compare_text = st.session_state.get(
+                    f"structure-compare-text-{selected_structure_job_id}"
+                )
+                cached_compare_format = st.session_state.get(
+                    f"structure-compare-format-{selected_structure_job_id}"
+                )
+                if (
+                    compare_enabled
+                    and cached_structure_text
+                    and cached_structure_format
+                    and cached_compare_text
+                    and cached_compare_format
+                    and selected_compare_artifact
+                ):
                     st.iframe(
                         build_compare_structure_viewer_html(
                             left_structure_text=cached_structure_text,
@@ -1550,6 +1787,7 @@ def _render_structure_job_explorer(
 # ---------------------------------------------------------------------------
 # Report detail / export / bundle / artifacts
 # ---------------------------------------------------------------------------
+
 
 def _render_report_detail(
     *,
@@ -1605,20 +1843,28 @@ def _render_report_detail(
                 candidates=candidates or [],
                 safe_call=safe_call,
                 report_payload=report_payload,
-                execution_select_key=f"execution-viewer-{pipeline_case_id}" if pipeline_case_id else None,
+                execution_select_key=f"execution-viewer-{pipeline_case_id}"
+                if pipeline_case_id
+                else None,
                 execution_history=execution_history or [],
             )
             if report_payload.get("report_type") == "ethics_package":
-                ethics_summary = summarize_ethics_package_operator_state(report_payload, case_detail=case_detail)
+                ethics_summary = summarize_ethics_package_operator_state(
+                    report_payload, case_detail=case_detail
+                )
                 ethics_metric1, ethics_metric2, ethics_metric3, ethics_metric4 = st.columns(4)
                 ethics_metric1.metric("Consent status", ethics_summary["consent_status"])
                 ethics_metric2.metric("Case review", ethics_summary["review_status"])
                 ethics_metric3.metric("Consent templates", ethics_summary["consent_template_count"])
                 ethics_metric4.metric("Oversight items", ethics_summary["oversight_item_count"])
                 if ethics_summary["needs_consent_attention"]:
-                    st.warning("Ethics package needs consent follow-through before operator signoff.")
+                    st.warning(
+                        "Ethics package needs consent follow-through before operator signoff."
+                    )
                 if ethics_summary["needs_review_attention"]:
-                    st.warning("Case review status is not yet in review/approved for this ethics package.")
+                    st.warning(
+                        "Case review status is not yet in review/approved for this ethics package."
+                    )
                 if not ethics_summary["species_matches_case"]:
                     st.error(
                         f"Ethics package species ({ethics_summary['report_species']}) does not match case species ({ethics_summary['case_species']})."
@@ -1642,7 +1888,9 @@ def _render_report_detail(
                     width="stretch",
                 )
             if report_payload.get("report_type") == "candidate_review":
-                cr_summary = summarize_candidate_review_operator_state(report_payload, case_detail=case_detail)
+                cr_summary = summarize_candidate_review_operator_state(
+                    report_payload, case_detail=case_detail
+                )
                 cr_metric1, cr_metric2, cr_metric3, cr_metric4 = st.columns(4)
                 cr_metric1.metric("Review status", cr_summary["review_status"])
                 cr_metric2.metric("Candidates", cr_summary["candidate_count"])
@@ -1651,7 +1899,9 @@ def _render_report_detail(
                 if cr_summary["needs_review_attention"]:
                     st.warning("Candidate review status needs attention before operator signoff.")
                 if cr_summary["needs_structure_attention"]:
-                    st.warning("Structure evidence is incomplete or not yet completed for this candidate review.")
+                    st.warning(
+                        "Structure evidence is incomplete or not yet completed for this candidate review."
+                    )
                 if not cr_summary["species_matches_case"]:
                     st.error(
                         f"Report species ({cr_summary['report_species']}) does not match case species ({cr_summary['case_species']})."
@@ -1689,16 +1939,26 @@ def _render_report_detail(
             export_col1, export_col2 = st.columns(2)
             with export_col1:
                 if st.button("Load export", key=f"load-export-{selected_case_id}", width="stretch"):
-                    export_payload, export_error = safe_call(client.export_report, selected_report_id, export_format)
+                    export_payload, export_error = safe_call(
+                        client.export_report, selected_report_id, export_format
+                    )
                     if export_error:
-                        render_api_error(export_error, fallback_title="Report export blocked by safety enforcement.")
+                        render_api_error(
+                            export_error,
+                            fallback_title="Report export blocked by safety enforcement.",
+                        )
                     else:
                         st.session_state[f"export-payload-{selected_case_id}"] = export_payload
             with export_col2:
                 if st.button("Save export", key=f"save-export-{selected_case_id}", width="stretch"):
-                    saved_export, saved_export_error = safe_call(client.save_report, selected_report_id, export_format)
+                    saved_export, saved_export_error = safe_call(
+                        client.save_report, selected_report_id, export_format
+                    )
                     if saved_export_error:
-                        render_api_error(saved_export_error, fallback_title="Saving report export was blocked by safety enforcement.")
+                        render_api_error(
+                            saved_export_error,
+                            fallback_title="Saving report export was blocked by safety enforcement.",
+                        )
                     else:
                         st.session_state[f"saved-export-{selected_case_id}"] = saved_export
             cached_export_payload = st.session_state.get(f"export-payload-{selected_case_id}")
@@ -1716,7 +1976,9 @@ def _render_report_detail(
                 st.caption("Saved export artifact")
                 st.json(saved_export_payload)
 
-            if st.button("Load case bundle", key=f"load-bundle-{selected_case_id}", width="stretch"):
+            if st.button(
+                "Load case bundle", key=f"load-bundle-{selected_case_id}", width="stretch"
+            ):
                 bundle_payload, bundle_error = safe_call(client.get_case_bundle, selected_case_id)
                 if bundle_error:
                     st.error(bundle_error)
@@ -1728,7 +1990,9 @@ def _render_report_detail(
                 bundle_metric1, bundle_metric2, bundle_metric3, bundle_metric4 = st.columns(4)
                 bundle_metric1.metric("Samples", len(cached_bundle_payload.get("samples", [])))
                 bundle_metric2.metric("Variants", len(cached_bundle_payload.get("variants", [])))
-                bundle_metric3.metric("Candidates", len(cached_bundle_payload.get("candidates", [])))
+                bundle_metric3.metric(
+                    "Candidates", len(cached_bundle_payload.get("candidates", []))
+                )
                 bundle_metric4.metric("Reports", len(cached_bundle_payload.get("reports", [])))
                 st.caption("Readable bundle preview")
                 st.code(format_bundle_preview(cached_bundle_payload))
@@ -1742,28 +2006,48 @@ def _render_report_detail(
                 )
                 bundle_export_col1, bundle_export_col2 = st.columns(2)
                 with bundle_export_col1:
-                    if st.button("Load bundle export", key=f"load-bundle-export-{selected_case_id}", width="stretch"):
+                    if st.button(
+                        "Load bundle export",
+                        key=f"load-bundle-export-{selected_case_id}",
+                        width="stretch",
+                    ):
                         bundle_export_payload, bundle_export_error = safe_call(
                             client.export_case_bundle,
                             selected_case_id,
                             bundle_export_format,
                         )
                         if bundle_export_error:
-                            render_api_error(bundle_export_error, fallback_title="Bundle export blocked by safety enforcement.")
+                            render_api_error(
+                                bundle_export_error,
+                                fallback_title="Bundle export blocked by safety enforcement.",
+                            )
                         else:
-                            st.session_state[f"bundle-export-payload-{selected_case_id}"] = bundle_export_payload
+                            st.session_state[f"bundle-export-payload-{selected_case_id}"] = (
+                                bundle_export_payload
+                            )
                 with bundle_export_col2:
-                    if st.button("Save bundle export", key=f"save-bundle-export-{selected_case_id}", width="stretch"):
+                    if st.button(
+                        "Save bundle export",
+                        key=f"save-bundle-export-{selected_case_id}",
+                        width="stretch",
+                    ):
                         saved_bundle_export, saved_bundle_export_error = safe_call(
                             client.save_case_bundle,
                             selected_case_id,
                             bundle_export_format,
                         )
                         if saved_bundle_export_error:
-                            render_api_error(saved_bundle_export_error, fallback_title="Saving bundle export was blocked by safety enforcement.")
+                            render_api_error(
+                                saved_bundle_export_error,
+                                fallback_title="Saving bundle export was blocked by safety enforcement.",
+                            )
                         else:
-                            st.session_state[f"saved-bundle-export-{selected_case_id}"] = saved_bundle_export
-                cached_bundle_export_payload = st.session_state.get(f"bundle-export-payload-{selected_case_id}")
+                            st.session_state[f"saved-bundle-export-{selected_case_id}"] = (
+                                saved_bundle_export
+                            )
+                cached_bundle_export_payload = st.session_state.get(
+                    f"bundle-export-payload-{selected_case_id}"
+                )
                 if cached_bundle_export_payload is not None:
                     st.caption("Bundle export payload")
                     if cached_bundle_export_payload.get("format") == "markdown":
@@ -1773,7 +2057,9 @@ def _render_report_detail(
                             st.code(format_bundle_preview(cached_bundle_payload))
                         with st.expander("Raw bundle export payload"):
                             st.json(cached_bundle_export_payload)
-                saved_bundle_export_payload = st.session_state.get(f"saved-bundle-export-{selected_case_id}")
+                saved_bundle_export_payload = st.session_state.get(
+                    f"saved-bundle-export-{selected_case_id}"
+                )
                 if saved_bundle_export_payload is not None:
                     st.caption("Saved bundle artifact")
                     st.json(saved_bundle_export_payload)
@@ -1789,7 +2075,14 @@ def _render_report_detail(
                     # Auto-open: if macro focus signalled an exact single artifact, mark it
                     prefocus_auto_open = st.session_state.pop(_CTX_PREFOCUS_AUTO_OPEN_KEY, None)
                     default_artifact_index = (
-                        next((i for i, a in enumerate(artifacts) if a.get("path") == prefocus_artifact_path), 0)
+                        next(
+                            (
+                                i
+                                for i, a in enumerate(artifacts)
+                                if a.get("path") == prefocus_artifact_path
+                            ),
+                            0,
+                        )
                         if prefocus_artifact_path
                         else 0
                     )
@@ -1797,7 +2090,9 @@ def _render_report_detail(
                         "Artifact download target",
                         options=artifacts,
                         index=default_artifact_index,
-                        format_func=lambda artifact: f"{artifact['artifact_type']} · {artifact['format']} · {artifact['filename']}",
+                        format_func=lambda artifact: (
+                            f"{artifact['artifact_type']} · {artifact['format']} · {artifact['filename']}"
+                        ),
                         key=f"artifact-download-{selected_case_id}",
                     )
                     meta_col1, meta_col2, meta_col3 = st.columns(3)
@@ -1815,27 +2110,47 @@ def _render_report_detail(
                         and f"artifact-file-{selected_case_id}" not in st.session_state
                     )
                     if should_auto_open:
-                        artifact_file, artifact_file_error = safe_call(client.download_artifact, selected_artifact["path"])
+                        artifact_file, artifact_file_error = safe_call(
+                            client.download_artifact, selected_artifact["path"]
+                        )
                         if artifact_file_error:
                             st.error(artifact_file_error)
                         else:
                             try:
-                                st.session_state[f"artifact-file-{selected_case_id}"] = artifact_file.decode("utf-8")
+                                st.session_state[f"artifact-file-{selected_case_id}"] = (
+                                    artifact_file.decode("utf-8")
+                                )
                             except UnicodeDecodeError:
-                                st.session_state[f"artifact-file-{selected_case_id}"] = f"Binary artifact: {len(artifact_file)} bytes"
+                                st.session_state[f"artifact-file-{selected_case_id}"] = (
+                                    f"Binary artifact: {len(artifact_file)} bytes"
+                                )
                     artifact_download_col1, artifact_download_col2 = st.columns(2)
                     with artifact_download_col1:
-                        st.link_button("Open artifact URL", api_url.rstrip("/") + selected_artifact["download_url"], width="stretch")
+                        st.link_button(
+                            "Open artifact URL",
+                            api_url.rstrip("/") + selected_artifact["download_url"],
+                            width="stretch",
+                        )
                     with artifact_download_col2:
-                        if st.button("Load artifact file", key=f"load-artifact-file-{selected_case_id}", width="stretch"):
-                            artifact_file, artifact_file_error = safe_call(client.download_artifact, selected_artifact["path"])
+                        if st.button(
+                            "Load artifact file",
+                            key=f"load-artifact-file-{selected_case_id}",
+                            width="stretch",
+                        ):
+                            artifact_file, artifact_file_error = safe_call(
+                                client.download_artifact, selected_artifact["path"]
+                            )
                             if artifact_file_error:
                                 st.error(artifact_file_error)
                             else:
                                 try:
-                                    st.session_state[f"artifact-file-{selected_case_id}"] = artifact_file.decode("utf-8")
+                                    st.session_state[f"artifact-file-{selected_case_id}"] = (
+                                        artifact_file.decode("utf-8")
+                                    )
                                 except UnicodeDecodeError:
-                                    st.session_state[f"artifact-file-{selected_case_id}"] = f"Binary artifact: {len(artifact_file)} bytes"
+                                    st.session_state[f"artifact-file-{selected_case_id}"] = (
+                                        f"Binary artifact: {len(artifact_file)} bytes"
+                                    )
                     cached_artifact_file = st.session_state.get(f"artifact-file-{selected_case_id}")
                     if cached_artifact_file is not None:
                         st.caption("Artifact file content")

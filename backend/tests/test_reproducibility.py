@@ -11,14 +11,13 @@ from fastapi.testclient import TestClient
 from backend.app.reproducibility import (
     DATABASE_VERSION_REGISTRY,
     EDAM_ONTOLOGY_TERMS,
-    SCHEMA_ORG_CONTEXT,
     TOOL_VERSION_REGISTRY,
-    DatabaseVersion,
     EnvironmentSnapshot,
     FAIRMetadata,
     FAIRReport,
     PipelineManifest,
     ToolVersion,
+    _manifest_store,
     capture_environment,
     create_fair_report,
     create_manifest,
@@ -30,13 +29,12 @@ from backend.app.reproducibility import (
     suggest_repository,
     validate_fair_compliance,
     verify_manifest,
-    _manifest_store,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def clear_manifest_store():
@@ -69,6 +67,7 @@ def _make_fair_report(kw: list[str] | None = None) -> FAIRReport:
 # EnvironmentSnapshot tests
 # ---------------------------------------------------------------------------
 
+
 class TestEnvironmentSnapshot:
     def test_captures_real_python_version(self):
         env = capture_environment()
@@ -100,14 +99,17 @@ class TestEnvironmentSnapshot:
 # PipelineManifest creation tests
 # ---------------------------------------------------------------------------
 
+
 class TestManifestCreation:
     def test_manifest_id_is_uuid(self):
         m = _make_manifest()
         import uuid
+
         uuid.UUID(m.manifest_id)  # raises if invalid
 
     def test_created_at_is_iso(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         m = _make_manifest()
         dt = datetime.fromisoformat(m.created_at)
         assert dt.tzinfo is not None
@@ -186,6 +188,7 @@ class TestManifestCreation:
 # Manifest verification tests
 # ---------------------------------------------------------------------------
 
+
 class TestManifestVerification:
     def test_verify_own_manifest_passes(self):
         m = _make_manifest()
@@ -234,6 +237,7 @@ class TestManifestVerification:
 # Rerun command tests
 # ---------------------------------------------------------------------------
 
+
 class TestRerunCommand:
     def test_contains_foldagent_run(self):
         m = _make_manifest()
@@ -266,6 +270,7 @@ class TestRerunCommand:
 # ---------------------------------------------------------------------------
 # Manifest store tests
 # ---------------------------------------------------------------------------
+
 
 class TestManifestStore:
     def test_store_returns_manifest_id(self):
@@ -313,12 +318,14 @@ class TestManifestStore:
 # FAIR metadata tests
 # ---------------------------------------------------------------------------
 
+
 class TestFAIRMetadata:
     def test_persistent_id_format(self):
         meta = generate_fair_metadata("Title", "Desc", ["A"], ["protein"])
         assert meta.persistent_id.startswith("foldagent:pred/")
         pid_suffix = meta.persistent_id.split("/", 2)[-1]
         import uuid
+
         uuid.UUID(pid_suffix)
 
     def test_unique_ids_per_call(self):
@@ -362,6 +369,7 @@ class TestFAIRMetadata:
 # ---------------------------------------------------------------------------
 # FAIR report tests
 # ---------------------------------------------------------------------------
+
 
 class TestFAIRReport:
     def test_report_has_metadata(self):
@@ -416,6 +424,7 @@ class TestFAIRReport:
 # FAIR compliance validation tests
 # ---------------------------------------------------------------------------
 
+
 class TestFAIRComplianceValidation:
     def test_all_scores_in_range(self):
         r = _make_fair_report()
@@ -461,8 +470,7 @@ class TestFAIRComplianceValidation:
         r = _make_fair_report()
         result = validate_fair_compliance(r)
         expected = (
-            result["findable"] + result["accessible"]
-            + result["interoperable"] + result["reusable"]
+            result["findable"] + result["accessible"] + result["interoperable"] + result["reusable"]
         ) / 4.0
         assert abs(result["overall"] - expected) < 0.001
 
@@ -475,6 +483,7 @@ class TestFAIRComplianceValidation:
 # ---------------------------------------------------------------------------
 # Repository suggestion tests
 # ---------------------------------------------------------------------------
+
 
 class TestRepositorySuggestion:
     def test_structure_keywords_suggest_pdb(self):
@@ -502,14 +511,18 @@ class TestRepositorySuggestion:
 # API endpoint tests
 # ---------------------------------------------------------------------------
 
+
 class TestReproducibilityAPI:
     def test_create_manifest_endpoint(self, client: TestClient):
-        resp = client.post("/reproducibility/create-manifest", json={
-            "tool_names": ["mock", "boltz1"],
-            "inputs": {"sequence": "MKTY"},
-            "outputs": {"score": 0.9},
-            "seeds": {"np": 42},
-        })
+        resp = client.post(
+            "/reproducibility/create-manifest",
+            json={
+                "tool_names": ["mock", "boltz1"],
+                "inputs": {"sequence": "MKTY"},
+                "outputs": {"score": 0.9},
+                "seeds": {"np": 42},
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "manifest_id" in data
@@ -521,21 +534,27 @@ class TestReproducibilityAPI:
         assert resp.json() == []
 
     def test_list_manifests_after_create(self, client: TestClient):
-        client.post("/reproducibility/create-manifest", json={
-            "tool_names": ["mock"],
-            "inputs": {},
-            "outputs": {},
-        })
+        client.post(
+            "/reproducibility/create-manifest",
+            json={
+                "tool_names": ["mock"],
+                "inputs": {},
+                "outputs": {},
+            },
+        )
         resp = client.get("/reproducibility/manifests")
         assert resp.status_code == 200
         assert len(resp.json()) == 1
 
     def test_get_manifest_by_id(self, client: TestClient):
-        create_resp = client.post("/reproducibility/create-manifest", json={
-            "tool_names": ["mock"],
-            "inputs": {"x": 1},
-            "outputs": {},
-        })
+        create_resp = client.post(
+            "/reproducibility/create-manifest",
+            json={
+                "tool_names": ["mock"],
+                "inputs": {"x": 1},
+                "outputs": {},
+            },
+        )
         mid = create_resp.json()["manifest_id"]
         resp = client.get(f"/reproducibility/manifests/{mid}")
         assert resp.status_code == 200
@@ -546,11 +565,14 @@ class TestReproducibilityAPI:
         assert resp.status_code == 404
 
     def test_verify_manifest_endpoint(self, client: TestClient):
-        create_resp = client.post("/reproducibility/create-manifest", json={
-            "tool_names": ["mock"],
-            "inputs": {},
-            "outputs": {},
-        })
+        create_resp = client.post(
+            "/reproducibility/create-manifest",
+            json={
+                "tool_names": ["mock"],
+                "inputs": {},
+                "outputs": {},
+            },
+        )
         mid = create_resp.json()["manifest_id"]
         resp = client.post("/reproducibility/verify-manifest", json={"manifest_id": mid})
         assert resp.status_code == 200
@@ -563,13 +585,16 @@ class TestReproducibilityAPI:
         assert resp.status_code == 404
 
     def test_fair_create_report_endpoint(self, client: TestClient):
-        resp = client.post("/reproducibility/fair/create-report", json={
-            "prediction_data": {"plddt": 88.0},
-            "title": "Test Report",
-            "description": "A test",
-            "creators": ["Researcher"],
-            "keywords": ["protein", "structure"],
-        })
+        resp = client.post(
+            "/reproducibility/fair/create-report",
+            json={
+                "prediction_data": {"plddt": 88.0},
+                "title": "Test Report",
+                "description": "A test",
+                "creators": ["Researcher"],
+                "keywords": ["protein", "structure"],
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "persistent_id" in data
@@ -578,13 +603,16 @@ class TestReproducibilityAPI:
 
     def test_fair_validate_endpoint(self, client: TestClient):
         # First create a report, then validate
-        create_resp = client.post("/reproducibility/fair/create-report", json={
-            "prediction_data": {"plddt": 85.0},
-            "title": "Val Test",
-            "description": "Validation test",
-            "creators": ["Alice"],
-            "keywords": ["neoantigen"],
-        })
+        create_resp = client.post(
+            "/reproducibility/fair/create-report",
+            json={
+                "prediction_data": {"plddt": 85.0},
+                "title": "Val Test",
+                "description": "Validation test",
+                "creators": ["Alice"],
+                "keywords": ["neoantigen"],
+            },
+        )
         assert create_resp.status_code == 200
         report_data = create_resp.json()
         report_data["description"] = "Validation test"

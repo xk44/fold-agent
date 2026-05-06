@@ -2,34 +2,28 @@
 
 from __future__ import annotations
 
-import pytest
-
 from backend.app.protein_science_ext import (
-    # Feature 1
-    TMHelix,
-    MembraneProteinResult,
-    LipidEnvironment,
+    COMMON_GLYCAN_TYPES,
+    KNOWN_METALLOPROTEIN_DB,
     KYTE_DOOLITTLE,
-    predict_tm_helices,
-    analyze_membrane_protein,
-    assign_lipid_environment,
-    calculate_cavity_accessibility,
+    METAL_BINDING_MOTIFS,
+    GlycanShieldResult,
+    # Feature 3
+    LipidEnvironment,
+    MembraneProteinResult,
     # Feature 2
     MetalIon,
-    MetalSite,
     MetalSiteResult,
-    METAL_BINDING_MOTIFS,
-    KNOWN_METALLOPROTEIN_DB,
-    predict_metal_sites,
-    cross_validate_metal,
-    # Feature 3
-    GlycosylationSite,
-    GlycanShieldResult,
-    N_GLYCOSYLATION_MOTIF,
-    COMMON_GLYCAN_TYPES,
-    predict_glycosylation_sites,
+    # Feature 1
     analyze_glycan_shield,
+    analyze_membrane_protein,
     assess_epitope_accessibility,
+    assign_lipid_environment,
+    calculate_cavity_accessibility,
+    cross_validate_metal,
+    predict_glycosylation_sites,
+    predict_metal_sites,
+    predict_tm_helices,
 )
 
 # ---------------------------------------------------------------------------
@@ -54,6 +48,7 @@ NO_METAL_SEQ = "MKVLSPADKTNVKAAWGKVGAHAG"
 # ---------------------------------------------------------------------------
 # Feature 1: TM Helix prediction
 # ---------------------------------------------------------------------------
+
 
 class TestKyteDoolittle:
     def test_all_20_aa_present(self):
@@ -218,6 +213,7 @@ class TestCalculateCavityAccessibility:
 # Feature 2: Metal coordination
 # ---------------------------------------------------------------------------
 
+
 class TestMetalBindingMotifs:
     def test_ten_motifs_present(self):
         assert len(METAL_BINDING_MOTIFS) == 10
@@ -294,7 +290,16 @@ class TestPredictMetalSites:
 
     def test_metal_ion_enum_values(self):
         values = {m.value for m in MetalIon}
-        expected = {"zinc", "iron", "calcium", "magnesium", "copper", "manganese", "cobalt", "nickel"}
+        expected = {
+            "zinc",
+            "iron",
+            "calcium",
+            "magnesium",
+            "copper",
+            "manganese",
+            "cobalt",
+            "nickel",
+        }
         assert values == expected
 
 
@@ -326,6 +331,7 @@ class TestCrossValidateMetal:
 # ---------------------------------------------------------------------------
 # Feature 3: Glycoprotein modeling
 # ---------------------------------------------------------------------------
+
 
 class TestCommonGlycanTypes:
     def test_eight_types_present(self):

@@ -356,30 +356,50 @@ def test_dashboard_streamlit_smoke_variant_focus_buttons_drive_selectors(
     at.run(timeout=30)
     assert not at.exception, at.exception[0].value
 
-    _find_widget_by_label(at.selectbox, "Candidate review target").set_value(seeded["other_candidate"]["id"])
+    _find_widget_by_label(at.selectbox, "Candidate review target").set_value(
+        seeded["other_candidate"]["id"]
+    )
     _find_widget_by_label(at.selectbox, "Candidate MHC filter").set_value("HLA-B*07:02")
-    _find_widget_by_label(at.selectbox, "Variant review target").set_value(seeded["target_variant"]["id"])
-    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(seeded["other_structure"]["id"])
-    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(seeded["ethics_report"]["id"])
+    _find_widget_by_label(at.selectbox, "Variant review target").set_value(
+        seeded["target_variant"]["id"]
+    )
+    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(
+        seeded["other_structure"]["id"]
+    )
+    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(
+        seeded["ethics_report"]["id"]
+    )
     at.run(timeout=30)
 
     _find_widget_by_label(at.button, "Focus related candidate").click()
     at.run(timeout=30)
-    assert _find_widget_by_label(at.selectbox, "Candidate review target").value == seeded["target_candidate"]["id"]
+    assert (
+        _find_widget_by_label(at.selectbox, "Candidate review target").value
+        == seeded["target_candidate"]["id"]
+    )
     assert _find_widget_by_label(at.selectbox, "Candidate MHC filter").value == "all"
 
-    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(seeded["other_structure"]["id"])
+    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(
+        seeded["other_structure"]["id"]
+    )
     at.run(timeout=30)
     _find_widget_by_label(at.button, "Focus related structure job").click()
     at.run(timeout=30)
-    assert _find_widget_by_label(at.selectbox, "Structure job detail").value == seeded["target_structure"]["id"]
+    assert (
+        _find_widget_by_label(at.selectbox, "Structure job detail").value
+        == seeded["target_structure"]["id"]
+    )
 
-    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(seeded["ethics_report"]["id"])
+    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(
+        seeded["ethics_report"]["id"]
+    )
     at.run(timeout=30)
     _find_widget_by_label(at.button, "Focus related report").click()
     at.run(timeout=30)
-    assert _find_widget_by_label(at.selectbox, "Report detail/export").value == seeded["candidate_review_report"]["id"]
-
+    assert (
+        _find_widget_by_label(at.selectbox, "Report detail/export").value
+        == seeded["candidate_review_report"]["id"]
+    )
 
 
 def test_dashboard_streamlit_smoke_candidate_focus_buttons_drive_selectors(
@@ -396,27 +416,49 @@ def test_dashboard_streamlit_smoke_candidate_focus_buttons_drive_selectors(
     at.run(timeout=30)
     assert not at.exception, at.exception[0].value
 
-    _find_widget_by_label(at.selectbox, "Candidate review target").set_value(seeded["target_candidate"]["id"])
-    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(seeded["other_structure"]["id"])
-    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(seeded["ethics_report"]["id"])
-    _find_widget_by_label(at.selectbox, "Artifact download target").set_value(seeded["other_artifact"])
+    _find_widget_by_label(at.selectbox, "Candidate review target").set_value(
+        seeded["target_candidate"]["id"]
+    )
+    _find_widget_by_label(at.selectbox, "Structure job detail").set_value(
+        seeded["other_structure"]["id"]
+    )
+    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(
+        seeded["ethics_report"]["id"]
+    )
+    _find_widget_by_label(at.selectbox, "Artifact download target").set_value(
+        seeded["other_artifact"]
+    )
     at.run(timeout=30)
 
     _find_widget_by_label(at.button, "Focus structure job").click()
     at.run(timeout=30)
-    assert _find_widget_by_label(at.selectbox, "Structure job detail").value == seeded["target_structure"]["id"]
+    assert (
+        _find_widget_by_label(at.selectbox, "Structure job detail").value
+        == seeded["target_structure"]["id"]
+    )
 
-    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(seeded["ethics_report"]["id"])
+    _find_widget_by_label(at.selectbox, "Report detail/export").set_value(
+        seeded["ethics_report"]["id"]
+    )
     at.run(timeout=30)
     _find_widget_by_label(at.button, "Focus candidate review report").click()
     at.run(timeout=60)
-    assert _find_widget_by_label(at.selectbox, "Report detail/export").value == seeded["candidate_review_report"]["id"]
+    assert (
+        _find_widget_by_label(at.selectbox, "Report detail/export").value
+        == seeded["candidate_review_report"]["id"]
+    )
 
-    _find_widget_by_label(at.selectbox, "Artifact download target").set_value(seeded["other_artifact"])
+    _find_widget_by_label(at.selectbox, "Artifact download target").set_value(
+        seeded["other_artifact"]
+    )
     at.run(timeout=30)
     _find_widget_by_label(at.button, "Focus candidate artifact").click()
     at.run(timeout=30)
-    assert _find_widget_by_label(at.selectbox, "Artifact download target").value["path"] == seeded["target_artifact"]["path"]
+    assert (
+        _find_widget_by_label(at.selectbox, "Artifact download target").value["path"]
+        == seeded["target_artifact"]["path"]
+    )
+
 
 def test_dashboard_streamlit_smoke_can_create_case_and_block_preflight(
     live_api_url: str,
@@ -437,7 +479,9 @@ def test_dashboard_streamlit_smoke_can_create_case_and_block_preflight(
     cases_response = httpx.get(f"{live_api_url}/cases", timeout=10.0)
     cases_response.raise_for_status()
     created_case = next(
-        case for case in cases_response.json() if case["diagnosis_summary"] == "Created from AppTest"
+        case
+        for case in cases_response.json()
+        if case["diagnosis_summary"] == "Created from AppTest"
     )
     case_selector = _find_widget_by_label(at.selectbox, "Case")
     assert any(

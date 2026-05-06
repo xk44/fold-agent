@@ -6,9 +6,7 @@ Real bioinformatics tool wrappers will replace mocks behind the same interface.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
 from enum import Enum
-from uuid import uuid4
 
 import structlog
 
@@ -37,7 +35,7 @@ class StepResult:
     safety_label: str = "Research candidate only — not administerable"
     tool_versions: dict = field(default_factory=dict)
     reproducibility_manifest: dict = field(default_factory=dict)
-    duration_seconds: Optional[float] = None
+    duration_seconds: float | None = None
 
 
 class PipelineStep(ABC):
@@ -156,7 +154,11 @@ class MockAlignmentStep(PipelineStep):
             status=StepStatus.COMPLETED,
             outputs={
                 "aligned_reads": "mock_aligned.bam",
-                "alignment_stats": {"total_reads": 1000000, "mapped_reads": 980000, "mapping_rate": 0.98},
+                "alignment_stats": {
+                    "total_reads": 1000000,
+                    "mapped_reads": 980000,
+                    "mapping_rate": 0.98,
+                },
                 "warning": "This is a mock alignment for demonstration only. No real genomic data was processed.",
             },
             reproducibility_manifest=self.create_reproducibility_manifest(inputs),
@@ -296,7 +298,9 @@ async def run_mock_pipeline(case_id: str) -> list[StepResult]:
         results.append(result)
 
         if result.status == StepStatus.FAILED:
-            logger.error("pipeline_step_failed", step=step.name, case_id=case_id, errors=result.errors)
+            logger.error(
+                "pipeline_step_failed", step=step.name, case_id=case_id, errors=result.errors
+            )
             break
 
         # Pass outputs as inputs to next step

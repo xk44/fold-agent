@@ -11,20 +11,21 @@ the original in-process, thread-safe behaviour.  Additional backends
 Adding a new backend only requires implementing the ``EventBackend``
 protocol and registering it in ``_BACKEND_REGISTRY``.
 """
+
 from __future__ import annotations
 
+import queue
+import threading
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-import queue
-import threading
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Abstract backend protocol
 # ---------------------------------------------------------------------------
+
 
 class EventBackend(ABC):
     """Interface that every event-stream backend must implement.
@@ -51,9 +52,11 @@ class EventBackend(ABC):
 # In-memory (default) backend
 # ---------------------------------------------------------------------------
 
+
 @dataclass(slots=True)
 class _Subscriber:
     """Internal bookkeeping for the in-memory backend."""
+
     queue: queue.Queue[dict[str, Any]]
     prefixes: tuple[str, ...] | None = None
 
@@ -131,6 +134,7 @@ def _ensure_backends_loaded() -> None:
     _backends_loaded = True
     try:
         from backend.app.event_backends import _auto_register
+
         _auto_register()
     except Exception:
         # If the backends subpackage is unavailable (e.g. redis not
@@ -158,9 +162,7 @@ def _create_backend(name: str) -> EventBackend:
         return _BACKEND_REGISTRY[name]()
     except KeyError:
         available = ", ".join(sorted(_BACKEND_REGISTRY))
-        raise ValueError(
-            f"Unknown event backend {name!r}; available: {available}"
-        ) from None
+        raise ValueError(f"Unknown event backend {name!r}; available: {available}") from None
 
 
 # ---------------------------------------------------------------------------
@@ -178,11 +180,14 @@ def _resolve_backend() -> EventBackend:
         if _backend is not None:
             return _backend
         from backend.app.config import settings
+
         _backend = _create_backend(settings.event_backend)
         return _backend
 
 
-def configure_backend(name: str | None = None, *, backend: EventBackend | None = None) -> EventBackend:
+def configure_backend(
+    name: str | None = None, *, backend: EventBackend | None = None
+) -> EventBackend:
     """Set (or reset) the active event backend.
 
     Pass *name* to select from the registry (e.g. ``"memory"``),
@@ -210,6 +215,7 @@ def get_backend() -> EventBackend:
 # ---------------------------------------------------------------------------
 # Public API – thin facade delegating to the active backend
 # ---------------------------------------------------------------------------
+
 
 def publish_event(event_name: str, payload: dict[str, Any]) -> None:
     """Publish an event via the active backend.

@@ -68,7 +68,9 @@ case_labels = {
     cid: f"{cid[:8]} — {case.get('species', '?')} — consent: {case.get('consent_status', '?')}"
     for cid, case in case_options.items()
 }
-selected_case_id = st.selectbox("Select case", options=list(case_labels.keys()), format_func=lambda x: case_labels[x])
+selected_case_id = st.selectbox(
+    "Select case", options=list(case_labels.keys()), format_func=lambda x: case_labels[x]
+)
 selected_case = case_options[selected_case_id]
 timeline = case_timelines[selected_case_id]
 
@@ -80,7 +82,9 @@ metric_cols[1].metric("Review status", summary["review_status"])
 metric_cols[2].metric("Consent updates", summary["consent_update_count"])
 metric_cols[3].metric(
     "Days since update",
-    f"{summary['days_since_last_update']:.1f}" if summary["days_since_last_update"] is not None else "—",
+    f"{summary['days_since_last_update']:.1f}"
+    if summary["days_since_last_update"] is not None
+    else "—",
 )
 
 if summary["needs_attention"]:

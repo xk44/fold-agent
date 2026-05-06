@@ -6,7 +6,6 @@ checks that prevent prohibited outputs and enforce mode restrictions.
 """
 
 import re
-from typing import Optional
 
 import structlog
 
@@ -40,7 +39,9 @@ class PreflightResult:
     BLOCK = "block"
     REQUIRES_APPROVAL = "requires_approval"
 
-    def __init__(self, status: str, reason: Optional[str] = None, blocked_patterns: Optional[list] = None):
+    def __init__(
+        self, status: str, reason: str | None = None, blocked_patterns: list | None = None
+    ):
         self.status = status
         self.reason = reason
         self.blocked_patterns = blocked_patterns or []
@@ -75,7 +76,7 @@ def check_text_for_unsafe_patterns(text: str) -> tuple[bool, list[str]]:
 def preflight_action(
     action: str,
     species_mode: str,
-    content: Optional[str] = None,
+    content: str | None = None,
     is_expert_mode: bool = False,
     is_export: bool = False,
     involves_external_upload: bool = False,
@@ -129,7 +130,9 @@ def preflight_action(
 
     # Check 3: External upload requires confirmation
     if involves_external_upload:
-        logger.warning("safety_preflight_requires_approval", action=action, reason="external_upload")
+        logger.warning(
+            "safety_preflight_requires_approval", action=action, reason="external_upload"
+        )
         return PreflightResult(
             status=PreflightResult.REQUIRES_APPROVAL,
             reason="External data upload requires explicit user confirmation and privacy acknowledgment.",

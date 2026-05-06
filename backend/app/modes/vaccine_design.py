@@ -9,7 +9,7 @@ medical advice, veterinary advice, or treatment recommendations.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -27,6 +27,7 @@ VACCINE_DESIGN_DISCLAIMER = (
 # ---------------------------------------------------------------------------
 # Linker types
 # ---------------------------------------------------------------------------
+
 
 class LinkerType(str, Enum):
     GPGPG = "GPGPG"
@@ -46,6 +47,7 @@ _AVG_RESIDUE_MW_KDA = 0.11
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EpitopeCandidate:
@@ -109,26 +111,74 @@ class mRNAConstruct:
 
 # Parker hydrophilicity scale (Parker et al., 1986)
 PARKER_HYDROPHILICITY: dict[str, float] = {
-    "A": -0.5, "R": 3.0, "N": 0.2, "D": 3.0, "C": -1.0,
-    "Q": 0.2, "E": 3.0, "G": 0.0, "H": -0.5, "I": -1.8,
-    "L": -1.8, "K": 3.0, "M": -1.3, "F": -2.5, "P": 0.0,
-    "S": 0.3, "T": -0.4, "W": -3.4, "Y": -2.3, "V": -1.5,
+    "A": -0.5,
+    "R": 3.0,
+    "N": 0.2,
+    "D": 3.0,
+    "C": -1.0,
+    "Q": 0.2,
+    "E": 3.0,
+    "G": 0.0,
+    "H": -0.5,
+    "I": -1.8,
+    "L": -1.8,
+    "K": 3.0,
+    "M": -1.3,
+    "F": -2.5,
+    "P": 0.0,
+    "S": 0.3,
+    "T": -0.4,
+    "W": -3.4,
+    "Y": -2.3,
+    "V": -1.5,
 }
 
 # Emini surface accessibility values (Emini et al., 1985)
 EMINI_SURFACE_ACCESSIBILITY: dict[str, float] = {
-    "A": 0.49, "R": 0.95, "N": 0.81, "D": 0.83, "C": 0.26,
-    "Q": 0.84, "E": 0.84, "G": 0.48, "H": 0.66, "I": 0.34,
-    "L": 0.40, "K": 1.05, "M": 0.48, "F": 0.42, "P": 0.75,
-    "S": 0.70, "T": 0.71, "W": 0.51, "Y": 0.76, "V": 0.36,
+    "A": 0.49,
+    "R": 0.95,
+    "N": 0.81,
+    "D": 0.83,
+    "C": 0.26,
+    "Q": 0.84,
+    "E": 0.84,
+    "G": 0.48,
+    "H": 0.66,
+    "I": 0.34,
+    "L": 0.40,
+    "K": 1.05,
+    "M": 0.48,
+    "F": 0.42,
+    "P": 0.75,
+    "S": 0.70,
+    "T": 0.71,
+    "W": 0.51,
+    "Y": 0.76,
+    "V": 0.36,
 }
 
 # Kolaskar-Tongaonkar antigenicity scale (Kolaskar & Tongaonkar, 1990)
 _KOLASKAR_ANTIGENICITY: dict[str, float] = {
-    "A": 1.064, "R": 0.873, "N": 0.776, "D": 0.924, "C": 1.020,
-    "Q": 0.931, "E": 0.932, "G": 0.874, "H": 1.105, "I": 1.152,
-    "L": 1.250, "K": 0.930, "M": 0.826, "F": 1.091, "P": 0.922,
-    "S": 1.012, "T": 1.086, "W": 0.893, "Y": 0.909, "V": 1.161,
+    "A": 1.064,
+    "R": 0.873,
+    "N": 0.776,
+    "D": 0.924,
+    "C": 1.020,
+    "Q": 0.931,
+    "E": 0.932,
+    "G": 0.874,
+    "H": 1.105,
+    "I": 1.152,
+    "L": 1.250,
+    "K": 0.930,
+    "M": 0.826,
+    "F": 1.091,
+    "P": 0.922,
+    "S": 1.012,
+    "T": 1.086,
+    "W": 0.893,
+    "Y": 0.909,
+    "V": 1.161,
 }
 
 
@@ -140,6 +190,7 @@ def _safe_aa_lookup(table: dict[str, float], aa: str) -> float:
 # ---------------------------------------------------------------------------
 # B-cell epitope prediction
 # ---------------------------------------------------------------------------
+
 
 def predict_b_cell_epitopes(
     protein_sequence: str,
@@ -238,7 +289,9 @@ def analyze_epitope_conservation(
             mismatches = sum(a != b for a, b in zip(epitope_upper, window))
             if mismatches < best_mismatches:
                 best_mismatches = mismatches
-                best_variant_pos = [j for j, (a, b) in enumerate(zip(epitope_upper, window)) if a != b]
+                best_variant_pos = [
+                    j for j, (a, b) in enumerate(zip(epitope_upper, window)) if a != b
+                ]
 
         if best_mismatches <= max_mismatches:
             hits += 1
@@ -265,6 +318,7 @@ def analyze_epitope_conservation(
 # ---------------------------------------------------------------------------
 # Multi-epitope construct builder
 # ---------------------------------------------------------------------------
+
 
 def build_multi_epitope_construct(
     epitopes: list[EpitopeCandidate],
@@ -360,7 +414,11 @@ PATHOGEN_DATABASE: dict[str, list[PathogenTarget]] = {
             pathogen_name="Malaria",
             protein_name="Circumsporozoite protein (CSP)",
             uniprot_id="P19597",
-            known_epitopes=["NANPNANPNANP", "DPNANPNVDPNANPNV", "EYLNKIQNSLSTEWSPCSVTCGNGIQVRIKPGSANKPKDELDYENDIEKKICKMEKCSSVFNVVNSSIGLIMK"],
+            known_epitopes=[
+                "NANPNANPNANP",
+                "DPNANPNVDPNANPNV",
+                "EYLNKIQNSLSTEWSPCSVTCGNGIQVRIKPGSANKPKDELDYENDIEKKICKMEKCSSVFNVVNSSIGLIMK",
+            ],
             vaccine_type="subunit",
         ),
         PathogenTarget(
@@ -383,7 +441,11 @@ PATHOGEN_DATABASE: dict[str, list[PathogenTarget]] = {
             pathogen_name="TB",
             protein_name="ESAT-6",
             uniprot_id="P9WNK9",
-            known_epitopes=["MTEQQWNFAGIEAAASAIQGNVTSIHSLLDEGKQSLTKLAAAWGGSGSEAYQGVQQKWDATATELNNALQNLARTISEAGKR", "AIQGNVTSIHSLLDEGKQS", "QQWNFAGIEAAASAIQ"],
+            known_epitopes=[
+                "MTEQQWNFAGIEAAASAIQGNVTSIHSLLDEGKQSLTKLAAAWGGSGSEAYQGVQQKWDATATELNNALQNLARTISEAGKR",
+                "AIQGNVTSIHSLLDEGKQS",
+                "QQWNFAGIEAAASAIQ",
+            ],
             vaccine_type="subunit",
         ),
     ],
@@ -417,7 +479,11 @@ PATHOGEN_DATABASE: dict[str, list[PathogenTarget]] = {
             pathogen_name="RSV",
             protein_name="Fusion protein (F)",
             uniprot_id="P03420",
-            known_epitopes=["NSELLSLINDMPITNDQ", "KKTTKQIQNAQKFMGSSR", "FSTGKPCLKPTKDSSSVITSLGAIVSCYGKTKCTASNKNRGIIKTFSNGCDYVSNKGMDTVSVGNTLYYVNKQEGKSLYVKGEPIINFYDPLVFPSDEFDASISQVNEKINQSLAFIRKSDELLHNVNAGKSTTNIMITTIIIVIIVILLSLIAVGLLLYCKARSTPVTLSKDQLSGINNIAFSN"],
+            known_epitopes=[
+                "NSELLSLINDMPITNDQ",
+                "KKTTKQIQNAQKFMGSSR",
+                "FSTGKPCLKPTKDSSSVITSLGAIVSCYGKTKCTASNKNRGIIKTFSNGCDYVSNKGMDTVSVGNTLYYVNKQEGKSLYVKGEPIINFYDPLVFPSDEFDASISQVNEKINQSLAFIRKSDELLHNVNAGKSTTNIMITTIIIVIIVILLSLIAVGLLLYCKARSTPVTLSKDQLSGINNIAFSN",
+            ],
             vaccine_type="subunit",
         ),
     ],
@@ -449,17 +515,49 @@ def get_known_epitopes(pathogen: str, protein: str) -> list[str]:
 # Each amino acid maps to its most-preferred codon in that species
 CODON_TABLES: dict[str, dict[str, str]] = {
     "human": {
-        "A": "GCC", "R": "AGG", "N": "AAC", "D": "GAC", "C": "TGC",
-        "Q": "CAG", "E": "GAG", "G": "GGC", "H": "CAC", "I": "ATC",
-        "L": "CTG", "K": "AAG", "M": "ATG", "F": "TTC", "P": "CCC",
-        "S": "AGC", "T": "ACC", "W": "TGG", "Y": "TAC", "V": "GTG",
+        "A": "GCC",
+        "R": "AGG",
+        "N": "AAC",
+        "D": "GAC",
+        "C": "TGC",
+        "Q": "CAG",
+        "E": "GAG",
+        "G": "GGC",
+        "H": "CAC",
+        "I": "ATC",
+        "L": "CTG",
+        "K": "AAG",
+        "M": "ATG",
+        "F": "TTC",
+        "P": "CCC",
+        "S": "AGC",
+        "T": "ACC",
+        "W": "TGG",
+        "Y": "TAC",
+        "V": "GTG",
         "*": "TGA",
     },
     "dog": {
-        "A": "GCC", "R": "CGG", "N": "AAC", "D": "GAC", "C": "TGC",
-        "Q": "CAG", "E": "GAG", "G": "GGC", "H": "CAC", "I": "ATC",
-        "L": "CTG", "K": "AAG", "M": "ATG", "F": "TTC", "P": "CCC",
-        "S": "TCC", "T": "ACC", "W": "TGG", "Y": "TAC", "V": "GTG",
+        "A": "GCC",
+        "R": "CGG",
+        "N": "AAC",
+        "D": "GAC",
+        "C": "TGC",
+        "Q": "CAG",
+        "E": "GAG",
+        "G": "GGC",
+        "H": "CAC",
+        "I": "ATC",
+        "L": "CTG",
+        "K": "AAG",
+        "M": "ATG",
+        "F": "TTC",
+        "P": "CCC",
+        "S": "TCC",
+        "T": "ACC",
+        "W": "TGG",
+        "Y": "TAC",
+        "V": "GTG",
         "*": "TGA",
     },
 }
@@ -484,9 +582,7 @@ CODON_TABLES: dict[str, dict[str, str]] = {
 # They are NOT clinical-grade and have NOT been validated for GMP manufacturing,
 # regulatory submission, or human therapeutic use.  Do not use in clinical
 # or regulatory contexts without independent validation.
-_UTR5_SEQUENCE = (
-    "ACTTGCTTTTGACACAACTGTGTTCACTAGCAACCTCAAACAGACACCATG"
-)
+_UTR5_SEQUENCE = "ACTTGCTTTTGACACAACTGTGTTCACTAGCAACCTCAAACAGACACCATG"
 _UTR3_SEQUENCE = (
     # AES segment
     "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
@@ -575,6 +671,7 @@ def optimize_mrna_construct(
 # Rapid-response pipeline
 # ---------------------------------------------------------------------------
 
+
 def rapid_response_pipeline(
     pathogen_sequence: str,
     pathogen_name: str,
@@ -592,7 +689,11 @@ def rapid_response_pipeline(
     RESEARCH ONLY — not for clinical decision-making.
     """
     pipeline_start = time.monotonic()
-    results: dict = {"pathogen_name": pathogen_name, "steps": {}, "disclaimer": VACCINE_DESIGN_DISCLAIMER}
+    results: dict = {
+        "pathogen_name": pathogen_name,
+        "steps": {},
+        "disclaimer": VACCINE_DESIGN_DISCLAIMER,
+    }
 
     # Step 1: B-cell epitope prediction
     t0 = time.monotonic()
@@ -687,10 +788,11 @@ def rapid_response_pipeline(
 # Vaccine design report
 # ---------------------------------------------------------------------------
 
+
 def build_vaccine_design_report(
     case_id: str | None,
     epitopes: list[dict],
-    db: "Session | None" = None,
+    db: Session | None = None,
 ) -> dict:
     """Build a structured vaccine design report.
 
@@ -719,11 +821,14 @@ def build_vaccine_design_report(
     case_info: dict = {}
     if case_id and db is not None:
         from backend.app.models import Case
+
         case = db.get(Case, case_id)
         if case:
             case_info = {
                 "case_id": case_id,
-                "species": case.species.value if hasattr(case.species, "value") else str(case.species),
+                "species": case.species.value
+                if hasattr(case.species, "value")
+                else str(case.species),
                 "id": case.id,
             }
 

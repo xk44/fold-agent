@@ -11,8 +11,7 @@ Provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Known drug targets
@@ -1023,9 +1022,7 @@ _TARGET_SIMILARITY: dict[str, list[tuple[str, float, str]]] = {
 }
 
 # Drug → original target for repurposing cross-reference
-_DRUG_TARGET_MAP: dict[str, str] = {
-    d["name"]: d["primary_target"] for d in APPROVED_DRUG_LIBRARY
-}
+_DRUG_TARGET_MAP: dict[str, str] = {d["name"]: d["primary_target"] for d in APPROVED_DRUG_LIBRARY}
 
 
 def find_repurposing_candidates(target_gene: str) -> list[RepurposingCandidate]:
@@ -1060,7 +1057,10 @@ def find_repurposing_candidates(target_gene: str) -> list[RepurposingCandidate]:
     # Deduplicate by drug name, keep highest similarity
     seen: dict[str, RepurposingCandidate] = {}
     for c in candidates:
-        if c.drug_name not in seen or c.target_similarity_score > seen[c.drug_name].target_similarity_score:
+        if (
+            c.drug_name not in seen
+            or c.target_similarity_score > seen[c.drug_name].target_similarity_score
+        ):
             seen[c.drug_name] = c
 
     result = sorted(seen.values(), key=lambda c: -c.target_similarity_score)
@@ -1377,9 +1377,9 @@ def predict_cofold(target_gene: str, ligand_smiles: str) -> CoFoldingResult:
 
     # Contact residues: deterministic set of 4–8 residue numbers
     n_contacts = 4 + (h & 0x3)
-    contact_residues = sorted(
-        {((h >> (i * 8)) & 0xFF) % 350 + 1 for i in range(n_contacts + 4)}
-    )[:n_contacts]
+    contact_residues = sorted({((h >> (i * 8)) & 0xFF) % 350 + 1 for i in range(n_contacts + 4)})[
+        :n_contacts
+    ]
 
     # Mock PDB coordinate block
     pdb_snippet = (
@@ -1417,12 +1417,12 @@ class ADMETProfile:
     """
 
     compound_name: str
-    absorption: float          # 0–1 (fraction absorbed)
-    distribution_vd: float     # L/kg (volume of distribution)
-    metabolism_cyp_risk: str   # "low" | "medium" | "high"
+    absorption: float  # 0–1 (fraction absorbed)
+    distribution_vd: float  # L/kg (volume of distribution)
+    metabolism_cyp_risk: str  # "low" | "medium" | "high"
     excretion_half_life_hours: float
     toxicity_ld50_estimate: str  # e.g. "500 mg/kg (rat, oral)"
-    lipinski_violations: int   # 0–5
+    lipinski_violations: int  # 0–5
     drug_likeness_score: float  # 0–1
 
 

@@ -32,7 +32,9 @@ class TestBwaRequest:
 
 class TestGatkMutect2Request:
     def test_valid_request(self):
-        req = GatkMutect2Request(input_bam="/tumor.bam", normal_bam="/normal.bam", tumor_sample="T001")
+        req = GatkMutect2Request(
+            input_bam="/tumor.bam", normal_bam="/normal.bam", tumor_sample="T001"
+        )
         assert req.input_bam == "/tumor.bam"
         assert req.normal_bam == "/normal.bam"
 
@@ -86,7 +88,9 @@ class TestParsePipelineRequest:
         assert isinstance(req, VepRequest)
 
     def test_routes_pvactools(self):
-        req = parse_pipeline_request("pvactools", {"input_vcf": "/in.vcf", "sample_name": "S1", "alleles": ["HLA-A*02:01"]})
+        req = parse_pipeline_request(
+            "pvactools", {"input_vcf": "/in.vcf", "sample_name": "S1", "alleles": ["HLA-A*02:01"]}
+        )
         assert isinstance(req, PvactoolsRequest)
 
     def test_unknown_adapter_raises(self):

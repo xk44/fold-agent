@@ -17,11 +17,7 @@ Priority ordering:
 
 from __future__ import annotations
 
-import os
 import subprocess
-from pathlib import Path
-
-import pytest
 
 from backend.app.alphafold import shells
 from backend.app.alphafold.shells import (
@@ -30,10 +26,10 @@ from backend.app.alphafold.shells import (
     _probe_command,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _fake_which_all_found(command: str) -> str | None:
     return {
@@ -92,7 +88,8 @@ class TestGpuRuntimeDetail:
     def test_gpu_runtime_detail_nvidia_smi_present_with_driver(self, monkeypatch) -> None:
         """When nvidia-smi runs and reports a driver, parse version and GPU name."""
         monkeypatch.setattr(
-            shells, "which",
+            shells,
+            "which",
             lambda cmd: "/usr/bin/nvidia-smi" if cmd == "nvidia-smi" else None,
         )
         nvidia_output = (
@@ -123,7 +120,8 @@ class TestGpuRuntimeDetail:
     def test_gpu_runtime_detail_nvidia_smi_multi_gpu(self, monkeypatch) -> None:
         """Multi-GPU setup: gpu_count reflects number of GPUs."""
         monkeypatch.setattr(
-            shells, "which",
+            shells,
+            "which",
             lambda cmd: "/usr/bin/nvidia-smi" if cmd == "nvidia-smi" else None,
         )
         nvidia_output = (
@@ -147,7 +145,8 @@ class TestGpuRuntimeDetail:
     def test_gpu_runtime_detail_nvidia_smi_fails(self, monkeypatch) -> None:
         """nvidia-smi found but exits non-zero: available=False with path preserved."""
         monkeypatch.setattr(
-            shells, "which",
+            shells,
+            "which",
             lambda cmd: "/usr/bin/nvidia-smi" if cmd == "nvidia-smi" else None,
         )
 
@@ -165,14 +164,14 @@ class TestGpuRuntimeDetail:
     def test_gpu_runtime_detail_nvidia_smi_times_out(self, monkeypatch) -> None:
         """nvidia-smi hangs: detail returns timed_out=True."""
         monkeypatch.setattr(
-            shells, "which",
+            shells,
+            "which",
             lambda cmd: "/usr/bin/nvidia-smi" if cmd == "nvidia-smi" else None,
         )
         monkeypatch.setattr(
-            shells.subprocess, "run",
-            lambda *a, **kw: (_ for _ in ()).throw(
-                subprocess.TimeoutExpired("nvidia-smi", 5)
-            ),
+            shells.subprocess,
+            "run",
+            lambda *a, **kw: (_ for _ in ()).throw(subprocess.TimeoutExpired("nvidia-smi", 5)),
         )
         detail = shells._gpu_runtime_detail()
         assert detail["available"] is False
@@ -231,7 +230,9 @@ class TestConfiguredPathSymlinkDetection:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(symlink_dir))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         assert entry["kind"] == "symlink"
         assert entry["exists"] is True
         assert entry["link_target"] == str(real_dir)
@@ -247,7 +248,9 @@ class TestConfiguredPathSymlinkDetection:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(broken_link))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         assert entry["kind"] == "broken_symlink"
         assert entry["exists"] is False
         assert entry["link_target"] == str(dead_target)
@@ -284,7 +287,9 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         assert "disk_free_bytes" in entry
         assert entry["disk_free_bytes"] is not None
         assert isinstance(entry["disk_free_bytes"], int)
@@ -302,16 +307,16 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(absent))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         # Key must exist with value None, not absent (which also returns None from .get())
         assert "disk_free_bytes" in entry
         assert entry["disk_free_bytes"] is None
         assert "disk_total_bytes" in entry
         assert entry["disk_total_bytes"] is None
 
-    def test_configured_path_disk_space_not_reported_for_file(
-        self, monkeypatch, tmp_path
-    ) -> None:
+    def test_configured_path_disk_space_not_reported_for_file(self, monkeypatch, tmp_path) -> None:
         """File-type paths should not report disk space (it's not meaningful)."""
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)
@@ -320,7 +325,9 @@ class TestConfiguredPathDiskSpace:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(a_file))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         # kind == "file" should not have disk space fields (or they should be None)
         assert entry["kind"] == "file"
         # Key must exist with explicit None, not be absent
@@ -354,7 +361,8 @@ class TestProbeCommandErrorTyping:
     def test_probe_command_permission_denied(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", lambda cmd: "/usr/bin/colabfold_batch")
         monkeypatch.setattr(
-            shells.subprocess, "run",
+            shells.subprocess,
+            "run",
             lambda *a, **kw: (_ for _ in ()).throw(
                 PermissionError("[Errno 13] Permission denied: '/usr/bin/colabfold_batch'")
             ),
@@ -366,7 +374,8 @@ class TestProbeCommandErrorTyping:
     def test_probe_command_not_found_oserror(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", lambda cmd: "/usr/bin/colabfold_batch")
         monkeypatch.setattr(
-            shells.subprocess, "run",
+            shells.subprocess,
+            "run",
             lambda *a, **kw: (_ for _ in ()).throw(
                 FileNotFoundError("[Errno 2] No such file or directory")
             ),
@@ -377,10 +386,9 @@ class TestProbeCommandErrorTyping:
 
     def test_probe_command_timeout_returns_error_type(self, monkeypatch) -> None:
         monkeypatch.setattr(
-            shells.subprocess, "run",
-            lambda *a, **kw: (_ for _ in ()).throw(
-                subprocess.TimeoutExpired("colabfold_batch", 5)
-            ),
+            shells.subprocess,
+            "run",
+            lambda *a, **kw: (_ for _ in ()).throw(subprocess.TimeoutExpired("colabfold_batch", 5)),
         )
         result = _probe_command("colabfold_batch", ["--version"])
         assert result["probe_error_type"] == "timeout"
@@ -415,7 +423,8 @@ class TestVersionParsing:
     def test_version_parsed_from_colabfold_output(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(
-            shells.subprocess, "run",
+            shells.subprocess,
+            "run",
             lambda *a, **kw: subprocess.CompletedProcess(
                 a[0] if a else [], 0, stdout="colabfold_batch 1.5.5\n", stderr=""
             ),
@@ -427,7 +436,8 @@ class TestVersionParsing:
     def test_version_parsed_none_when_no_version_pattern(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(
-            shells.subprocess, "run",
+            shells.subprocess,
+            "run",
             lambda *a, **kw: subprocess.CompletedProcess(
                 a[0] if a else [], 0, stdout="Usage: alphafold [options]\n", stderr=""
             ),
@@ -440,7 +450,8 @@ class TestVersionParsing:
     def test_version_parsed_extracts_two_part_version(self, monkeypatch) -> None:
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(
-            shells.subprocess, "run",
+            shells.subprocess,
+            "run",
             lambda *a, **kw: subprocess.CompletedProcess(
                 a[0] if a else [], 0, stdout="run_alphafold 2.3\n", stderr=""
             ),
@@ -470,26 +481,32 @@ class TestCudaToolkitDetection:
     """Tests for CUDA toolkit detection alongside GPU runtime (P1)."""
 
     def test_cuda_toolkit_detected(self, monkeypatch) -> None:
-        monkeypatch.setattr(shells, "which", lambda cmd: {
-            "nvidia-smi": "/usr/bin/nvidia-smi",
-            "nvcc": "/usr/local/cuda/bin/nvcc",
-            "colabfold_batch": "/usr/bin/colabfold_batch",
-            "run_alphafold": "/usr/bin/run_alphafold",
-            "alphafold": "/usr/bin/alphafold",
-        }.get(cmd))
+        monkeypatch.setattr(
+            shells,
+            "which",
+            lambda cmd: {
+                "nvidia-smi": "/usr/bin/nvidia-smi",
+                "nvcc": "/usr/local/cuda/bin/nvcc",
+                "colabfold_batch": "/usr/bin/colabfold_batch",
+                "run_alphafold": "/usr/bin/run_alphafold",
+                "alphafold": "/usr/bin/alphafold",
+            }.get(cmd),
+        )
 
         def fake_run(command, **kwargs):
             if command[0] == "nvidia-smi":
                 return subprocess.CompletedProcess(
-                    command, 0,
+                    command,
+                    0,
                     stdout="Driver Version: 535.129.03\nCUDA Version: 12.2\n",
                     stderr="",
                 )
             if command[0] == "nvcc":
                 return subprocess.CompletedProcess(
-                    command, 0,
+                    command,
+                    0,
                     stdout="nvcc: NVIDIA (R) Cuda compiler driver\n"
-                           "Cuda compilation tools, release 12.2, V12.2.140\n",
+                    "Cuda compilation tools, release 12.2, V12.2.140\n",
                     stderr="",
                 )
             return subprocess.CompletedProcess(command, 0, stdout="ok\n", stderr="")
@@ -502,18 +519,23 @@ class TestCudaToolkitDetection:
         assert gpu_detail.get("cuda_toolkit_version") is not None
 
     def test_cuda_toolkit_absent(self, monkeypatch) -> None:
-        monkeypatch.setattr(shells, "which", lambda cmd: {
-            "nvidia-smi": "/usr/bin/nvidia-smi",
-            "nvcc": None,
-            "colabfold_batch": "/usr/bin/colabfold_batch",
-            "run_alphafold": "/usr/bin/run_alphafold",
-            "alphafold": "/usr/bin/alphafold",
-        }.get(cmd))
+        monkeypatch.setattr(
+            shells,
+            "which",
+            lambda cmd: {
+                "nvidia-smi": "/usr/bin/nvidia-smi",
+                "nvcc": None,
+                "colabfold_batch": "/usr/bin/colabfold_batch",
+                "run_alphafold": "/usr/bin/run_alphafold",
+                "alphafold": "/usr/bin/alphafold",
+            }.get(cmd),
+        )
 
         def fake_run(command, **kwargs):
             if command[0] == "nvidia-smi":
                 return subprocess.CompletedProcess(
-                    command, 0,
+                    command,
+                    0,
                     stdout="Driver Version: 535.129.03\nCUDA Version: 12.2\n",
                     stderr="",
                 )
@@ -548,6 +570,7 @@ class TestTimeoutConstants:
         """Document that _probe_command uses hardcoded 5s timeout."""
         # This test verifies the current state and documents the gap
         import inspect
+
         source = inspect.getsource(_probe_command)
         assert "timeout=5" in source or "timeout =" in source
 
@@ -613,6 +636,7 @@ class TestConfigurablePathSpecs:
 # Regression guards — existing behavior must be preserved after changes
 # ===========================================================================
 
+
 class TestExistingBehaviorPreserved:
     """Ensure all existing behavior survives after proposed changes land."""
 
@@ -625,7 +649,9 @@ class TestExistingBehaviorPreserved:
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
         payload = shells.list_alphafold_shell_statuses()
-        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"]["alphafold2_data_dir"]
+        entry = payload["alphafold2_local"]["diagnostics"]["configured_paths"][
+            "alphafold2_data_dir"
+        ]
         assert entry["exists"] is True
         # kind should be "dir" or "symlink" (symlink if tmp_path itself is a symlink on some CI)
         assert entry["kind"] in ("dir", "symlink")
@@ -652,7 +678,6 @@ class TestExistingBehaviorPreserved:
         result = _probe_command("never_gonna_run", ["--version"])
         # With nothing on PATH, which() would return None before _probe_command
         # is called — but _probe_command itself should still handle TimeoutExpired
-        import subprocess
         # We can't easily inject TimeoutExpired here since _probe_command
         # calls subprocess.run directly, but the existing test in
         # test_alphafold_environment_diagnostics_api.py covers this.
@@ -670,9 +695,7 @@ class TestExistingBehaviorPreserved:
         data_dir.mkdir()
         monkeypatch.setenv("FOLDAGENT_ALPHAFOLD2_DATA_DIR", str(data_dir))
 
-        result = _configured_path_checks(
-            [("FOLDAGENT_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")]
-        )
+        result = _configured_path_checks([("FOLDAGENT_ALPHAFOLD2_DATA_DIR", "alphafold2_data_dir")])
         assert "alphafold2_data_dir" in result
         entry = result["alphafold2_data_dir"]
         # Existing keys must be preserved
@@ -684,9 +707,7 @@ class TestExistingBehaviorPreserved:
         assert "readable" in entry
         assert "writable" in entry
 
-    def test_diagnostics_output_includes_version_probe_for_local_backend(
-        self, monkeypatch
-    ) -> None:
+    def test_diagnostics_output_includes_version_probe_for_local_backend(self, monkeypatch) -> None:
         """Local backends should include version_probe in diagnostics."""
         monkeypatch.setattr(shells, "which", _fake_which_all_found)
         monkeypatch.setattr(shells.subprocess, "run", _fake_run_all_ok)

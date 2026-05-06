@@ -54,14 +54,16 @@ def build_consent_timeline(
 
     # Anchor: case creation
     created_at = case.get("created_at")
-    timeline.append({
-        "timestamp": created_at,
-        "event_type": "case_created",
-        "title": "Case created",
-        "description": f"Case opened with initial consent status: {case.get('consent_status', 'unknown')}",
-        "actor": "system",
-        "status_after": normalize_consent_status(case.get("consent_status")),
-    })
+    timeline.append(
+        {
+            "timestamp": created_at,
+            "event_type": "case_created",
+            "title": "Case created",
+            "description": f"Case opened with initial consent status: {case.get('consent_status', 'unknown')}",
+            "actor": "system",
+            "status_after": normalize_consent_status(case.get("consent_status")),
+        }
+    )
 
     for entry in audit_log:
         action = entry.get("action", "")
@@ -74,48 +76,56 @@ def build_consent_timeline(
             # Detect consent_status changes in inputs
             consent_change = inputs.get("consent_status")
             if consent_change is not None:
-                timeline.append({
-                    "timestamp": ts,
-                    "event_type": "consent_updated",
-                    "title": f"Consent marked {normalize_consent_status(consent_change)}",
-                    "description": f"Actor: {actor}",
-                    "actor": actor,
-                    "status_after": normalize_consent_status(consent_change),
-                })
+                timeline.append(
+                    {
+                        "timestamp": ts,
+                        "event_type": "consent_updated",
+                        "title": f"Consent marked {normalize_consent_status(consent_change)}",
+                        "description": f"Actor: {actor}",
+                        "actor": actor,
+                        "status_after": normalize_consent_status(consent_change),
+                    }
+                )
 
         elif action == "case.redacted":
             level = details.get("redaction_level", "unknown")
-            timeline.append({
-                "timestamp": ts,
-                "event_type": "redacted",
-                "title": f"Case redacted ({level})",
-                "description": f"Actor: {actor}",
-                "actor": actor,
-                "status_after": "withdrawn",
-            })
+            timeline.append(
+                {
+                    "timestamp": ts,
+                    "event_type": "redacted",
+                    "title": f"Case redacted ({level})",
+                    "description": f"Actor: {actor}",
+                    "actor": actor,
+                    "status_after": "withdrawn",
+                }
+            )
 
         elif action == "case.deleted":
             hard = details.get("hard_delete", False)
-            timeline.append({
-                "timestamp": ts,
-                "event_type": "deleted",
-                "title": "Case deleted" + (" (hard)" if hard else " (soft)"),
-                "description": f"Actor: {actor}",
-                "actor": actor,
-                "status_after": "withdrawn",
-            })
+            timeline.append(
+                {
+                    "timestamp": ts,
+                    "event_type": "deleted",
+                    "title": "Case deleted" + (" (hard)" if hard else " (soft)"),
+                    "description": f"Actor: {actor}",
+                    "actor": actor,
+                    "status_after": "withdrawn",
+                }
+            )
 
         elif action == "report.generated":
             report_type = details.get("report_type", "unknown")
             if report_type == "ethics_package":
-                timeline.append({
-                    "timestamp": ts,
-                    "event_type": "ethics_report",
-                    "title": "Ethics package generated",
-                    "description": f"Actor: {actor}",
-                    "actor": actor,
-                    "status_after": None,
-                })
+                timeline.append(
+                    {
+                        "timestamp": ts,
+                        "event_type": "ethics_report",
+                        "title": "Ethics package generated",
+                        "description": f"Actor: {actor}",
+                        "actor": actor,
+                        "status_after": None,
+                    }
+                )
 
     # Sort by timestamp, None last
     def _sort_key(item: dict):

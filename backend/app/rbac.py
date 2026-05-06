@@ -3,6 +3,7 @@
 Defines roles, permissions, and the mapping between them.
 Actual auth middleware is deferred — this is the permission model only.
 """
+
 from __future__ import annotations
 
 from enum import Enum

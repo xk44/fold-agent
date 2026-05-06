@@ -9,9 +9,7 @@ def list_structure_artifacts(artifacts: list[dict] | None) -> list[dict]:
         artifact
         for artifact in candidates
         if artifact.get("artifact_type") == "alphafold_model_cif"
-        or str(artifact.get("filename") or "")
-        .lower()
-        .endswith((".cif", ".mmcif", ".pdb"))
+        or str(artifact.get("filename") or "").lower().endswith((".cif", ".mmcif", ".pdb"))
     ]
 
 
@@ -19,9 +17,7 @@ def select_structure_artifact(artifacts: list[dict] | None) -> dict | None:
     candidates = list_structure_artifacts(artifacts)
     priority = (
         lambda artifact: artifact.get("artifact_type") == "alphafold_model_cif",
-        lambda artifact: str(artifact.get("filename") or "")
-        .lower()
-        .endswith((".cif", ".mmcif")),
+        lambda artifact: str(artifact.get("filename") or "").lower().endswith((".cif", ".mmcif")),
         lambda artifact: str(artifact.get("filename") or "").lower().endswith(".pdb"),
     )
     for predicate in priority:
@@ -74,9 +70,7 @@ def format_structure_confidence_summary(
             else "n/a"
         ),
         "ptm": f"{metrics.get('ptm'):.2f}" if metrics.get("ptm") is not None else "n/a",
-        "iptm": (
-            f"{metrics.get('iptm'):.2f}" if metrics.get("iptm") is not None else "n/a"
-        ),
+        "iptm": (f"{metrics.get('iptm'):.2f}" if metrics.get("iptm") is not None else "n/a"),
         "output_format": str(metrics.get("output_format") or "n/a"),
         "source_url": str(metrics.get("source_url") or "n/a"),
         "model_path": str(model_path),

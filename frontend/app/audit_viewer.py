@@ -21,7 +21,9 @@ def _entry_search_blob(entry: dict) -> str:
     return " ".join(str(part) for part in parts if part).lower()
 
 
-def filter_audit_entries(entries: list[dict] | None, *, selected_action: str = "all", query: str = "") -> list[dict]:
+def filter_audit_entries(
+    entries: list[dict] | None, *, selected_action: str = "all", query: str = ""
+) -> list[dict]:
     filtered = list(entries or [])
     if selected_action and selected_action != "all":
         filtered = [entry for entry in filtered if entry.get("action") == selected_action]

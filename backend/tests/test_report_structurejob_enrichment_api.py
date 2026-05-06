@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 from backend.app.alphafold.shells import AlphaFoldExecution
 
 
-def test_report_markdown_export_includes_richer_alphafold_fields(client: TestClient, monkeypatch) -> None:
+def test_report_markdown_export_includes_richer_alphafold_fields(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Rich markdown case"},
@@ -42,7 +44,9 @@ def test_report_markdown_export_includes_richer_alphafold_fields(client: TestCli
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
     run = client.post(
         "/alphafold/backends/alphafold3_local/run",
         json={

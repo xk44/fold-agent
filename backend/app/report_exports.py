@@ -128,9 +128,9 @@ def sanitize_report_text(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_report_version(case_id: str, db: "Session") -> dict:
+def build_report_version(case_id: str, db: Session) -> dict:
     """Return versioned metadata for a case report."""
-    from backend.app.models import Case, CandidateAntigen, Report
+    from backend.app.models import CandidateAntigen, Case, Report
 
     case = db.get(Case, case_id)
     if case is None:
@@ -166,13 +166,13 @@ def build_report_version(case_id: str, db: "Session") -> dict:
 # ---------------------------------------------------------------------------
 
 
-def build_report_html(case_id: str, db: "Session") -> str:
+def build_report_html(case_id: str, db: Session) -> str:
     """Build a styled HTML report for a case.
 
     Includes: case metadata, candidate summary table, evidence level, FP risk
     warnings, citations, safety disclaimers, and a version watermark.
     """
-    from backend.app.models import Case, CandidateAntigen
+    from backend.app.models import CandidateAntigen, Case
     from backend.app.safety_reports import (
         assess_evidence_level,
         assess_false_positive_risk,
@@ -411,13 +411,13 @@ def _expr_summary(expr: dict | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_report_markdown(case_id: str, db: "Session") -> str:
+def build_report_markdown(case_id: str, db: Session) -> str:
     """Build a full Markdown report for a case.
 
     Includes the same sections as the HTML report. Sections are wrapped with
     <!-- EDITABLE: ... --> comment markers for user customisation.
     """
-    from backend.app.models import Case, CandidateAntigen
+    from backend.app.models import CandidateAntigen, Case
     from backend.app.safety_reports import (
         assess_evidence_level,
         assess_false_positive_risk,
@@ -456,8 +456,8 @@ def build_report_markdown(case_id: str, db: "Session") -> str:
         "<!-- EDITABLE: case-metadata -->",
         "## Case Metadata",
         "",
-        f"| Field | Value |",
-        f"|---|---|",
+        "| Field | Value |",
+        "|---|---|",
         f"| Case ID | `{case_id}` |",
         f"| Species | {case.species.value} |",
         f"| Created | {created_str} |",
@@ -571,13 +571,13 @@ def build_report_markdown(case_id: str, db: "Session") -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_veterinary_consent(case_id: str, db: "Session") -> dict:
+def build_veterinary_consent(case_id: str, db: Session) -> dict:
     """Build a veterinary owner consent draft for a case.
 
     Species-aware: dog cases include species-specific language.
     TEMPLATE ONLY — must be reviewed and signed by a licensed veterinary professional.
     """
-    from backend.app.models import Case, CandidateAntigen
+    from backend.app.models import CandidateAntigen, Case
 
     case = db.get(Case, case_id)
     species = case.species.value if case else "unknown"
@@ -721,14 +721,14 @@ Signature: ________________________
 # ---------------------------------------------------------------------------
 
 
-def build_human_research_consent(case_id: str, db: "Session") -> dict:
+def build_human_research_consent(case_id: str, db: Session) -> dict:
     """Build a human research participant consent draft.
 
     STRONG DISCLAIMER: This is a TEMPLATE ONLY.
     It is NOT legal or medical advice. It must be reviewed by an IRB and
     qualified legal/medical counsel before any use.
     """
-    from backend.app.models import Case, CandidateAntigen
+    from backend.app.models import CandidateAntigen, Case
 
     case = db.get(Case, case_id)
     candidate_count = (

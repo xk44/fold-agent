@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.gene_therapy import (
-    AAV_SEROTYPES,
     EDITOR_SPECS,
     KNOWN_CAS_VARIANTS,
     PAM_DATABASE,
@@ -25,7 +23,6 @@ from backend.app.modes.gene_therapy import (
     score_guide,
     score_transgene_safety,
 )
-
 
 # ---------------------------------------------------------------------------
 # KNOWN_CAS_VARIANTS / predict_cas_structure

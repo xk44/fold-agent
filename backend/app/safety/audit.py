@@ -7,7 +7,6 @@ Every action (user, system, or agent) must be recorded here.
 import hashlib
 import json
 from datetime import UTC, datetime
-from typing import Optional
 from uuid import uuid4
 
 import structlog
@@ -23,7 +22,7 @@ class SafetyGateResult:
     REQUIRES_APPROVAL = "requires_approval"
 
 
-def compute_hash(data: dict | str | None) -> Optional[str]:
+def compute_hash(data: dict | str | None) -> str | None:
     """Compute SHA-256 hash of data for audit integrity."""
     if data is None:
         return None
@@ -35,13 +34,13 @@ def compute_hash(data: dict | str | None) -> Optional[str]:
 def log_action(
     db_session,
     *,
-    case_id: Optional[str],
+    case_id: str | None,
     actor: str,
     action: str,
-    inputs: Optional[dict] = None,
-    outputs: Optional[dict] = None,
+    inputs: dict | None = None,
+    outputs: dict | None = None,
     safety_gate_result: str = SafetyGateResult.PASS,
-    details: Optional[dict] = None,
+    details: dict | None = None,
 ) -> str:
     """Log an action to the audit trail."""
     from backend.app.models import AuditLog

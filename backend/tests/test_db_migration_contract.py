@@ -9,9 +9,9 @@ These tests verify:
    (migration parity contract).
 5. The lifespan correctly delegates to ``init_db``.
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -58,6 +58,7 @@ EXPECTED_TABLES = {
 # expected_table_names
 # -----------------------------------------------------------------------
 
+
 class TestExpectedTableNames:
     def test_matches_authoritative_set(self):
         """The ORM metadata must declare exactly the tables we expect."""
@@ -93,6 +94,7 @@ class TestExpectedTableNames:
 # -----------------------------------------------------------------------
 # validate_schema
 # -----------------------------------------------------------------------
+
 
 class TestValidateSchema:
     def test_passes_when_tables_exist(self, tmp_path):
@@ -150,6 +152,7 @@ class TestValidateSchema:
 # init_db mode switching
 # -----------------------------------------------------------------------
 
+
 class TestInitDbModes:
     def test_create_all_mode_creates_tables(self, tmp_path):
         """In create_all mode, init_db should create all ORM tables."""
@@ -175,8 +178,10 @@ class TestInitDbModes:
             db_init_mode=DbInitMode.validate,
         )
         # We patch the module-level settings reference used inside init_db.
-        with patch("backend.app.db.settings", test_settings), \
-             patch("backend.app.db.engine", build_engine(db_url)):
+        with (
+            patch("backend.app.db.settings", test_settings),
+            patch("backend.app.db.engine", build_engine(db_url)),
+        ):
             with pytest.raises(RuntimeError, match="missing tables"):
                 init_db()
 
@@ -190,8 +195,7 @@ class TestInitDbModes:
             database_url=db_url,
             db_init_mode=DbInitMode.validate,
         )
-        with patch("backend.app.db.settings", test_settings), \
-             patch("backend.app.db.engine", eng):
+        with patch("backend.app.db.settings", test_settings), patch("backend.app.db.engine", eng):
             # Should not raise
             init_db()
 
@@ -199,6 +203,7 @@ class TestInitDbModes:
 # -----------------------------------------------------------------------
 # Alembic / create_all migration parity contract
 # -----------------------------------------------------------------------
+
 
 class TestMigrationParity:
     def test_alembic_and_create_all_produce_same_tables(self, tmp_path):
@@ -250,6 +255,7 @@ class TestMigrationParity:
 # -----------------------------------------------------------------------
 # Contract: expected_table_names stays in sync with models
 # -----------------------------------------------------------------------
+
 
 class TestTableContractDocumentation:
     """These tests ensure the migration contract is documented and caught

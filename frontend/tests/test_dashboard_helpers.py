@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -65,7 +65,7 @@ def test_format_health_status_summary_handles_unreachable_error() -> None:
 def test_parse_due_date_accepts_trailing_z() -> None:
     parsed = parse_due_date("2026-04-21T12:30:00Z")
 
-    assert parsed == datetime(2026, 4, 21, 12, 30, tzinfo=timezone.utc)
+    assert parsed == datetime(2026, 4, 21, 12, 30, tzinfo=UTC)
 
 
 def test_parse_due_date_returns_none_for_invalid_value() -> None:
@@ -74,9 +74,11 @@ def test_parse_due_date_returns_none_for_invalid_value() -> None:
 
 
 def test_is_task_overdue_true_only_for_open_past_due_tasks() -> None:
-    now = datetime(2026, 4, 21, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 4, 21, 12, 0, tzinfo=UTC)
 
-    assert is_task_overdue({"due_date": "2026-04-20T12:00:00Z", "status": "pending"}, now=now) is True
+    assert (
+        is_task_overdue({"due_date": "2026-04-20T12:00:00Z", "status": "pending"}, now=now) is True
+    )
     assert is_task_overdue({"due_date": "2026-04-20T12:00:00Z", "status": "done"}, now=now) is False
     assert is_task_overdue({"due_date": None, "status": "pending"}, now=now) is False
 

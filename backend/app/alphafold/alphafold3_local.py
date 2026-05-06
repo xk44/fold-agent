@@ -65,9 +65,7 @@ def build_alphafold3_local_command(
 
     if request.af3_input is not None:
         if json_output_path is None:
-            raise ValueError(
-                "json_output_path is required when af3_input is provided"
-            )
+            raise ValueError("json_output_path is required when af3_input is provided")
         build_af3_json_input_file(request.af3_input, json_output_path)
         command.extend(["--json_path", str(json_output_path)])
     elif request.input_kind == "json":

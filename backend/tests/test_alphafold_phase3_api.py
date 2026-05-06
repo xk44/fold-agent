@@ -19,7 +19,9 @@ def test_alphafold3_run_rejects_missing_json_path_with_422(client: TestClient) -
     assert "json_path" in response.text
 
 
-def test_alphafold3_output_directory_is_parsed_when_stdout_is_empty(client: TestClient, monkeypatch, tmp_path: Path) -> None:
+def test_alphafold3_output_directory_is_parsed_when_stdout_is_empty(
+    client: TestClient, monkeypatch, tmp_path: Path
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "AF3 output dir parse case"},
@@ -57,7 +59,9 @@ def test_alphafold3_output_directory_is_parsed_when_stdout_is_empty(client: Test
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run = client.post(
         "/alphafold/backends/alphafold3_local/run",
@@ -73,7 +77,9 @@ def test_alphafold3_output_directory_is_parsed_when_stdout_is_empty(client: Test
 
     structure_evidence = client.get(f"/cases/{case_id}/candidates").json()[0]["structure_evidence"]
     assert structure_evidence["model_cif"] == str(output_dir / "hello_fold_model.cif")
-    assert structure_evidence["summary_confidences_json"] == str(output_dir / "hello_fold_summary_confidences.json")
+    assert structure_evidence["summary_confidences_json"] == str(
+        output_dir / "hello_fold_summary_confidences.json"
+    )
     assert structure_evidence["ptm"] == 0.61
     assert structure_evidence["iptm"] == 0.83
     assert structure_evidence["ranking_score"] == 0.87

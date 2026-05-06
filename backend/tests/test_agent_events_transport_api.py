@@ -11,7 +11,9 @@ from skills.shared.event_stream_client import parse_sse_snapshot
 
 
 def _create_demo_case(client: TestClient) -> str:
-    response = client.post("/cases", json={"species": "demo", "diagnosis_summary": "event transport"})
+    response = client.post(
+        "/cases", json={"species": "demo", "diagnosis_summary": "event transport"}
+    )
     assert response.status_code == 201
     return response.json()["id"]
 

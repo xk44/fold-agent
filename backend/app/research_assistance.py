@@ -8,8 +8,7 @@ RESEARCH USE ONLY.
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Feature 1: MSA Quality Pre-screen
@@ -173,13 +172,9 @@ def suggest_prediction_strategy(quality: MSAQualityResult) -> dict:
             "Consider ESMFold as MSA-free fallback."
         )
         strategy["alternative_backends"] = ["esmfold", "omegafold"]
-        strategy["confidence_caveat"] = (
-            "Predictions based on marginal MSA may have lower accuracy."
-        )
+        strategy["confidence_caveat"] = "Predictions based on marginal MSA may have lower accuracy."
     else:
-        strategy["rationale"] = (
-            "Sparse/orphan MSA; ESMFold (MSA-free language model) recommended."
-        )
+        strategy["rationale"] = "Sparse/orphan MSA; ESMFold (MSA-free language model) recommended."
         strategy["alternative_backends"] = ["omegafold", "chai1"]
         strategy["confidence_caveat"] = (
             "MSA-sparse: structure prediction confidence will be low. "
@@ -791,7 +786,12 @@ def identify_knowledge_gaps(gene: str) -> dict:
     # What major categories are missing?
     major_categories = {
         "structure": {"structure", "cryo_em", "crystallography", "NMR"},
-        "drug_target": {"drug_target", "small_molecule_inhibitor", "kinase_inhibitor", "clinical_trial"},
+        "drug_target": {
+            "drug_target",
+            "small_molecule_inhibitor",
+            "kinase_inhibitor",
+            "clinical_trial",
+        },
         "mechanism": {"mechanism", "signaling", "pathway"},
         "biomarker": {"biomarker", "expression", "prognosis"},
         "hereditary": {"hereditary", "germline", "familial"},
@@ -823,9 +823,7 @@ def identify_knowledge_gaps(gene: str) -> dict:
         "gap_categories": gaps,
         "specific_gaps": specific_gaps,
         "total_references": lit.total_references,
-        "research_opportunities": [
-            f"Investigate {g} for {gene.upper()}" for g in gaps[:3]
-        ],
+        "research_opportunities": [f"Investigate {g} for {gene.upper()}" for g in gaps[:3]],
         "safety_label": "Research only — not for clinical use",
     }
 
@@ -835,10 +833,20 @@ def identify_knowledge_gaps(gene: str) -> dict:
 # ---------------------------------------------------------------------------
 
 PLDDT_COLOR_SCHEME: dict[str, dict] = {
-    "very_high": {"min": 90, "max": 100, "color": "#0053D6", "label": "Very high confidence (pLDDT > 90)"},
+    "very_high": {
+        "min": 90,
+        "max": 100,
+        "color": "#0053D6",
+        "label": "Very high confidence (pLDDT > 90)",
+    },
     "confident": {"min": 70, "max": 90, "color": "#65CBF3", "label": "Confident (pLDDT 70-90)"},
     "low": {"min": 50, "max": 70, "color": "#FFDB13", "label": "Low confidence (pLDDT 50-70)"},
-    "very_low": {"min": 0, "max": 50, "color": "#FF7D45", "label": "Very low confidence (pLDDT < 50)"},
+    "very_low": {
+        "min": 0,
+        "max": 50,
+        "color": "#FF7D45",
+        "label": "Very low confidence (pLDDT < 50)",
+    },
 }
 
 
@@ -908,38 +916,44 @@ def generate_viewer_data(
         seed = int(hashlib.sha256(f"plddt:{seq}:{i}".encode()).hexdigest(), 16)
         plddt = 40.0 + (seed % 6000) / 100.0  # 40–100
         color = plddt_to_color(plddt)
-        annotations.append(VisualizationAnnotation(
-            residue_index=i,
-            annotation_type="plddt",
-            value=round(plddt, 2),
-            color_hex=color,
-            tooltip=f"Residue {i} ({aa}): pLDDT {plddt:.1f}",
-        ))
+        annotations.append(
+            VisualizationAnnotation(
+                residue_index=i,
+                annotation_type="plddt",
+                value=round(plddt, 2),
+                color_hex=color,
+                tooltip=f"Residue {i} ({aa}): pLDDT {plddt:.1f}",
+            )
+        )
 
     # Ensemble disagreement for a handful of residues
     n_disagree = 1 + h % 8
     for j in range(n_disagree):
         idx = 1 + (h >> (j * 4)) % max(1, len(seq))
         dis_val = round(0.3 + (h >> (j * 8) & 0xFF) / 510.0, 3)
-        annotations.append(VisualizationAnnotation(
-            residue_index=idx,
-            annotation_type="disagreement",
-            value=dis_val,
-            color_hex="#FF4500",
-            tooltip=f"Residue {idx}: ensemble disagreement Δ={dis_val:.3f} Å",
-        ))
+        annotations.append(
+            VisualizationAnnotation(
+                residue_index=idx,
+                annotation_type="disagreement",
+                value=dis_val,
+                color_hex="#FF4500",
+                tooltip=f"Residue {idx}: ensemble disagreement Δ={dis_val:.3f} Å",
+            )
+        )
 
     # Binding site highlights
     n_bs = 1 + h % 4
     for k in range(n_bs):
         idx = 1 + (h >> (k * 12)) % max(1, len(seq))
-        annotations.append(VisualizationAnnotation(
-            residue_index=idx,
-            annotation_type="binding_site",
-            value="predicted",
-            color_hex="#00CC44",
-            tooltip=f"Residue {idx}: predicted binding site",
-        ))
+        annotations.append(
+            VisualizationAnnotation(
+                residue_index=idx,
+                annotation_type="binding_site",
+                value="predicted",
+                color_hex="#00CC44",
+                tooltip=f"Residue {idx}: predicted binding site",
+            )
+        )
 
     # Variant annotations
     if variants:
@@ -948,21 +962,25 @@ def generate_viewer_data(
             var_label = var.get("mutation", "unknown")
             var_effect = var.get("effect", "unknown")
             color = "#FF0000" if var_effect in ("pathogenic", "likely_pathogenic") else "#FFA500"
-            annotations.append(VisualizationAnnotation(
-                residue_index=var_idx,
-                annotation_type="variant",
-                value=var_label,
-                color_hex=color,
-                tooltip=f"Variant {var_label} at residue {var_idx}: {var_effect}",
-            ))
+            annotations.append(
+                VisualizationAnnotation(
+                    residue_index=var_idx,
+                    annotation_type="variant",
+                    value=var_label,
+                    color_hex=color,
+                    tooltip=f"Variant {var_label} at residue {var_idx}: {var_effect}",
+                )
+            )
 
-    viewer_config = generate_molstar_config(StructureViewerData(
-        pdb_data=pdb_data,
-        annotations=annotations,
-        color_scheme="plddt",
-        viewer_config={},
-        export_formats=[],
-    ))
+    viewer_config = generate_molstar_config(
+        StructureViewerData(
+            pdb_data=pdb_data,
+            annotations=annotations,
+            color_scheme="plddt",
+            viewer_config={},
+            export_formats=[],
+        )
+    )
 
     return StructureViewerData(
         pdb_data=pdb_data,
@@ -1177,7 +1195,9 @@ def analyze_secretion_pathway(sequence: str) -> SecretionAnalysis:
         warnings.append("GPI anchor predicted; protein will be lipid-anchored to outer leaflet.")
     elif tm_helices >= 2:
         localization = "membrane"
-        warnings.append(f"{tm_helices} transmembrane helices predicted; protein is likely integral membrane.")
+        warnings.append(
+            f"{tm_helices} transmembrane helices predicted; protein is likely integral membrane."
+        )
     elif tm_helices == 1:
         localization = "membrane"
         warnings.append("Single-pass transmembrane topology predicted.")
@@ -1195,14 +1215,16 @@ def analyze_secretion_pathway(sequence: str) -> SecretionAnalysis:
         )
         localization = "nuclear" if has_nls else "cytoplasmic"
 
-    suitability = assess_therapeutic_suitability(SecretionAnalysis(
-        signal_peptide=sp,
-        predicted_localization=localization,
-        transmembrane_helices=tm_helices,
-        gpi_anchor=gpi,
-        therapeutic_suitability="",  # filled below
-        warnings=warnings,
-    ))
+    suitability = assess_therapeutic_suitability(
+        SecretionAnalysis(
+            signal_peptide=sp,
+            predicted_localization=localization,
+            transmembrane_helices=tm_helices,
+            gpi_anchor=gpi,
+            therapeutic_suitability="",  # filled below
+            warnings=warnings,
+        )
+    )
 
     return SecretionAnalysis(
         signal_peptide=sp,

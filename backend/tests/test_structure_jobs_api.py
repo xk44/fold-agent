@@ -64,13 +64,23 @@ def test_structure_job_crud_and_alphafold_run_linkage(client: TestClient, monkey
             validation_ok=True,
             notes="simulated",
             status="completed",
-            stdout=json.dumps({"structure": {"backend": backend_name, "status": "completed", "pdb_file": "/tmp/demo_out/predicted_structure.pdb"}}),
+            stdout=json.dumps(
+                {
+                    "structure": {
+                        "backend": backend_name,
+                        "status": "completed",
+                        "pdb_file": "/tmp/demo_out/predicted_structure.pdb",
+                    }
+                }
+            ),
             stderr="",
             timed_out=False,
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run_response = client.post(
         "/alphafold/backends/colabfold/run",

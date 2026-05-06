@@ -6,7 +6,7 @@ Config/registry scaffold. Actual Celery app creation is deferred.
 from __future__ import annotations
 
 import importlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import structlog
 
@@ -36,16 +36,8 @@ def get_celery_config() -> CeleryConfig:
     """Build a CeleryConfig from settings/env, with sensible defaults."""
     from backend.app.config import settings
 
-    broker = (
-        settings.celery_broker_url
-        or settings.redis_url
-        or "redis://localhost:6379/0"
-    )
-    backend = (
-        settings.celery_result_backend
-        or settings.redis_url
-        or "redis://localhost:6379/0"
-    )
+    broker = settings.celery_broker_url or settings.redis_url or "redis://localhost:6379/0"
+    backend = settings.celery_result_backend or settings.redis_url or "redis://localhost:6379/0"
     return CeleryConfig(
         broker_url=broker,
         result_backend=backend,

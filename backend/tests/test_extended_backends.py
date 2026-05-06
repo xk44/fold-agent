@@ -6,27 +6,24 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.alphafold_backends import (
+    _BACKEND_MAP,
     Boltz1Backend,
     Boltz2Backend,
     Chai1Backend,
     ESMFoldBackend,
-    MockBackend,
     OpenFoldBackend,
     PredictionResult,
     ProteinMPNNBackend,
     RFdiffusion2Backend,
     RFdiffusionBackend,
     StructureCache,
-    _BACKEND_MAP,
 )
 from backend.app.ensemble import EnsembleResult, compare_backends, run_ensemble
 from backend.app.mode_safety import (
-    MODE_SAFETY_CONFIG,
     ResearchMode,
     check_mode_safety,
     get_mode_config,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -125,7 +122,16 @@ def test_rfdiffusion2_validate_structure() -> None:
 
 @pytest.mark.parametrize(
     "name",
-    ["boltz1", "boltz2", "esmfold", "openfold", "rfdiffusion", "proteinmpnn", "chai1", "rfdiffusion2"],
+    [
+        "boltz1",
+        "boltz2",
+        "esmfold",
+        "openfold",
+        "rfdiffusion",
+        "proteinmpnn",
+        "chai1",
+        "rfdiffusion2",
+    ],
 )
 def test_new_backends_registered(name: str) -> None:
     assert name in _BACKEND_MAP
@@ -392,6 +398,7 @@ def test_check_mode_safety_unknown_mode_raises() -> None:
 @pytest.fixture()
 def client():
     from backend.app.main import app
+
     return TestClient(app)
 
 

@@ -5,6 +5,7 @@ Covers:
 - apply_filters: apply selected filter values to cards and events
 - FILTER_ALL sentinel behavior
 """
+
 from __future__ import annotations
 
 import sys
@@ -12,17 +13,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     FILTER_ALL,
     apply_filters,
     derive_filter_options,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures — sample data
 # ---------------------------------------------------------------------------
+
 
 def _make_card(
     status: str = "completed",
@@ -62,6 +63,7 @@ def _make_event(
 # ---------------------------------------------------------------------------
 # derive_filter_options
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveFilterOptionsEmpty:
     def test_no_cards_no_events(self):
@@ -218,6 +220,7 @@ class TestDeriveFilterOptionsCombined:
 # apply_filters
 # ---------------------------------------------------------------------------
 
+
 class TestApplyFiltersAllDefaults:
     """When all filters are FILTER_ALL (default), no filtering occurs."""
 
@@ -238,7 +241,8 @@ class TestApplyFiltersAllDefaults:
         cards = [_make_card()]
         events = [_make_event()]
         filtered_cards, filtered_events = apply_filters(
-            cards, events,
+            cards,
+            events,
             status=FILTER_ALL,
             job_type=FILTER_ALL,
             case_id=FILTER_ALL,
@@ -282,7 +286,9 @@ class TestApplyFiltersByStatus:
         cards = [_make_card(status="running")]
         events = [_make_event(event="pipeline.started", case_id="c1")]
         filtered_cards, filtered_events = apply_filters(
-            cards, events, status="completed",
+            cards,
+            events,
+            status="completed",
         )
         # Cards filtered, events untouched (no status filter on events)
         assert len(filtered_cards) == 0
@@ -300,7 +306,9 @@ class TestApplyFiltersByJobType:
             _make_event(event="safety.preflight", case_id="c2"),
         ]
         filtered_cards, filtered_events = apply_filters(
-            cards, events, job_type="pipeline_run",
+            cards,
+            events,
+            job_type="pipeline_run",
         )
         assert len(filtered_cards) == 1
         assert filtered_cards[0]["job_type"] == "pipeline_run"
@@ -320,7 +328,9 @@ class TestApplyFiltersByJobType:
             _make_card(job_type="safety", case_id="c2"),
         ]
         _, filtered_events = apply_filters(
-            cards, events, job_type="pipeline",
+            cards,
+            events,
+            job_type="pipeline",
         )
         assert len(filtered_events) == 2
         families = {(e.event or "").split(".")[0] for e in filtered_events}
@@ -339,7 +349,9 @@ class TestApplyFiltersByJobType:
     def test_job_type_with_no_match(self):
         cards = [_make_card(job_type="pipeline_run")]
         filtered_cards, filtered_events = apply_filters(
-            cards, [], job_type="nonexistent_type",
+            cards,
+            [],
+            job_type="nonexistent_type",
         )
         assert len(filtered_cards) == 0
         assert len(filtered_events) == 0
@@ -376,7 +388,9 @@ class TestApplyFiltersByCaseId:
             _make_event(event="safety.preflight", case_id="c2"),
         ]
         filtered_cards, filtered_events = apply_filters(
-            cards, events, case_id="c1",
+            cards,
+            events,
+            case_id="c1",
         )
         assert len(filtered_cards) == 1
         assert filtered_cards[0]["case_id"] == "c1"
@@ -404,7 +418,10 @@ class TestApplyFiltersCombined:
         ]
         # Filtering by job_type="pipeline" matches event family "pipeline"
         filtered_cards, filtered_events = apply_filters(
-            cards, events, status="running", job_type="pipeline",
+            cards,
+            events,
+            status="running",
+            job_type="pipeline",
         )
         # Cards: only "running" cards, but no card has job_type "pipeline"
         # (they have "pipeline_run"). So 0 cards match.
@@ -425,8 +442,11 @@ class TestApplyFiltersCombined:
         ]
         # Status and job_type filters on cards, job_type and case_id on events
         filtered_cards, filtered_events = apply_filters(
-            cards, events,
-            status="running", job_type="pipeline_run", case_id="c1",
+            cards,
+            events,
+            status="running",
+            job_type="pipeline_run",
+            case_id="c1",
         )
         # Only first card: running + pipeline_run + c1
         assert len(filtered_cards) == 1
@@ -443,7 +463,9 @@ class TestApplyFiltersCombined:
         ]
         events = [_make_event(event="x.y", case_id="c1")]
         filtered_cards, filtered_events = apply_filters(
-            cards, events, status="running",
+            cards,
+            events,
+            status="running",
         )
         assert len(filtered_cards) == 1
         assert filtered_cards[0]["status"] == "running"
@@ -460,7 +482,9 @@ class TestApplyFiltersCombined:
             _make_event(event="b.z", case_id="c2"),
         ]
         filtered_cards, filtered_events = apply_filters(
-            cards, events, job_type="a",
+            cards,
+            events,
+            job_type="a",
         )
         assert len(filtered_cards) == 1
         assert filtered_cards[0]["job_type"] == "a"
@@ -494,7 +518,9 @@ class TestApplyFiltersEdgeCases:
     def test_empty_cards_and_events_with_filter(self):
         """Filtering empty lists should return empty lists."""
         filtered_cards, filtered_events = apply_filters(
-            [], [], status="running",
+            [],
+            [],
+            status="running",
         )
         assert filtered_cards == []
         assert filtered_events == []
@@ -519,7 +545,10 @@ class TestApplyFiltersEdgeCases:
             _make_event(event="pipeline.started", case_id="c1"),
         ]
         _, filtered_events = apply_filters(
-            [], events, job_type="pipeline", case_id="c2",
+            [],
+            events,
+            job_type="pipeline",
+            case_id="c2",
         )
         assert len(filtered_events) == 0
 

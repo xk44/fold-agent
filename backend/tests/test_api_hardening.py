@@ -26,8 +26,6 @@ from backend.app.dry_run import (
     dry_run_action,
 )
 from backend.app.openapi_export import _classify_safety_level, export_openapi_spec
-from backend.app.main import app
-
 
 # ---------------------------------------------------------------------------
 # OpenAPI export: safety level classification
@@ -313,7 +311,9 @@ def test_dry_run_delete_case() -> None:
 
 
 def test_dry_run_submit_alphafold() -> None:
-    result = dry_run_action("submit_alphafold", {"backend": "alphafold_server", "sequence": "MKTII"})
+    result = dry_run_action(
+        "submit_alphafold", {"backend": "alphafold_server", "sequence": "MKTII"}
+    )
     assert result.action == "submit_alphafold"
     assert result.requires_approval is True
     assert result.safety_level == "dangerous"

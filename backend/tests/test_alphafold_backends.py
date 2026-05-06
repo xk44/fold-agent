@@ -20,7 +20,6 @@ from backend.app.alphafold_backends import (
     predict_with_cache,
 )
 
-
 # ---------------------------------------------------------------------------
 # validate() — each backend
 # ---------------------------------------------------------------------------
@@ -276,7 +275,12 @@ def test_api_predict_with_mock_backend(client: TestClient) -> None:
     StructureCache.clear()
     response = client.post(
         "/alphafold/v2/predict",
-        json={"sequence": "MTEYKLVVVG", "backend": "mock", "allow_cloud": False, "allow_fallback": False},
+        json={
+            "sequence": "MTEYKLVVVG",
+            "backend": "mock",
+            "allow_cloud": False,
+            "allow_fallback": False,
+        },
     )
     assert response.status_code == 200
     data = response.json()
@@ -301,7 +305,12 @@ def test_api_predict_second_call_is_cached(client: TestClient) -> None:
 def test_api_predict_cloud_blocked_without_permission(client: TestClient) -> None:
     response = client.post(
         "/alphafold/v2/predict",
-        json={"sequence": "ACDE", "backend": "alphafold_server", "allow_cloud": False, "allow_fallback": False},
+        json={
+            "sequence": "ACDE",
+            "backend": "alphafold_server",
+            "allow_cloud": False,
+            "allow_fallback": False,
+        },
     )
     assert response.status_code == 403
 

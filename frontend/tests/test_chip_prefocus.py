@@ -10,6 +10,7 @@ Covers:
 - Chip with report_id=None omits prefocus_report_id
 - Chip with empty artifact_paths omits prefocus_artifact_path
 """
+
 from __future__ import annotations
 
 import sys
@@ -25,10 +26,10 @@ from frontend.app.event_stream import (
     derive_chip_prefocus,
 )
 
-
 # ---------------------------------------------------------------------------
 # view_report chip
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveChipPrefocusViewReport:
     """view_report chip derives report and case prefocus keys."""
@@ -127,6 +128,7 @@ class TestDeriveChipPrefocusViewReport:
 # view_artifacts chip
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveChipPrefocusViewArtifacts:
     """view_artifacts chip derives artifact path and case prefocus keys."""
 
@@ -213,6 +215,7 @@ class TestDeriveChipPrefocusViewArtifacts:
 # view_structure chip
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveChipPrefocusViewStructure:
     """view_structure chip derives structure job and case prefocus keys."""
 
@@ -266,6 +269,7 @@ class TestDeriveChipPrefocusViewStructure:
 # ---------------------------------------------------------------------------
 # Edge cases and unsupported chips
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveChipPrefocusEdgeCases:
     """Edge cases: unknown actions, missing fields, empty chips."""

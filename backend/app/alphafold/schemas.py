@@ -10,13 +10,13 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, RootModel, field_validator, model_validator
 
-
 InputKind = Literal["fasta", "a3m", "csv", "tsv", "json", "input_dir"]
 
 
 # ---------------------------------------------------------------------------
 # AlphaFold 3 JSON Input Dialect Models
 # ---------------------------------------------------------------------------
+
 
 class ProteinModification(BaseModel):
     """Post-translational modification on a protein chain."""
@@ -34,7 +34,7 @@ class ProteinTemplate(BaseModel):
     templateIndices: list[int]
 
     @model_validator(mode="after")
-    def validate_mmcif_source(self) -> "ProteinTemplate":
+    def validate_mmcif_source(self) -> ProteinTemplate:
         if self.mmcif is not None and self.mmcifPath is not None:
             raise ValueError("mmcif and mmcifPath are mutually exclusive")
         if self.mmcif is None and self.mmcifPath is None:
@@ -58,7 +58,7 @@ class ProteinEntity(BaseModel):
     templates: list[ProteinTemplate] | None = None
 
     @model_validator(mode="after")
-    def validate_msa_sources(self) -> "ProteinEntity":
+    def validate_msa_sources(self) -> ProteinEntity:
         if self.unpairedMsa is not None and self.unpairedMsaPath is not None:
             raise ValueError("unpairedMsa and unpairedMsaPath are mutually exclusive")
         if self.pairedMsa is not None and self.pairedMsaPath is not None:
@@ -84,7 +84,7 @@ class RnaEntity(BaseModel):
     unpairedMsaPath: str | None = None
 
     @model_validator(mode="after")
-    def validate_msa_sources(self) -> "RnaEntity":
+    def validate_msa_sources(self) -> RnaEntity:
         if self.unpairedMsa is not None and self.unpairedMsaPath is not None:
             raise ValueError("unpairedMsa and unpairedMsaPath are mutually exclusive")
         return self
@@ -118,7 +118,7 @@ class LigandEntity(BaseModel):
     description: str | None = None
 
     @model_validator(mode="after")
-    def validate_ligand_source(self) -> "LigandEntity":
+    def validate_ligand_source(self) -> LigandEntity:
         if self.ccdCodes is not None and self.smiles is not None:
             raise ValueError("ccdCodes and smiles are mutually exclusive")
         if self.ccdCodes is None and self.smiles is None:
@@ -138,7 +138,7 @@ class SequenceEntry(BaseModel):
     ligand: LigandEntity | None = None
 
     @model_validator(mode="after")
-    def validate_exactly_one_entity(self) -> "SequenceEntry":
+    def validate_exactly_one_entity(self) -> SequenceEntry:
         entities = [e for e in (self.protein, self.rna, self.dna, self.ligand) if e is not None]
         if len(entities) != 1:
             raise ValueError("exactly one of protein, rna, dna, or ligand must be specified")
@@ -157,7 +157,7 @@ class BondAtomSpec(RootModel):
     root: list
 
     @model_validator(mode="after")
-    def validate_spec(self) -> "BondAtomSpec":
+    def validate_spec(self) -> BondAtomSpec:
         if len(self.root) != 3:
             raise ValueError(
                 "BondAtomSpec must have exactly 3 elements: [entity_id, residue_id, atom_name]"
@@ -198,7 +198,7 @@ class AF3InputJSON(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_user_ccd(self) -> "AF3InputJSON":
+    def validate_user_ccd(self) -> AF3InputJSON:
         if self.userCCD is not None and self.userCCDPath is not None:
             raise ValueError("userCCD and userCCDPath are mutually exclusive")
         return self
@@ -241,6 +241,7 @@ def _serialize_item(item):
 # Legacy / generic backend request models
 # ---------------------------------------------------------------------------
 
+
 class AlphaFoldJobRequestBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -265,7 +266,7 @@ class ColabFoldJobRequest(AlphaFoldJobRequestBase):
     overwrite_existing_results: bool = False
 
     @model_validator(mode="after")
-    def validate_input_source(self) -> "ColabFoldJobRequest":
+    def validate_input_source(self) -> ColabFoldJobRequest:
         if self.input_kind == "fasta" and not (self.sequence or self.input_path):
             raise ValueError("fasta input requires sequence or input_path")
         if self.input_kind in {"a3m", "csv", "tsv", "input_dir"} and not self.input_path:
@@ -282,7 +283,7 @@ class AlphaFold2LocalJobRequest(AlphaFoldJobRequestBase):
     db_preset: str | None = None
 
     @model_validator(mode="after")
-    def validate_input_source(self) -> "AlphaFold2LocalJobRequest":
+    def validate_input_source(self) -> AlphaFold2LocalJobRequest:
         if not (self.sequence or self.fasta_path):
             raise ValueError("alphafold2_local requires sequence or fasta_path")
         return self
@@ -298,14 +299,16 @@ class AlphaFold3LocalJobRequest(AlphaFoldJobRequestBase):
     af3_input: AF3InputJSON | None = None
 
     @model_validator(mode="after")
-    def validate_input_source(self) -> "AlphaFold3LocalJobRequest":
+    def validate_input_source(self) -> AlphaFold3LocalJobRequest:
         if self.af3_input and self.json_path:
             raise ValueError(
                 "af3_input and json_path are mutually exclusive; "
                 "use af3_input to have the builder generate the JSON file"
             )
         if self.input_kind == "json" and not (self.json_path or self.af3_input):
-            raise ValueError("alphafold3_local with input_kind=json requires json_path or af3_input")
+            raise ValueError(
+                "alphafold3_local with input_kind=json requires json_path or af3_input"
+            )
         if self.input_kind == "input_dir" and not self.input_dir:
             raise ValueError("alphafold3_local with input_kind=input_dir requires input_dir")
         return self
@@ -317,7 +320,7 @@ class AlphaFoldServerJobRequest(AlphaFoldJobRequestBase):
     acknowledge_external_upload: bool = False
 
     @model_validator(mode="after")
-    def validate_input_source(self) -> "AlphaFoldServerJobRequest":
+    def validate_input_source(self) -> AlphaFoldServerJobRequest:
         if not self.json_path:
             raise ValueError("alphafold_server requires json_path")
         return self

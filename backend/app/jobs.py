@@ -13,14 +13,14 @@ subscribing to /agent/events are notified of background job progress.
 from __future__ import annotations
 
 import json
-import structlog
 import threading
-import traceback
+from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 from uuid import uuid4
 
+import structlog
 from sqlalchemy.orm import Session
 
 from backend.app.config import settings
@@ -46,7 +46,9 @@ def _pipeline_terminal_action(pipeline_status: str) -> str:
 logger = structlog.get_logger()
 
 # Module-level executor - one shared pool keeps things simple and predictable.
-_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="bg-job")
+_executor = ThreadPoolExecutor(
+    max_workers=settings.pipeline_concurrent_workers, thread_name_prefix="bg-job"
+)
 
 # Per-job cancellation events: job_id -> threading.Event
 # When set, signals the running job that it should abort cooperatively.
@@ -229,6 +231,7 @@ def run_pipeline_job(
     job_id: str,
     run_pipeline_sync: Callable[[str], dict],
     pipeline_mode: str,
+    cancel_event: threading.Event | None = None,
 ) -> dict:
     """Persist pipeline-run side effects for either threadpool or worker execution."""
     _db = SessionLocal()
@@ -247,6 +250,9 @@ def run_pipeline_job(
     finally:
         _db.close()
 
+    if cancel_event is not None and cancel_event.is_set():
+        raise RuntimeError(f"Job {job_id} cancelled before pipeline execution")
+
     result_data = run_pipeline_sync(case_id)
     pipeline_status = result_data.get("status", "completed")
 
@@ -258,7 +264,11 @@ def run_pipeline_job(
                 case_id=case_id,
                 actor="bg_job",
                 action=_pipeline_step_action(step["status"]),
-                inputs={"case_id": case_id, "background_job_id": job_id, "step_name": step["step_name"]},
+                inputs={
+                    "case_id": case_id,
+                    "background_job_id": job_id,
+                    "step_name": step["step_name"],
+                },
                 outputs={"step_name": step["step_name"], "status": step["status"]},
                 details={
                     "job_id": job_id,
@@ -299,7 +309,6 @@ def run_pipeline_job(
     return {"status": pipeline_status, "pipeline_steps": len(result_data["steps"])}
 
 
-
 def run_alphafold_job(
     *,
     case_id: str | None,
@@ -307,6 +316,7 @@ def run_alphafold_job(
     backend_name: str,
     payload: dict,
     run_alphafold_sync: Callable[[str, dict], dict],
+    cancel_event: threading.Event | None = None,
 ) -> dict:
     """Persist AlphaFold side effects for either threadpool or worker execution."""
     _db_started = SessionLocal()
@@ -326,6 +336,9 @@ def run_alphafold_job(
     finally:
         _db_started.close()
 
+    if cancel_event is not None and cancel_event.is_set():
+        raise RuntimeError(f"Job {job_id} cancelled before AlphaFold execution")
+
     result_dict = run_alphafold_sync(backend_name, payload)
 
     _db = SessionLocal()
@@ -340,7 +353,9 @@ def run_alphafold_job(
                         structure_payload = parsed.get("structure", structure_payload)
                     except json.JSONDecodeError:
                         pass
-                output_path = structure_payload.get("model_cif") or structure_payload.get("pdb_file")
+                output_path = structure_payload.get("model_cif") or structure_payload.get(
+                    "pdb_file"
+                )
                 confidence_metrics = {
                     key: structure_payload[key]
                     for key in (
@@ -393,7 +408,6 @@ def run_alphafold_job(
     return result_dict
 
 
-
 def _submit_via_threadpool(
     job_id: str,
     func: Callable[..., Any],
@@ -412,6 +426,11 @@ def _submit_via_threadpool(
 
         _transition(job_id, BackgroundJobStatusEnum.running)
         try:
+            import inspect as _inspect
+
+            _sig = _inspect.signature(func)
+            if "cancel_event" in _sig.parameters:
+                kwargs["cancel_event"] = cancel_event
             rv = func(*args, **kwargs)
             cancel_event.set()
 
@@ -428,7 +447,11 @@ def _submit_via_threadpool(
             finally:
                 check_db.close()
 
-            _transition(job_id, BackgroundJobStatusEnum.completed, result=rv if isinstance(rv, dict) else None)
+            _transition(
+                job_id,
+                BackgroundJobStatusEnum.completed,
+                result=rv if isinstance(rv, dict) else None,
+            )
             return rv
         except Exception as exc:
             cancel_event.set()
@@ -454,7 +477,6 @@ def _submit_via_threadpool(
     return future
 
 
-
 def _submit_via_celery(
     job_id: str,
     task_name: str,
@@ -474,8 +496,9 @@ def _submit_via_celery(
     return async_result
 
 
-
-def _should_use_celery_backend(celery_task_name: str | None, celery_kwargs: dict[str, Any] | None) -> bool:
+def _should_use_celery_backend(
+    celery_task_name: str | None, celery_kwargs: dict[str, Any] | None
+) -> bool:
     backend = settings.background_job_backend.lower().strip()
     has_broker = bool(settings.celery_broker_url or settings.redis_url)
     has_task_metadata = bool(celery_task_name and celery_kwargs)
@@ -485,7 +508,6 @@ def _should_use_celery_backend(celery_task_name: str | None, celery_kwargs: dict
     if backend == "celery":
         return has_broker and has_task_metadata
     return has_broker and has_task_metadata
-
 
 
 def submit_job(
@@ -538,7 +560,12 @@ def cancel_job(db: Session, job_id: str) -> BackgroundJob | None:
         job.finished_at = datetime.now(UTC)
         db.commit()
         db.refresh(job)
-        _emit_audit(job_id, job.case_id, "background_job.cancelled", details={"job_id": job_id, "status": "cancelled"})
+        _emit_audit(
+            job_id,
+            job.case_id,
+            "background_job.cancelled",
+            details={"job_id": job_id, "status": "cancelled"},
+        )
         # Signal and clean up the cancel event if it exists
         cancel_event = _cancel_events.pop(job_id, None)
         if cancel_event is not None:
@@ -573,7 +600,12 @@ def cancel_job(db: Session, job_id: str) -> BackgroundJob | None:
 
         # Refresh from the test session's perspective
         db.refresh(job)
-        _emit_audit(job_id, job.case_id, "background_job.cancelled", details={"job_id": job_id, "status": "cancelled"})
+        _emit_audit(
+            job_id,
+            job.case_id,
+            "background_job.cancelled",
+            details={"job_id": job_id, "status": "cancelled"},
+        )
         return job
 
     return job
@@ -610,7 +642,9 @@ def retry_job(db: Session, job_id: str) -> BackgroundJob | None:
         # Actually: max_retries=2, attempt=1 -> can retry (attempt 2)
         #           max_retries=2, attempt=2 -> can retry (attempt 3)
         #           max_retries=2, attempt=3 -> cannot retry (would be attempt 4, > max_retries+1)
-        raise ValueError(f"Job {job_id} has exceeded max retries (attempt={job.attempt}, max_retries={job.max_retries})")
+        raise ValueError(
+            f"Job {job_id} has exceeded max retries (attempt={job.attempt}, max_retries={job.max_retries})"
+        )
 
     # Recalculate: retry allowed when next_attempt <= max_retries + 1
     next_attempt = job.attempt + 1
@@ -628,6 +662,11 @@ def retry_job(db: Session, job_id: str) -> BackgroundJob | None:
     db.commit()
     db.refresh(job)
 
-    _emit_audit(job_id, job.case_id, "background_job.retried", details={"job_id": job_id, "attempt": next_attempt})
+    _emit_audit(
+        job_id,
+        job.case_id,
+        "background_job.retried",
+        details={"job_id": job_id, "attempt": next_attempt},
+    )
 
     return job

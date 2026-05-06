@@ -9,12 +9,12 @@ Provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Enzyme-substrate modeling
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EnzymeSubstrate:
@@ -134,7 +134,9 @@ def model_enzyme_substrate(enzyme_gene: str, substrate: str) -> EnzymeSubstrate:
     """Stub enzyme-substrate modeling (AF3 style). Returns known data or mock values."""
     g = enzyme_gene.upper()
     entry = KNOWN_THERAPEUTIC_ENZYMES.get(g)
-    if entry and (not substrate or substrate.lower() == entry["substrate"].lower() or substrate == ""):
+    if entry and (
+        not substrate or substrate.lower() == entry["substrate"].lower() or substrate == ""
+    ):
         return EnzymeSubstrate(
             enzyme_gene=g,
             substrate_name=entry["substrate"],
@@ -160,6 +162,7 @@ def model_enzyme_substrate(enzyme_gene: str, substrate: str) -> EnzymeSubstrate:
 # Rational mutagenesis
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MutationSuggestion:
     position: int
@@ -173,64 +176,170 @@ class MutationSuggestion:
 _MUTATION_DB: dict[str, dict[str, list[dict]]] = {
     "GBA": {
         "activity": [
-            {"position": 228, "original_aa": "E", "suggested_aa": "D", "rationale": "Conservative substitution maintains nucleophile geometry while reducing steric clash with bulkier substrates", "confidence": 0.72},
-            {"position": 443, "original_aa": "H", "suggested_aa": "R", "rationale": "Increased hydrogen bonding network with glucoside C6 hydroxyl improves kcat", "confidence": 0.65},
+            {
+                "position": 228,
+                "original_aa": "E",
+                "suggested_aa": "D",
+                "rationale": "Conservative substitution maintains nucleophile geometry while reducing steric clash with bulkier substrates",
+                "confidence": 0.72,
+            },
+            {
+                "position": 443,
+                "original_aa": "H",
+                "suggested_aa": "R",
+                "rationale": "Increased hydrogen bonding network with glucoside C6 hydroxyl improves kcat",
+                "confidence": 0.65,
+            },
         ],
         "stability": [
-            {"position": 126, "original_aa": "N", "suggested_aa": "Q", "rationale": "Removal of glycosylation site at N126 associated with misfolding; Q improves ER folding", "confidence": 0.78},
-            {"position": 370, "original_aa": "L", "suggested_aa": "V", "rationale": "Reduces hydrophobic core packing stress; improves thermostability by +3°C", "confidence": 0.68},
+            {
+                "position": 126,
+                "original_aa": "N",
+                "suggested_aa": "Q",
+                "rationale": "Removal of glycosylation site at N126 associated with misfolding; Q improves ER folding",
+                "confidence": 0.78,
+            },
+            {
+                "position": 370,
+                "original_aa": "L",
+                "suggested_aa": "V",
+                "rationale": "Reduces hydrophobic core packing stress; improves thermostability by +3°C",
+                "confidence": 0.68,
+            },
         ],
         "immunogenicity": [
-            {"position": 495, "original_aa": "R", "suggested_aa": "A", "rationale": "Ablates predicted MHC-II epitope without affecting catalytic core", "confidence": 0.61},
+            {
+                "position": 495,
+                "original_aa": "R",
+                "suggested_aa": "A",
+                "rationale": "Ablates predicted MHC-II epitope without affecting catalytic core",
+                "confidence": 0.61,
+            },
         ],
         "half_life": [
-            {"position": 66, "original_aa": "T", "suggested_aa": "N", "rationale": "Introduces N-linked glycosylation site; glycan shields from proteolysis and extends plasma half-life", "confidence": 0.74},
+            {
+                "position": 66,
+                "original_aa": "T",
+                "suggested_aa": "N",
+                "rationale": "Introduces N-linked glycosylation site; glycan shields from proteolysis and extends plasma half-life",
+                "confidence": 0.74,
+            },
         ],
         "specificity": [
-            {"position": 345, "original_aa": "Y", "suggested_aa": "F", "rationale": "Removal of hydroxyl group reduces binding of structurally similar ceramide substrates", "confidence": 0.58},
+            {
+                "position": 345,
+                "original_aa": "Y",
+                "suggested_aa": "F",
+                "rationale": "Removal of hydroxyl group reduces binding of structurally similar ceramide substrates",
+                "confidence": 0.58,
+            },
         ],
     },
     "GLA": {
         "activity": [
-            {"position": 203, "original_aa": "D", "suggested_aa": "E", "rationale": "Extended side chain improves transition state stabilization for galactosyl transfer", "confidence": 0.69},
-            {"position": 231, "original_aa": "W", "suggested_aa": "Y", "rationale": "Hydroxyl addition enables additional hydrogen bond with C4-OH of substrate", "confidence": 0.63},
+            {
+                "position": 203,
+                "original_aa": "D",
+                "suggested_aa": "E",
+                "rationale": "Extended side chain improves transition state stabilization for galactosyl transfer",
+                "confidence": 0.69,
+            },
+            {
+                "position": 231,
+                "original_aa": "W",
+                "suggested_aa": "Y",
+                "rationale": "Hydroxyl addition enables additional hydrogen bond with C4-OH of substrate",
+                "confidence": 0.63,
+            },
         ],
         "stability": [
-            {"position": 85, "original_aa": "C", "suggested_aa": "S", "rationale": "Removal of unpaired cysteine at C85 prevents misfolding disulfide under oxidative conditions", "confidence": 0.81},
+            {
+                "position": 85,
+                "original_aa": "C",
+                "suggested_aa": "S",
+                "rationale": "Removal of unpaired cysteine at C85 prevents misfolding disulfide under oxidative conditions",
+                "confidence": 0.81,
+            },
         ],
         "immunogenicity": [
-            {"position": 340, "original_aa": "K", "suggested_aa": "R", "rationale": "Conservative substitution reduces predicted T-cell epitope affinity", "confidence": 0.59},
+            {
+                "position": 340,
+                "original_aa": "K",
+                "suggested_aa": "R",
+                "rationale": "Conservative substitution reduces predicted T-cell epitope affinity",
+                "confidence": 0.59,
+            },
         ],
         "half_life": [
-            {"position": 108, "original_aa": "S", "suggested_aa": "N", "rationale": "New N-linked glycan reduces renal clearance; extends t½ by estimated 2-fold", "confidence": 0.77},
+            {
+                "position": 108,
+                "original_aa": "S",
+                "suggested_aa": "N",
+                "rationale": "New N-linked glycan reduces renal clearance; extends t½ by estimated 2-fold",
+                "confidence": 0.77,
+            },
         ],
         "specificity": [
-            {"position": 259, "original_aa": "R", "suggested_aa": "K", "rationale": "Reduces activity against secondary substrate globotriaosylsphingosine (lyso-Gb3)", "confidence": 0.54},
+            {
+                "position": 259,
+                "original_aa": "R",
+                "suggested_aa": "K",
+                "rationale": "Reduces activity against secondary substrate globotriaosylsphingosine (lyso-Gb3)",
+                "confidence": 0.54,
+            },
         ],
     },
     "ADA": {
         "activity": [
-            {"position": 295, "original_aa": "H", "suggested_aa": "Q", "rationale": "Repositions zinc coordination geometry to improve deoxyadenosine turnover", "confidence": 0.64},
+            {
+                "position": 295,
+                "original_aa": "H",
+                "suggested_aa": "Q",
+                "rationale": "Repositions zinc coordination geometry to improve deoxyadenosine turnover",
+                "confidence": 0.64,
+            },
         ],
         "stability": [
-            {"position": 182, "original_aa": "S", "suggested_aa": "A", "rationale": "Eliminates phosphorylation site that reduces enzyme stability in vivo", "confidence": 0.70},
+            {
+                "position": 182,
+                "original_aa": "S",
+                "suggested_aa": "A",
+                "rationale": "Eliminates phosphorylation site that reduces enzyme stability in vivo",
+                "confidence": 0.70,
+            },
         ],
         "immunogenicity": [
-            {"position": 75, "original_aa": "T", "suggested_aa": "A", "rationale": "Ablates MHC-II epitope hotspot; reduces anti-drug antibody formation risk", "confidence": 0.67},
+            {
+                "position": 75,
+                "original_aa": "T",
+                "suggested_aa": "A",
+                "rationale": "Ablates MHC-II epitope hotspot; reduces anti-drug antibody formation risk",
+                "confidence": 0.67,
+            },
         ],
         "half_life": [
-            {"position": 201, "original_aa": "K", "suggested_aa": "N", "rationale": "New glycosylation site reduces urinary clearance", "confidence": 0.71},
+            {
+                "position": 201,
+                "original_aa": "K",
+                "suggested_aa": "N",
+                "rationale": "New glycosylation site reduces urinary clearance",
+                "confidence": 0.71,
+            },
         ],
         "specificity": [
-            {"position": 14, "original_aa": "D", "suggested_aa": "N", "rationale": "Shifts substrate preference toward 2'-deoxyadenosine over adenosine", "confidence": 0.55},
+            {
+                "position": 14,
+                "original_aa": "D",
+                "suggested_aa": "N",
+                "rationale": "Shifts substrate preference toward 2'-deoxyadenosine over adenosine",
+                "confidence": 0.55,
+            },
         ],
     },
 }
 
 
-def suggest_mutations(
-    enzyme_gene: str, objective: str = "activity"
-) -> list[MutationSuggestion]:
+def suggest_mutations(enzyme_gene: str, objective: str = "activity") -> list[MutationSuggestion]:
     """Suggest mutations for a given enzyme and optimization objective."""
     g = enzyme_gene.upper()
     valid_objectives = {"activity", "stability", "specificity", "half_life", "immunogenicity"}
@@ -253,6 +362,7 @@ def suggest_mutations(
 # ---------------------------------------------------------------------------
 # ERT design helper
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ERTDesign:
@@ -379,6 +489,7 @@ def design_ert(enzyme_gene: str, disease: str) -> ERTDesign | None:
 # ---------------------------------------------------------------------------
 # Prodrug activation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ProdugSystem:

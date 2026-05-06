@@ -57,7 +57,9 @@ def build_candidate_review_report(case: Case, candidates: list[CandidateAntigen]
         structure_summary_parts.append(f"ptm={ptm}")
     if iptm is not None:
         structure_summary_parts.append(f"iptm={iptm}")
-    structure_summary = ", ".join(structure_summary_parts) if structure_summary_parts else "not available"
+    structure_summary = (
+        ", ".join(structure_summary_parts) if structure_summary_parts else "not available"
+    )
     candidate_table = [_candidate_row(candidate) for candidate in candidates]
     tool_versions = {
         "alignment": "mock_alignment v0.1.0-mock",

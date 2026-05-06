@@ -10,16 +10,13 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.hallucination_guard import (
-    KNOWN_SOURCES,
     check_source_citation,
     scan_for_hallucinated_content,
     validate_report_sources,
 )
-
 
 # ---------------------------------------------------------------------------
 # check_source_citation — known sources

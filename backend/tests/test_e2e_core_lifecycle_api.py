@@ -2,7 +2,6 @@ import json
 import time
 
 import pytest
-
 from fastapi.testclient import TestClient
 
 from backend.app.alphafold.shells import AlphaFoldExecution
@@ -10,7 +9,9 @@ from backend.app.alphafold.shells import AlphaFoldExecution
 pytestmark = pytest.mark.e2e
 
 
-def _create_case(client: TestClient, *, species: str = "demo", diagnosis_summary: str = "E2E lifecycle case") -> str:
+def _create_case(
+    client: TestClient, *, species: str = "demo", diagnosis_summary: str = "E2E lifecycle case"
+) -> str:
     response = client.post(
         "/cases",
         json={"species": species, "diagnosis_summary": diagnosis_summary},
@@ -30,7 +31,9 @@ def _poll_job_until_terminal(client: TestClient, job_id: str) -> dict:
     return client.get(f"/jobs/{job_id}").json()
 
 
-def test_e2e_case_lifecycle_covers_subject_sample_reviews_reports_bundle_and_audit(client: TestClient) -> None:
+def test_e2e_case_lifecycle_covers_subject_sample_reviews_reports_bundle_and_audit(
+    client: TestClient,
+) -> None:
     case_id = _create_case(client, diagnosis_summary="E2E operator workflow")
 
     subject = client.post(
@@ -67,7 +70,10 @@ def test_e2e_case_lifecycle_covers_subject_sample_reviews_reports_bundle_and_aud
     )
     candidate_review = client.patch(
         f"/candidates/{candidate['id']}/review",
-        json={"review_status": "expert_accepted_for_further_research", "expert_review_notes": "Best synthetic candidate"},
+        json={
+            "review_status": "expert_accepted_for_further_research",
+            "expert_review_notes": "Best synthetic candidate",
+        },
     )
     assert variant_review.status_code == 200
     assert candidate_review.status_code == 200
@@ -115,7 +121,9 @@ def test_e2e_case_lifecycle_covers_subject_sample_reviews_reports_bundle_and_aud
     }.issubset(actions)
 
 
-def test_e2e_async_pipeline_flow_covers_job_polling_history_bundle_and_events(client: TestClient) -> None:
+def test_e2e_async_pipeline_flow_covers_job_polling_history_bundle_and_events(
+    client: TestClient,
+) -> None:
     case_id = _create_case(client, diagnosis_summary="E2E async pipeline")
 
     dispatch = client.post(f"/cases/{case_id}/pipeline/run-async", json={})
@@ -141,7 +149,12 @@ def test_e2e_async_pipeline_flow_covers_job_polling_history_bundle_and_events(cl
     audit = client.get(f"/audit/{case_id}")
     assert audit.status_code == 200
     actions = {entry["action"] for entry in audit.json()}
-    assert {"pipeline.async_dispatched", "background_job.created", "pipeline.started", "pipeline.completed"}.issubset(actions)
+    assert {
+        "pipeline.async_dispatched",
+        "background_job.created",
+        "pipeline.started",
+        "pipeline.completed",
+    }.issubset(actions)
 
     event_stream = client.get("/agent/events")
     assert event_stream.status_code == 200
@@ -197,7 +210,9 @@ def test_e2e_async_alphafold_flow_covers_background_job_and_structure_job_linkag
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     dispatch = client.post(
         "/alphafold/backends/colabfold/run-async",
@@ -227,4 +242,10 @@ def test_e2e_async_alphafold_flow_covers_background_job_and_structure_job_linkag
     audit = client.get(f"/audit/{case_id}")
     assert audit.status_code == 200
     actions = {entry["action"] for entry in audit.json()}
-    assert {"alphafold.async_dispatched", "background_job.created", "alphafold.job.started", "alphafold.job.completed", "alphafold.backend.completed"}.issubset(actions)
+    assert {
+        "alphafold.async_dispatched",
+        "background_job.created",
+        "alphafold.job.started",
+        "alphafold.job.completed",
+        "alphafold.backend.completed",
+    }.issubset(actions)

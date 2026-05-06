@@ -13,7 +13,11 @@ from backend.app.config import SpeciesMode, settings
 from backend.app.db import build_engine, build_session_factory
 from backend.app.mock_analysis import ensure_mock_analysis_data
 from backend.app.models import Base, Case, Report, Sample, SampleTypeEnum, Subject
-from backend.app.reports import RESEARCH_LABEL, build_candidate_review_report, build_ethics_package_report
+from backend.app.reports import (
+    RESEARCH_LABEL,
+    build_candidate_review_report,
+    build_ethics_package_report,
+)
 from backend.app.safety.audit import log_action
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -178,7 +182,9 @@ def seed_demo_database(database_url: str | None = None, *, reset: bool = False) 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Seed FoldAgent synthetic demo data")
     parser.add_argument("--database-url", default=None, help="Override database URL for seeding")
-    parser.add_argument("--reset", action="store_true", help="Drop and recreate all tables before seeding")
+    parser.add_argument(
+        "--reset", action="store_true", help="Drop and recreate all tables before seeding"
+    )
     return parser.parse_args()
 
 

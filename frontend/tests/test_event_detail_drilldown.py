@@ -6,6 +6,7 @@ Covers:
 - format_event_detail: renders detail dict as compact text
 - format_event_payload_json: formats event data as pretty-printed JSON
 """
+
 from __future__ import annotations
 
 import json
@@ -14,18 +15,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     derive_event_detail,
     derive_event_shortcuts,
     format_event_detail,
     format_event_payload_json,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_event(
     event: str = "pipeline.completed",
@@ -61,6 +62,7 @@ def _make_event(
 # ---------------------------------------------------------------------------
 # derive_event_detail
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveEventDetailBasic:
     """Test derive_event_detail with simple events."""
@@ -186,6 +188,7 @@ class TestDeriveEventDetailShortcuts:
 # derive_event_shortcuts
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveEventShortcuts:
     """Test derive_event_shortcuts independently."""
 
@@ -250,6 +253,7 @@ class TestDeriveEventShortcuts:
 # format_event_detail
 # ---------------------------------------------------------------------------
 
+
 class TestFormatEventDetail:
     """Test format_event_detail rendering."""
 
@@ -258,12 +262,14 @@ class TestFormatEventDetail:
         assert result == "No event detail available."
 
     def test_basic_detail(self):
-        detail = derive_event_detail(_make_event(
-            event="pipeline.completed",
-            case_id="c1",
-            action="pipeline.done",
-            ts="2025-04-20T10:00:00",
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.completed",
+                case_id="c1",
+                action="pipeline.done",
+                ts="2025-04-20T10:00:00",
+            )
+        )
         result = format_event_detail(detail)
         assert "Event detail — pipeline.completed" in result
         assert "pipeline" in result  # family
@@ -272,29 +278,35 @@ class TestFormatEventDetail:
         assert "2025-04-20T10:00:00" in result
 
     def test_detail_with_status_field(self):
-        detail = derive_event_detail(_make_event(
-            event="pipeline.completed",
-            status="ok",
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.completed",
+                status="ok",
+            )
+        )
         result = format_event_detail(detail)
         assert "status" in result
         assert "ok" in result
 
     def test_detail_with_safety_gate_field(self):
-        detail = derive_event_detail(_make_event(
-            event="safety.preflight",
-            safety_gate="pass",
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="safety.preflight",
+                safety_gate="pass",
+            )
+        )
         result = format_event_detail(detail)
         assert "safety_gate_result" in result
         assert "pass" in result
 
     def test_detail_with_shortcuts(self):
-        detail = derive_event_detail(_make_event(
-            event="pipeline.completed",
-            case_id="c1",
-            job_id="j42",
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.completed",
+                case_id="c1",
+                job_id="j42",
+            )
+        )
         result = format_event_detail(detail)
         assert "shortcuts" in result
         assert "case=c1" in result
@@ -302,11 +314,13 @@ class TestFormatEventDetail:
         assert "pipeline" in result
 
     def test_detail_with_no_shortcuts(self):
-        detail = derive_event_detail(SSEEvent(
-            event="heartbeat",
-            data={"timestamp": "T"},
-            event_id=None,
-        ))
+        detail = derive_event_detail(
+            SSEEvent(
+                event="heartbeat",
+                data={"timestamp": "T"},
+                event_id=None,
+            )
+        )
         result = format_event_detail(detail)
         # No shortcuts line when None
         assert "shortcuts:" not in result
@@ -314,10 +328,12 @@ class TestFormatEventDetail:
     def test_detail_with_long_data_value(self):
         """Long data values should be truncated in the detail output."""
         long_msg = "x" * 300
-        detail = derive_event_detail(_make_event(
-            event="pipeline.completed",
-            extra_data={"message": long_msg},
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.completed",
+                extra_data={"message": long_msg},
+            )
+        )
         result = format_event_detail(detail)
         # The message line should be truncated
         msg_line = [l for l in result.splitlines() if "message" in l]
@@ -326,18 +342,22 @@ class TestFormatEventDetail:
         assert len(msg_line[0]) < 400
 
     def test_detail_with_job_id(self):
-        detail = derive_event_detail(_make_event(
-            event="pipeline.started",
-            job_id="j-abc-123",
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.started",
+                job_id="j-abc-123",
+            )
+        )
         result = format_event_detail(detail)
         assert "j-abc-123" in result
 
     def test_detail_preserves_all_data_fields(self):
-        detail = derive_event_detail(_make_event(
-            event="pipeline.completed",
-            extra_data={"step": 3, "total_steps": 10},
-        ))
+        detail = derive_event_detail(
+            _make_event(
+                event="pipeline.completed",
+                extra_data={"step": 3, "total_steps": 10},
+            )
+        )
         result = format_event_detail(detail)
         assert "step" in result
         assert "3" in result
@@ -347,6 +367,7 @@ class TestFormatEventDetail:
 # ---------------------------------------------------------------------------
 # format_event_payload_json
 # ---------------------------------------------------------------------------
+
 
 class TestFormatEventPayloadJson:
     """Test format_event_payload_json rendering."""
@@ -401,6 +422,7 @@ class TestFormatEventPayloadJson:
 # ---------------------------------------------------------------------------
 # Integration: derive_event_detail + format_event_detail round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestEventDetailRoundTrip:
     """End-to-end: derive then format a detail dict."""

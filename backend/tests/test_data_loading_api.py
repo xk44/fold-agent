@@ -45,13 +45,16 @@ class TestFileValidation:
         assert "Unrecognized" in resp.json()["error"]
 
     def test_format_mismatch(self, client: TestClient) -> None:
-        resp = client.post("/data/validate-file", json={"filename": "data.bam", "expected_format": "vcf"})
+        resp = client.post(
+            "/data/validate-file", json={"filename": "data.bam", "expected_format": "vcf"}
+        )
         assert resp.json()["valid"] is False
 
     def test_validate_multiple_files(self, client: TestClient) -> None:
-        resp = client.post("/data/validate-files", json={
-            "file_paths": {"tumor_r1": "tumor_R1.fastq.gz", "normal_bam": "normal.bam"}
-        })
+        resp = client.post(
+            "/data/validate-files",
+            json={"file_paths": {"tumor_r1": "tumor_R1.fastq.gz", "normal_bam": "normal.bam"}},
+        )
         assert resp.status_code == 200
         results = resp.json()
         assert len(results) == 2

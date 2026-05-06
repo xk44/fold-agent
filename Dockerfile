@@ -34,6 +34,7 @@ RUN mkdir -p /app/data /app/audit_logs /app/artifacts && \
 # Copy application source
 COPY --chown=foldagent:foldagent backend/ backend/
 COPY --chown=foldagent:foldagent frontend/ frontend/
+COPY --chown=foldagent:foldagent skills/ skills/
 COPY --chown=foldagent:foldagent pyproject.toml ./
 
 # Install the package in runtime stage so entry points are available

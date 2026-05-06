@@ -3,6 +3,7 @@
 Validates YAML task files parse correctly, reference valid API endpoints,
 and that the OPSEC checklist covers required security items.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -47,9 +48,7 @@ def _load_yaml(path: Path) -> dict:
 
 def _all_task_text() -> str:
     return "\n".join(
-        (TASKS_DIR / f).read_text()
-        for f in EXPECTED_TASK_FILES
-        if (TASKS_DIR / f).exists()
+        (TASKS_DIR / f).read_text() for f in EXPECTED_TASK_FILES if (TASKS_DIR / f).exists()
     )
 
 
@@ -92,9 +91,7 @@ def test_task_file_required_fields(filename: str) -> None:
 @pytest.mark.parametrize("endpoint", REQUIRED_ENDPOINTS)
 def test_required_endpoints_in_tasks(endpoint: str) -> None:
     combined = _all_task_text()
-    assert endpoint in combined, (
-        f"Required endpoint '{endpoint}' not found in any task file"
-    )
+    assert endpoint in combined, f"Required endpoint '{endpoint}' not found in any task file"
 
 
 # ---------------------------------------------------------------------------

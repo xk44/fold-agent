@@ -44,6 +44,7 @@ def test_candidate_review_report_surfaces_richer_alphafold_metrics(client: TestC
 
 def test_candidate_review_report_surfaces_af3_scores(client: TestClient, monkeypatch) -> None:
     import json
+
     from backend.app.alphafold.shells import AlphaFoldExecution
 
     create_case = client.post(
@@ -81,7 +82,9 @@ def test_candidate_review_report_surfaces_af3_scores(client: TestClient, monkeyp
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
     run = client.post(
         "/alphafold/backends/alphafold3_local/run",
         json={

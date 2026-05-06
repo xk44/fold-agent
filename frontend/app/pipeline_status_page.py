@@ -29,9 +29,7 @@ def render_pipeline_status(
         st.info("Select a case to view pipeline status.")
         return
 
-    tab_history, tab_steps, tab_run = st.tabs(
-        ["Run History", "Available Steps", "Run Pipeline"]
-    )
+    tab_history, tab_steps, tab_run = st.tabs(["Run History", "Available Steps", "Run Pipeline"])
 
     with tab_history:
         _render_run_history(api_base, case_id, http_get, st)
@@ -149,4 +147,9 @@ def _render_run_pipeline(
                 st.error(f"Dry run failed: {exc}")
 
     with col_run:
-        st.button("Run", disabled=True, use_container_width=True, help="Full pipeline execution coming soon.")
+        st.button(
+            "Run",
+            disabled=True,
+            use_container_width=True,
+            help="Full pipeline execution coming soon.",
+        )

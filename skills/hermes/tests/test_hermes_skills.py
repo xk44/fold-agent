@@ -3,6 +3,7 @@
 Validates skill files exist and are non-empty, install.md references correct
 paths, and audit_integration.md references valid log_action patterns.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

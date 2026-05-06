@@ -1,9 +1,10 @@
 """initial schema
 
 Revision ID: 0001_initial_schema
-Revises: 
+Revises:
 Create Date: 2026-04-19 01:15:00
 """
+
 from __future__ import annotations
 
 from alembic import op

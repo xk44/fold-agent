@@ -6,7 +6,6 @@ and all 8 API endpoints.
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.structure_analysis import (
@@ -43,6 +42,7 @@ SEQ_LONG = SEQ_DISORDERED * 4  # 152 AA
 # ===========================================================================
 # Feature 1: IDR detection + escalation
 # ===========================================================================
+
 
 class TestIDRConstants:
     def test_threshold_value(self):
@@ -133,7 +133,10 @@ class TestEscalateToIDR:
     def test_escalation_reason_text(self):
         result = escalate_to_idr_analysis(SEQ_LONG, [(0, 14)])
         assert result.escalation_reason is not None
-        assert "iupred2a" in result.escalation_reason.lower() or "albatross" in result.escalation_reason.lower()
+        assert (
+            "iupred2a" in result.escalation_reason.lower()
+            or "albatross" in result.escalation_reason.lower()
+        )
 
 
 class TestAnalyzeDisorder:
@@ -156,6 +159,7 @@ class TestAnalyzeDisorder:
 # ===========================================================================
 # Feature 2: PTM impact analysis
 # ===========================================================================
+
 
 class TestKnownPTMSites:
     def test_tp53_has_sites(self):
@@ -258,6 +262,7 @@ class TestAssessPTMImpact:
 # Feature 3: Epistatic multi-variant prediction
 # ===========================================================================
 
+
 class TestKnownEpistaticPairs:
     def test_count(self):
         assert len(KNOWN_EPISTATIC_PAIRS) >= 10
@@ -342,6 +347,7 @@ class TestPredictEpistaticEffect:
 # Feature 4: Fold-switching detector
 # ===========================================================================
 
+
 class TestKnownFoldSwitchers:
     def test_count(self):
         assert len(KNOWN_FOLD_SWITCHERS) >= 8
@@ -365,7 +371,9 @@ class TestCheckKnownFoldSwitchers:
         assert result == "CPEB3"
 
     def test_short_charged_returns_lymphotactin(self):
-        seq = "DKERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERK"[:90]
+        seq = "DKERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERKDERK"[
+            :90
+        ]
         result = check_known_fold_switchers(seq)
         # charged_frac should be 0.33ish, length ~90
         # may or may not match — just confirm it's a known name or None
@@ -430,6 +438,7 @@ class TestDetectFoldSwitchingRisk:
 # API Endpoint Tests
 # ===========================================================================
 
+
 class TestAnalyzeDisorderEndpoint:
     def test_basic(self, client: TestClient):
         r = client.post("/structure/analyze-disorder", json={"sequence": SEQ_DISORDERED})
@@ -476,26 +485,20 @@ class TestDetectLowPLDDTEndpoint:
 
 class TestPTMImpactEndpoint:
     def test_direct_disruption(self, client: TestClient):
-        r = client.post(
-            "/structure/ptm-impact", json={"gene": "TP53", "variant": "S15F"}
-        )
+        r = client.post("/structure/ptm-impact", json={"gene": "TP53", "variant": "S15F"})
         assert r.status_code == 200
         data = r.json()
         assert data["ptm_disrupted"] is True
         assert data["safety_label"] == "Research only — not for clinical use"
 
     def test_no_ptm_nearby(self, client: TestClient):
-        r = client.post(
-            "/structure/ptm-impact", json={"gene": "TP53", "variant": "A500V"}
-        )
+        r = client.post("/structure/ptm-impact", json={"gene": "TP53", "variant": "A500V"})
         assert r.status_code == 200
         data = r.json()
         assert data["ptm_disrupted"] is False
 
     def test_invalid_variant(self, client: TestClient):
-        r = client.post(
-            "/structure/ptm-impact", json={"gene": "TP53", "variant": "NOTAVARIANT"}
-        )
+        r = client.post("/structure/ptm-impact", json={"gene": "TP53", "variant": "NOTAVARIANT"})
         assert r.status_code == 200  # graceful degradation
 
 
@@ -564,9 +567,7 @@ class TestEpistaticPredictionEndpoint:
 
 class TestFoldSwitchingRiskEndpoint:
     def test_basic(self, client: TestClient):
-        r = client.post(
-            "/structure/fold-switching-risk", json={"sequence": SEQ_LONG}
-        )
+        r = client.post("/structure/fold-switching-risk", json={"sequence": SEQ_LONG})
         assert r.status_code == 200
         data = r.json()
         assert "risk_score" in data

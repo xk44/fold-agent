@@ -66,8 +66,9 @@ def test_pipeline_run_blocked_by_safety_preflight(client: TestClient, monkeypatc
     assert body["safety_reason"] == "blocked by test"
 
 
-
-def test_report_export_requires_approval_from_safety_preflight(client: TestClient, monkeypatch) -> None:
+def test_report_export_requires_approval_from_safety_preflight(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Report export gate case"},
@@ -77,7 +78,9 @@ def test_report_export_requires_approval_from_safety_preflight(client: TestClien
 
     monkeypatch.setattr(
         "backend.app.main.preflight_action",
-        lambda **_: DummyPreflightResult(PreflightResult.REQUIRES_APPROVAL, "approval required by test"),
+        lambda **_: DummyPreflightResult(
+            PreflightResult.REQUIRES_APPROVAL, "approval required by test"
+        ),
     )
 
     response = client.get(f"/reports/{report['id']}/export?format=markdown")
@@ -135,7 +138,6 @@ def test_bundle_export_blocks_unsafe_nested_report_content(client: TestClient) -
     assert body["blocked_patterns"]
 
 
-
 def test_bundle_save_blocked_by_safety_preflight(client: TestClient, monkeypatch) -> None:
     create_case = client.post(
         "/cases",
@@ -160,7 +162,6 @@ def test_bundle_save_blocked_by_safety_preflight(client: TestClient, monkeypatch
     assert "event: safety.blocked" in events.text
 
 
-
 def test_pipeline_run_human_case_blocked_by_sequence_gate(client: TestClient) -> None:
     create_case = client.post(
         "/cases",
@@ -176,7 +177,6 @@ def test_pipeline_run_human_case_blocked_by_sequence_gate(client: TestClient) ->
     assert "expert mode" in body["detail"].lower()
 
 
-
 def test_pipeline_adapter_run_human_case_blocked_by_sequence_gate(client: TestClient) -> None:
     create_case = client.post(
         "/cases",
@@ -186,14 +186,17 @@ def test_pipeline_adapter_run_human_case_blocked_by_sequence_gate(client: TestCl
 
     response = client.post(
         "/pipeline/adapters/vep/run",
-        json={"case_id": case_id, "input_vcf": "/tmp/mock.vcf", "output_path": "/tmp/mock.vep.json"},
+        json={
+            "case_id": case_id,
+            "input_vcf": "/tmp/mock.vcf",
+            "output_path": "/tmp/mock.vep.json",
+        },
     )
 
     assert response.status_code == 403
     body = response.json()
     assert body["safety_status"] == PreflightResult.REQUIRES_APPROVAL
     assert "expert mode" in body["detail"].lower()
-
 
 
 def test_alphafold_run_human_case_blocked_by_sequence_gate(client: TestClient, monkeypatch) -> None:

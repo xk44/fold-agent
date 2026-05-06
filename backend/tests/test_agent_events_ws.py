@@ -8,9 +8,9 @@ Validates that the WebSocket endpoint:
 - Co-exists with the SSE /agent/events endpoint
 - Has correct JSON message structure (event, id, data)
 """
+
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -19,8 +19,6 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.app.event_stream import publish_event, subscribe
-from backend.app.main import app
-
 
 # Short heartbeat for tests (1 second minimum enforced by the endpoint).
 WS_HEARTBEAT = 1.0
@@ -46,7 +44,9 @@ class TestWebSocketAgentEvents:
 
     def test_ws_prefix_filter_ignores_non_matching_events(self, client: TestClient) -> None:
         """With prefix=agent_task., only matching events are delivered."""
-        with client.websocket_connect(f"/agent/events/ws?prefix=agent_task.&heartbeat={WS_HEARTBEAT}") as ws:
+        with client.websocket_connect(
+            f"/agent/events/ws?prefix=agent_task.&heartbeat={WS_HEARTBEAT}"
+        ) as ws:
             # This should be filtered out (does not match agent_task. prefix)
             publish_event("pipeline.completed", {"log_id": "filtered-1"})
             # This should pass through

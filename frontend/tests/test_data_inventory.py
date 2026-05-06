@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -35,14 +35,55 @@ def test_build_case_inventory_summary_counts_core_entities() -> None:
 
 def test_build_inventory_rows_formats_entity_specific_labels_and_status() -> None:
     rows = build_inventory_rows(
-        subjects=[{"id": "subject-1", "anonymized_display_name": "Rosie-demo", "privacy_flags": {"redacted": True}, "created_at": "2026-04-19T09:00:00Z"}],
-        samples=[{"id": "sample-1", "sample_type": "tumor", "source_lab": "Lab A", "created_at": "2026-04-19T10:00:00Z"}],
-        reports=[{"id": "report-1", "report_type": "candidate_review", "generated_at": "2026-04-19T11:00:00Z", "safety_label": "Research candidate only — not administerable"}],
-        artifacts=[{"id": "artifact-1", "artifact_type": "report_export", "filename": "report.md", "saved_at": "2026-04-19T12:00:00Z"}],
-        executions=[{"id": "exec-1", "adapter_name": "vep", "status": "completed", "started_at": "2026-04-19T13:00:00Z"}],
+        subjects=[
+            {
+                "id": "subject-1",
+                "anonymized_display_name": "Rosie-demo",
+                "privacy_flags": {"redacted": True},
+                "created_at": "2026-04-19T09:00:00Z",
+            }
+        ],
+        samples=[
+            {
+                "id": "sample-1",
+                "sample_type": "tumor",
+                "source_lab": "Lab A",
+                "created_at": "2026-04-19T10:00:00Z",
+            }
+        ],
+        reports=[
+            {
+                "id": "report-1",
+                "report_type": "candidate_review",
+                "generated_at": "2026-04-19T11:00:00Z",
+                "safety_label": "Research candidate only — not administerable",
+            }
+        ],
+        artifacts=[
+            {
+                "id": "artifact-1",
+                "artifact_type": "report_export",
+                "filename": "report.md",
+                "saved_at": "2026-04-19T12:00:00Z",
+            }
+        ],
+        executions=[
+            {
+                "id": "exec-1",
+                "adapter_name": "vep",
+                "status": "completed",
+                "started_at": "2026-04-19T13:00:00Z",
+            }
+        ],
     )
 
-    assert [row["entity_type"] for row in rows] == ["execution", "artifact", "report", "sample", "subject"]
+    assert [row["entity_type"] for row in rows] == [
+        "execution",
+        "artifact",
+        "report",
+        "sample",
+        "subject",
+    ]
     assert rows[0]["label"] == "vep"
     assert rows[0]["status"] == "completed"
     assert rows[1]["label"] == "report_export · report.md"

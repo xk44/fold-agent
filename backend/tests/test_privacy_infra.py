@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+
 import pytest
 
 from backend.app.privacy_infra import (
@@ -27,10 +28,10 @@ from backend.app.privacy_infra import (
     simulate_federated_round,
 )
 
-
 # ---------------------------------------------------------------------------
 # Federated Node / Status
 # ---------------------------------------------------------------------------
+
 
 class TestFederationNodes:
     def test_mock_nodes_count(self):
@@ -77,6 +78,7 @@ class TestFederationNodes:
 # ---------------------------------------------------------------------------
 # Federated Job Creation
 # ---------------------------------------------------------------------------
+
 
 class TestCreateFederatedJob:
     def test_creates_job_with_all_available_nodes(self):
@@ -126,6 +128,7 @@ class TestCreateFederatedJob:
 # ---------------------------------------------------------------------------
 # Federated Round Simulation
 # ---------------------------------------------------------------------------
+
 
 class TestSimulateFederatedRound:
     def test_round_produces_aggregating_status(self):
@@ -180,6 +183,7 @@ class TestSimulateFederatedRound:
 # Federated Aggregation
 # ---------------------------------------------------------------------------
 
+
 class TestAggregateFederatedResults:
     def test_aggregate_produces_federated_result(self):
         job = simulate_federated_round(create_federated_job("hash1"))
@@ -232,6 +236,7 @@ class TestAggregateFederatedResults:
 # Full Pipeline
 # ---------------------------------------------------------------------------
 
+
 class TestRunFederatedPrediction:
     def test_full_pipeline_returns_result(self):
         result = run_federated_prediction("hashABC")
@@ -255,6 +260,7 @@ class TestRunFederatedPrediction:
 # ---------------------------------------------------------------------------
 # Differential Privacy — Laplace Noise
 # ---------------------------------------------------------------------------
+
 
 class TestLaplaceNoise:
     def test_laplace_deterministic_same_input(self):
@@ -298,6 +304,7 @@ class TestLaplaceNoise:
 # Differential Privacy — Gaussian Noise
 # ---------------------------------------------------------------------------
 
+
 class TestGaussianNoise:
     def test_gaussian_deterministic_same_input(self):
         n1 = add_gaussian_noise(50.0, 1.0, 1.0, 1e-5)
@@ -330,6 +337,7 @@ class TestGaussianNoise:
 # ---------------------------------------------------------------------------
 # apply_dp
 # ---------------------------------------------------------------------------
+
 
 class TestApplyDP:
     def test_apply_dp_laplace_returns_dpresult(self):
@@ -388,6 +396,7 @@ class TestApplyDP:
 # Cohort Report
 # ---------------------------------------------------------------------------
 
+
 class TestCohortReport:
     def test_cohort_report_created(self):
         values = [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -444,6 +453,7 @@ class TestCohortReport:
 # check_privacy_budget
 # ---------------------------------------------------------------------------
 
+
 class TestCheckPrivacyBudget:
     def test_check_budget_remaining(self):
         result = check_privacy_budget(3.0, 10.0)
@@ -470,6 +480,7 @@ class TestCheckPrivacyBudget:
 # ---------------------------------------------------------------------------
 # PrivacyAccountant
 # ---------------------------------------------------------------------------
+
 
 class TestPrivacyAccountant:
     def test_initial_budget(self):

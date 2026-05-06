@@ -6,7 +6,6 @@ GET /pipeline/framework/adapters, POST /pipeline/framework/adapters/{name}/test.
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.pipeline.framework import (
@@ -16,7 +15,6 @@ from backend.app.pipeline.framework import (
     NetMHCIIpanStep,
     RNAExpressionValidationStep,
 )
-
 
 # ---------------------------------------------------------------------------
 # NetMHCIIpanStep
@@ -32,16 +30,12 @@ class TestNetMHCIIpanStep:
         assert "MHC class II" in self.step.description
 
     def test_valid_input_returns_success(self) -> None:
-        result = self.step.run(
-            {"peptides": ["ACDEFGHIKLM"], "alleles": ["HLA-DRB1*01:01"]}
-        )
+        result = self.step.run({"peptides": ["ACDEFGHIKLM"], "alleles": ["HLA-DRB1*01:01"]})
         assert result.status == "success"
         assert result.step_name == "netmhciipan"
 
     def test_output_keys_present(self) -> None:
-        result = self.step.run(
-            {"peptides": ["ACDEFGHIKLM"], "alleles": ["HLA-DRB1*01:01"]}
-        )
+        result = self.step.run({"peptides": ["ACDEFGHIKLM"], "alleles": ["HLA-DRB1*01:01"]})
         out = result.output
         assert "predictions" in out
         assert "peptide_count" in out
@@ -108,18 +102,14 @@ class TestRNAExpressionValidationStep:
         assert result.step_name == "rna_expression_validation"
 
     def test_genes_above_threshold_are_validated(self) -> None:
-        result = self.step.run(
-            {"expression_data": {"EGFR": 10.0, "MYC": 3.5, "BRCA1": 1.0}}
-        )
+        result = self.step.run({"expression_data": {"EGFR": 10.0, "MYC": 3.5, "BRCA1": 1.0}})
         out = result.output
         assert "EGFR" in out["validated_genes"]
         assert "MYC" in out["validated_genes"]
         assert "BRCA1" in out["validated_genes"]
 
     def test_genes_below_threshold_are_flagged(self) -> None:
-        result = self.step.run(
-            {"expression_data": {"LOWGENE": 0.5, "ZEROGENE": 0.0}}
-        )
+        result = self.step.run({"expression_data": {"LOWGENE": 0.5, "ZEROGENE": 0.0}})
         out = result.output
         assert "LOWGENE" in out["low_expression_genes"]
         assert "ZEROGENE" in out["low_expression_genes"]
@@ -127,11 +117,11 @@ class TestRNAExpressionValidationStep:
 
     def test_mixed_expression_levels(self) -> None:
         expression = {
-            "KRAS": 8.2,     # above threshold
-            "NRAS": 0.8,     # below
-            "BRAF": 1.0,     # exactly at threshold → validated
-            "CDKN2A": 0.1,   # below
-            "TP53": 15.0,    # above
+            "KRAS": 8.2,  # above threshold
+            "NRAS": 0.8,  # below
+            "BRAF": 1.0,  # exactly at threshold → validated
+            "CDKN2A": 0.1,  # below
+            "TP53": 15.0,  # above
         }
         result = self.step.run({"expression_data": expression})
         out = result.output
@@ -146,7 +136,13 @@ class TestRNAExpressionValidationStep:
     def test_output_keys_present(self) -> None:
         result = self.step.run({"expression_data": {"KRAS": 5.0}})
         out = result.output
-        for key in ("validated_genes", "low_expression_genes", "filtered_count", "total_genes", "threshold_tpm"):
+        for key in (
+            "validated_genes",
+            "low_expression_genes",
+            "filtered_count",
+            "total_genes",
+            "threshold_tpm",
+        ):
             assert key in out
 
     def test_missing_expression_data_field_returns_failed(self) -> None:
@@ -177,9 +173,7 @@ class TestMHCMetadataStep:
         assert "metadata" in self.step.description.lower()
 
     def test_human_hla_allele_known_supertype(self) -> None:
-        result = self.step.run(
-            {"species": "human", "alleles": ["HLA-DRB1*01:01"]}
-        )
+        result = self.step.run({"species": "human", "alleles": ["HLA-DRB1*01:01"]})
         assert result.status == "success"
         meta = result.output["allele_metadata"]
         assert len(meta) == 1
@@ -200,9 +194,7 @@ class TestMHCMetadataStep:
         assert loci == {"DRB1", "DQB1", "DPB1"}
 
     def test_dog_dla_allele_known_supertype(self) -> None:
-        result = self.step.run(
-            {"species": "dog", "alleles": ["DLA-DRB1*001:01"]}
-        )
+        result = self.step.run({"species": "dog", "alleles": ["DLA-DRB1*001:01"]})
         assert result.status == "success"
         entry = result.output["allele_metadata"][0]
         assert entry["allele"] == "DLA-DRB1*001:01"
@@ -211,16 +203,12 @@ class TestMHCMetadataStep:
         assert entry["known"] is True
 
     def test_dog_canine_species_alias(self) -> None:
-        result = self.step.run(
-            {"species": "canine", "alleles": ["DLA-DQB1*002:01"]}
-        )
+        result = self.step.run({"species": "canine", "alleles": ["DLA-DQB1*002:01"]})
         assert result.status == "success"
         assert result.output["allele_metadata"][0]["species"] == "dog"
 
     def test_unknown_allele_returns_unknown_supertype(self) -> None:
-        result = self.step.run(
-            {"species": "human", "alleles": ["HLA-DRB1*99:99"]}
-        )
+        result = self.step.run({"species": "human", "alleles": ["HLA-DRB1*99:99"]})
         entry = result.output["allele_metadata"][0]
         assert entry["supertype"] == "unknown"
         assert entry["known"] is False

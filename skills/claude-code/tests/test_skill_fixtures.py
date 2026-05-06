@@ -3,9 +3,9 @@
 Validates that all skill markdown files exist, are non-empty, have required
 frontmatter fields, and reference valid FoldAgent API endpoints.
 """
+
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -61,9 +61,7 @@ def _extract_frontmatter(path: Path) -> dict:
 def _all_action_text() -> str:
     """Return combined text of all action markdown files."""
     return "\n".join(
-        (ACTIONS_DIR / f).read_text()
-        for f in EXPECTED_ACTION_FILES
-        if (ACTIONS_DIR / f).exists()
+        (ACTIONS_DIR / f).read_text() for f in EXPECTED_ACTION_FILES if (ACTIONS_DIR / f).exists()
     )
 
 
@@ -124,9 +122,7 @@ def test_action_file_frontmatter(filename: str) -> None:
 @pytest.mark.parametrize("endpoint", REQUIRED_ENDPOINTS)
 def test_required_endpoints_referenced(endpoint: str) -> None:
     combined = _all_action_text()
-    assert endpoint in combined, (
-        f"Required endpoint '{endpoint}' not referenced in any action file"
-    )
+    assert endpoint in combined, f"Required endpoint '{endpoint}' not referenced in any action file"
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +143,4 @@ def test_skill_md_references_all_actions() -> None:
     text = skill_md.read_text()
     for filename in EXPECTED_ACTION_FILES:
         stem = filename.replace(".md", "")
-        assert stem in text, (
-            f"SKILL.md does not reference action '{stem}'"
-        )
+        assert stem in text, f"SKILL.md does not reference action '{stem}'"

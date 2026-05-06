@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -79,7 +79,10 @@ def test_format_agent_event_stream_preview_renders_recent_events() -> None:
         {
             "events": [
                 {"event": "case.created", "data": {"case_id": "case-1", "action": "case.created"}},
-                {"event": "agent_task.created", "data": {"case_id": "case-1", "action": "agent_task.created"}},
+                {
+                    "event": "agent_task.created",
+                    "data": {"case_id": "case-1", "action": "agent_task.created"},
+                },
             ]
         }
     )

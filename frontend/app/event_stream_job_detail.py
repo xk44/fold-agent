@@ -4,12 +4,10 @@ Extracted from event_stream.py for modularity.  This module depends on
 :mod:`event_stream_job_status` (for ``_severity_for_status``) and
 :mod:`event_stream_job_retry` (for ``is_retry_eligible``).
 """
+
 from __future__ import annotations
 
 from skills.shared.event_stream_client import SSEEvent
-
-from frontend.app.event_stream_job_status import _severity_for_status
-
 
 # ---------------------------------------------------------------------------
 # Structure-job / AlphaFold linkback helpers — pure, no Streamlit dependency
@@ -56,7 +54,9 @@ def derive_structure_linkback(
     if not structure_job_id:
         structure_block = result.get("structure") or {}
         if isinstance(structure_block, dict):
-            structure_job_id = structure_block.get("job_id") or structure_block.get("structure_job_id")
+            structure_job_id = structure_block.get("job_id") or structure_block.get(
+                "structure_job_id"
+            )
 
     # 3. From payload.candidate_id (enables lookup by case_id in the explorer)
     payload = detail.get("payload") or {}
@@ -200,6 +200,7 @@ def format_blocked_failed_diagnosis(diagnosis: str) -> str:
 # Lifecycle event helpers (internal)
 # ---------------------------------------------------------------------------
 
+
 def _derive_lifecycle_events(
     events: list[SSEEvent],
     job_id: str | None = None,
@@ -247,7 +248,9 @@ def _derive_lifecycle_events(
 def _format_lifecycle_entry(evt: SSEEvent) -> dict:
     """Convert an SSEEvent into a flat lifecycle entry dict."""
     data = evt.data or {}
-    detail_keys = [k for k in ("status", "safety_gate_result", "details", "message", "error") if data.get(k)]
+    detail_keys = [
+        k for k in ("status", "safety_gate_result", "details", "message", "error") if data.get(k)
+    ]
     detail_parts = [f"{k}={data[k]}" for k in detail_keys]
     return {
         "event": evt.event or "message",
@@ -268,7 +271,7 @@ def _format_payload_preview(payload, max_len: int = 200) -> str:
     try:
         s = json.dumps(payload, default=str, separators=(",", ":"))
         if len(s) > max_len:
-            return s[:max_len - 3] + "..."
+            return s[: max_len - 3] + "..."
         return s
     except (TypeError, ValueError):
         return str(payload)[:max_len]
@@ -277,6 +280,7 @@ def _format_payload_preview(payload, max_len: int = 200) -> str:
 # ---------------------------------------------------------------------------
 # Job detail derivation (primary entry point)
 # ---------------------------------------------------------------------------
+
 
 def derive_job_detail(
     job_card: dict,
@@ -499,16 +503,18 @@ def build_job_detail_table(detail: dict) -> list[dict]:
 
     # Lifecycle event rows
     for entry in detail.get("lifecycle_events") or []:
-        rows.append({
-            "type": "lifecycle",
-            "job_id": job_id,
-            "job_type": job_type,
-            "status": status,
-            "case_id": case_id,
-            "event": entry.get("event", ""),
-            "timestamp": entry.get("timestamp", ""),
-            "action": entry.get("action", ""),
-            "detail": entry.get("detail", ""),
-        })
+        rows.append(
+            {
+                "type": "lifecycle",
+                "job_id": job_id,
+                "job_type": job_type,
+                "status": status,
+                "case_id": case_id,
+                "event": entry.get("event", ""),
+                "timestamp": entry.get("timestamp", ""),
+                "action": entry.get("action", ""),
+                "detail": entry.get("detail", ""),
+            }
+        )
 
     return rows

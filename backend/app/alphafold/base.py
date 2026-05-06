@@ -6,7 +6,6 @@ and MockAlphaFoldBackend for testing.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
 from enum import Enum
 from uuid import uuid4
 
@@ -39,11 +38,11 @@ class StructureResult:
     job_id: str
     backend_name: str
     status: str
-    output_path: Optional[str] = None
+    output_path: str | None = None
     confidence_metrics: dict = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     safety_label: str = "Structure prediction only — not clinical validation"
-    input_hash: Optional[str] = None
+    input_hash: str | None = None
 
 
 class AlphaFoldBackend(ABC):
@@ -87,13 +86,15 @@ class AlphaFoldBackend(ABC):
     async def validate_environment(self) -> bool: ...
 
     @abstractmethod
-    async def run_structure_prediction(self, manifest: StructureInputManifest) -> StructureResult: ...
+    async def run_structure_prediction(
+        self, manifest: StructureInputManifest
+    ) -> StructureResult: ...
 
     @abstractmethod
-    async def estimate_cost(self, manifest: StructureInputManifest) -> Optional[float]: ...
+    async def estimate_cost(self, manifest: StructureInputManifest) -> float | None: ...
 
     @abstractmethod
-    async def estimate_runtime(self, manifest: StructureInputManifest) -> Optional[int]: ...
+    async def estimate_runtime(self, manifest: StructureInputManifest) -> int | None: ...
 
     @abstractmethod
     async def collect_outputs(self, job_id: str) -> dict: ...
@@ -165,10 +166,10 @@ class StaticMetadataBackend(AlphaFoldBackend):
     async def run_structure_prediction(self, manifest: StructureInputManifest) -> StructureResult:
         raise RuntimeError(f"Backend {self.name} is metadata-only in current FoldAgent phase")
 
-    async def estimate_cost(self, manifest: StructureInputManifest) -> Optional[float]:
+    async def estimate_cost(self, manifest: StructureInputManifest) -> float | None:
         return None
 
-    async def estimate_runtime(self, manifest: StructureInputManifest) -> Optional[int]:
+    async def estimate_runtime(self, manifest: StructureInputManifest) -> int | None:
         return None
 
     async def collect_outputs(self, job_id: str) -> dict:
@@ -194,7 +195,9 @@ class MockAlphaFoldBackend(AlphaFoldBackend):
     async def run_structure_prediction(self, manifest: StructureInputManifest) -> StructureResult:
         import hashlib
 
-        logger.info("mock_alphafold_running", sequence_len=len(manifest.sequence), case_id=manifest.case_id)
+        logger.info(
+            "mock_alphafold_running", sequence_len=len(manifest.sequence), case_id=manifest.case_id
+        )
         job_id = str(uuid4())
         input_hash = hashlib.sha256(manifest.sequence.encode()).hexdigest()[:16]
         mock_confidence = {
@@ -218,10 +221,10 @@ class MockAlphaFoldBackend(AlphaFoldBackend):
             input_hash=input_hash,
         )
 
-    async def estimate_cost(self, manifest: StructureInputManifest) -> Optional[float]:
+    async def estimate_cost(self, manifest: StructureInputManifest) -> float | None:
         return 0.0
 
-    async def estimate_runtime(self, manifest: StructureInputManifest) -> Optional[int]:
+    async def estimate_runtime(self, manifest: StructureInputManifest) -> int | None:
         return 1
 
     async def collect_outputs(self, job_id: str) -> dict:
@@ -244,7 +247,9 @@ def register_backend(backend: AlphaFoldBackend) -> None:
 
 def get_backend(name: str) -> AlphaFoldBackend:
     if name not in _BACKENDS:
-        raise KeyError(f"AlphaFold backend '{name}' not registered. Available: {list(_BACKENDS.keys())}")
+        raise KeyError(
+            f"AlphaFold backend '{name}' not registered. Available: {list(_BACKENDS.keys())}"
+        )
     return _BACKENDS[name]
 
 

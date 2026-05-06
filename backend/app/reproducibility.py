@@ -14,15 +14,15 @@ import platform
 import sys
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _sha256(data: str) -> str:
@@ -36,6 +36,7 @@ def _hash_dict(d: dict) -> str:
 # ---------------------------------------------------------------------------
 # Feature 1: Pipeline Reproducibility Manifest
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ToolVersion:
@@ -131,10 +132,12 @@ DATABASE_VERSION_REGISTRY: dict[str, dict] = {
 # Environment capture
 # ---------------------------------------------------------------------------
 
+
 def capture_environment() -> EnvironmentSnapshot:
     """Capture current execution environment snapshot."""
     relevant_env_vars = {
-        k: v for k, v in os.environ.items()
+        k: v
+        for k, v in os.environ.items()
         if any(k.startswith(p) for p in ("FOLDAGENT_", "CUDA_", "PATH", "PYTHONPATH"))
     }
     env_hash = _sha256(json.dumps(relevant_env_vars, sort_keys=True))
@@ -142,9 +145,11 @@ def capture_environment() -> EnvironmentSnapshot:
     gpu_available = False
     try:
         import importlib
+
         spec = importlib.util.find_spec("torch")
         if spec is not None:
             import torch  # type: ignore
+
             gpu_available = torch.cuda.is_available()
     except Exception:
         pass
@@ -164,6 +169,7 @@ def capture_environment() -> EnvironmentSnapshot:
 # Manifest creation / verification / storage
 # ---------------------------------------------------------------------------
 
+
 def _hash_value(v: object) -> str:
     return _sha256(json.dumps(v, sort_keys=True, default=str))
 
@@ -180,16 +186,20 @@ def create_manifest(
         version = TOOL_VERSION_REGISTRY.get(name, "unknown")
         checksum = _sha256(f"{name}:{version}")
         source = "local" if "server" not in name and "db" not in name else "cloud"
-        tool_versions.append(ToolVersion(name=name, version=version, source=source, checksum=checksum))
+        tool_versions.append(
+            ToolVersion(name=name, version=version, source=source, checksum=checksum)
+        )
 
     db_versions: list[DatabaseVersion] = []
     for db_name, db_info in DATABASE_VERSION_REGISTRY.items():
-        db_versions.append(DatabaseVersion(
-            name=db_name,
-            version=db_info["version"],
-            last_updated=db_info["last_updated"],
-            entry_count=db_info["entry_count"],
-        ))
+        db_versions.append(
+            DatabaseVersion(
+                name=db_name,
+                version=db_info["version"],
+                last_updated=db_info["last_updated"],
+                entry_count=db_info["entry_count"],
+            )
+        )
 
     env = capture_environment()
 
@@ -419,8 +429,8 @@ def create_fair_report(prediction_data: dict, metadata: FAIRMetadata) -> FAIRRep
 
     # Human-readable summary
     lines = [
-        f"FoldAgent Prediction Report",
-        f"========================",
+        "FoldAgent Prediction Report",
+        "========================",
         f"ID: {metadata.persistent_id}",
         f"Title: {metadata.title}",
         f"Created: {metadata.created_date}",
@@ -429,8 +439,8 @@ def create_fair_report(prediction_data: dict, metadata: FAIRMetadata) -> FAIRRep
         f"Keywords: {', '.join(metadata.keywords)}",
         f"Ontology terms: {len(metadata.ontology_terms)} EDAM terms",
         f"Data fields: {', '.join(list(prediction_data.keys())[:10])}",
-        f"",
-        f"RESEARCH USE ONLY — not for clinical or regulatory decision-making.",
+        "",
+        "RESEARCH USE ONLY — not for clinical or regulatory decision-making.",
     ]
     human_summary = "\n".join(lines)
 
@@ -521,7 +531,7 @@ def suggest_repository(report: FAIRReport) -> str:
 def suggest_repository_from_metadata(metadata: FAIRMetadata, content: dict) -> str:
     """Suggest a repository based on content type."""
     kw_lower = {k.lower() for k in metadata.keywords}
-    content_keys = {k.lower() for k in content.keys()}
+    content_keys = {k.lower() for k in content}
     all_terms = kw_lower | content_keys
 
     if any(w in all_terms for w in ("pdb", "structure", "coordinates", "protein_structure")):

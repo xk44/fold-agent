@@ -36,7 +36,9 @@ except Exception as exc:  # pragma: no cover - hard fail only in opt-in mode
 
 def _command_ok(command: list[str]) -> bool:
     try:
-        result = subprocess.run(command, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=20)
+        result = subprocess.run(
+            command, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=20
+        )
     except Exception:
         return False
     return result.returncode == 0
@@ -180,13 +182,13 @@ class _ComposeRedis:
 
 
 def _publish_remote(redis_url: str, channel: str, event_name: str, payload: dict) -> None:
-    code = f'''
+    code = f"""
 import sys
 sys.path.insert(0, {str(PROJECT_ROOT)!r})
 from backend.app.event_backends.redis_backend import RedisEventBackend
 backend = RedisEventBackend(redis_url={redis_url!r}, channel={channel!r})
 backend.publish({event_name!r}, {payload!r})
-'''
+"""
     result = subprocess.run(
         [sys.executable, "-c", code],
         cwd=PROJECT_ROOT,
@@ -248,8 +250,8 @@ def test_live_redis_backend_cross_process_pubsub_smoke() -> None:
 
 
 def test_live_redis_backend_websocket_end_to_end_smoke() -> None:
-    from backend.app.main import app
     from backend.app.event_stream import InMemoryEventBackend, configure_backend
+    from backend.app.main import app
 
     channel = f"foldagent:events:smoke:ws:{uuid4().hex}"
     with _ComposeRedis() as redis_url:
@@ -302,4 +304,6 @@ def test_live_redis_backend_sse_follow_end_to_end_smoke() -> None:
                         continue
                     lines.append(line)
 
-                raise AssertionError("did not receive remote SSE event through live redis-backed /agent/events follow stream")
+                raise AssertionError(
+                    "did not receive remote SSE event through live redis-backed /agent/events follow stream"
+                )

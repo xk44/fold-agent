@@ -79,7 +79,9 @@ def test_list_alphafold_shell_statuses_surfaces_probe_timeout(monkeypatch) -> No
     assert colabfold["diagnostics"]["version_probe"]["probe_timed_out"] is True
 
 
-def test_alphafold_run_rejects_backend_when_validation_not_ok(client: TestClient, monkeypatch) -> None:
+def test_alphafold_run_rejects_backend_when_validation_not_ok(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "validation gate case"},

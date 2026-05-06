@@ -3,6 +3,7 @@
 Extracted from event_stream.py for modularity.  Pure functions, no
 Streamlit dependency.
 """
+
 from __future__ import annotations
 
 from skills.shared.event_stream_client import SSEEvent
@@ -54,33 +55,37 @@ def derive_job_status_cards(
         else:
             status = (latest_evt.event or "unknown").split(".", 1)[-1]
 
-        cards.append({
-            "source": "event",
-            "job_id": None,
-            "job_type": family,
-            "case_id": case_id or None,
-            "status": status,
-            "latest_status": status,
-            "event_count": len(group),
-            "error": None,
-            "created_at": data.get("timestamp"),
-        })
+        cards.append(
+            {
+                "source": "event",
+                "job_id": None,
+                "job_type": family,
+                "case_id": case_id or None,
+                "status": status,
+                "latest_status": status,
+                "event_count": len(group),
+                "error": None,
+                "created_at": data.get("timestamp"),
+            }
+        )
 
     # --- API-sourced cards: one per background job ---
     for job in api_jobs:
-        cards.append({
-            "source": "api",
-            "job_id": job.get("id"),
-            "job_type": job.get("job_type", "unknown"),
-            "case_id": job.get("case_id"),
-            "status": job.get("status", "unknown"),
-            "latest_status": job.get("status", "unknown"),
-            "event_count": 0,
-            "error": job.get("error"),
-            "created_at": job.get("created_at"),
-            "attempt": job.get("attempt", 1),
-            "max_retries": job.get("max_retries", 0),
-        })
+        cards.append(
+            {
+                "source": "api",
+                "job_id": job.get("id"),
+                "job_type": job.get("job_type", "unknown"),
+                "case_id": job.get("case_id"),
+                "status": job.get("status", "unknown"),
+                "latest_status": job.get("status", "unknown"),
+                "event_count": 0,
+                "error": job.get("error"),
+                "created_at": job.get("created_at"),
+                "attempt": job.get("attempt", 1),
+                "max_retries": job.get("max_retries", 0),
+            }
+        )
 
     # --- Dedup: prefer API card when (job_type, case_id) collides ---
     if dedup:

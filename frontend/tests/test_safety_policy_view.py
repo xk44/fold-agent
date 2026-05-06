@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -10,7 +10,6 @@ from frontend.app.safety_policy_view import (
     format_safety_policy_summary,
     parse_safety_policy_markdown,
 )
-
 
 SAMPLE_POLICY = """# FoldAgent Safety Policy
 
@@ -170,7 +169,9 @@ def test_derive_safety_policy_references_maps_requires_approval_to_policy_rules(
     assert "mRNA / Construct Handling -> Manual approval checkpoint" in refs
 
 
-def test_derive_safety_policy_references_maps_blocked_patterns_to_scanner_and_boundary_rules() -> None:
+def test_derive_safety_policy_references_maps_blocked_patterns_to_scanner_and_boundary_rules() -> (
+    None
+):
     policy = parse_safety_policy_markdown(SAMPLE_POLICY)
     refs = derive_safety_policy_references(
         {

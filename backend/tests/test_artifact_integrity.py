@@ -1,4 +1,5 @@
 """Tests for artifact content hash integrity verification."""
+
 import hashlib
 
 from fastapi.testclient import TestClient

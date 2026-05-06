@@ -17,7 +17,9 @@ DISCLAIMER_FRAGMENT = "research coordination tool only"
 # ---------------------------------------------------------------------------
 
 
-def _make_case(client: TestClient, species: str = "dog", summary: str = "Ethics template test") -> str:
+def _make_case(
+    client: TestClient, species: str = "dog", summary: str = "Ethics template test"
+) -> str:
     resp = client.post("/cases", json={"species": species, "diagnosis_summary": summary})
     assert resp.status_code == 201
     return resp.json()["id"]
@@ -229,10 +231,15 @@ def test_compassionate_use_checklist_has_attestations(client: TestClient) -> Non
         assert "attestation" in att
 
 
-def test_compassionate_use_checklist_critical_warning_mentions_foldagent(client: TestClient) -> None:
+def test_compassionate_use_checklist_critical_warning_mentions_foldagent(
+    client: TestClient,
+) -> None:
     data = client.get("/ethics/compassionate-use-checklist?species=dog").json()
 
-    assert "foldagent" in data["critical_warning"].lower() or "cannot bypass" in data["critical_warning"].lower()
+    assert (
+        "foldagent" in data["critical_warning"].lower()
+        or "cannot bypass" in data["critical_warning"].lower()
+    )
 
 
 def test_compassionate_use_checklist_contains_disclaimer(client: TestClient) -> None:

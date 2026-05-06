@@ -20,13 +20,13 @@ Lower-level helpers (:func:`parse_alphafold_stdout`,
 :func:`extract_inline_structure`, :func:`harvest_af3_output_dir`) are exposed
 for direct unit testing.
 """
+
 from __future__ import annotations
 
 import csv
 import json
 from pathlib import Path
 from typing import TypedDict
-
 
 # Canonical keys propagated from a parsed structure payload into the
 # candidate ``structure_evidence`` dict and the ``StructureJob.confidence_metrics``.

@@ -8,7 +8,7 @@ RESEARCH USE ONLY. Not for clinical diagnostic use without expert validation.
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 # ---------------------------------------------------------------------------
@@ -66,7 +66,11 @@ _STRENGTH_WEIGHTS: dict[str, float] = {
 
 # Critical domains per gene (residue ranges) — mirrors variant_pathogenicity.py
 _CRITICAL_DOMAINS: dict[str, list[tuple[int, int, str]]] = {
-    "TP53": [(94, 102, "proline-rich"), (102, 292, "DNA-binding domain"), (293, 363, "tetramerization domain")],
+    "TP53": [
+        (94, 102, "proline-rich"),
+        (102, 292, "DNA-binding domain"),
+        (293, 363, "tetramerization domain"),
+    ],
     "KRAS": [(1, 86, "G-domain"), (87, 166, "switch-II region")],
     "EGFR": [(712, 979, "kinase domain")],
     "BRCA1": [(1, 100, "RING domain"), (1642, 1736, "BRCT domain")],
@@ -88,6 +92,7 @@ _LOW_BENIGN_MISSENSE_GENES: set[str] = {"TP53", "BRCA1", "BRCA2", "MEN1", "CDH1"
 def _extract_position(variant: str) -> int | None:
     """Extract numeric residue position from variant notation like R175H."""
     import re
+
     m = re.search(r"\d+", variant)
     return int(m.group()) if m else None
 
@@ -159,6 +164,7 @@ def score_acmg_criteria(
         # Try known table first
         try:
             from backend.app.modes.variant_pathogenicity import ALPHAMISSENSE_SCORES
+
             am_score = ALPHAMISSENSE_SCORES.get((gene, variant))
         except ImportError:
             pass
@@ -180,6 +186,7 @@ def score_acmg_criteria(
     if not known_path_at_pos and position is not None:
         try:
             from backend.app.modes.variant_pathogenicity import KNOWN_CRITICAL_RESIDUES
+
             known_path_at_pos = position in KNOWN_CRITICAL_RESIDUES.get(gene, [])
         except ImportError:
             known_path_at_pos = _deterministic_score(gene, variant, "known_path") > 0.6
@@ -187,128 +194,152 @@ def score_acmg_criteria(
     # --- PP3: Computational evidence — pathogenic ---
     pp3_met = am_score > 0.7 or cons_score > 0.8
     pp3_detail = (
-        f"AlphaMissense={am_score:.3f} (>0.7)" if am_score > 0.7
+        f"AlphaMissense={am_score:.3f} (>0.7)"
+        if am_score > 0.7
         else f"Conservation={cons_score:.3f} (>0.8)"
     )
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.PP3,
-        met=pp3_met,
-        strength="supporting",
-        evidence_source="AlphaMissense+Conservation",
-        detail=pp3_detail if pp3_met else f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — thresholds not met",
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.PP3,
+            met=pp3_met,
+            strength="supporting",
+            evidence_source="AlphaMissense+Conservation",
+            detail=pp3_detail
+            if pp3_met
+            else f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — thresholds not met",
+        )
+    )
 
     # --- BP4: Computational evidence — benign ---
     bp4_met = am_score < 0.3 and cons_score < 0.4
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.BP4,
-        met=bp4_met,
-        strength="supporting",
-        evidence_source="AlphaMissense+Conservation",
-        detail=(
-            f"AlphaMissense={am_score:.3f} (<0.3) and Conservation={cons_score:.3f} (<0.4)"
-            if bp4_met
-            else f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — benign thresholds not met"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.BP4,
+            met=bp4_met,
+            strength="supporting",
+            evidence_source="AlphaMissense+Conservation",
+            detail=(
+                f"AlphaMissense={am_score:.3f} (<0.3) and Conservation={cons_score:.3f} (<0.4)"
+                if bp4_met
+                else f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — benign thresholds not met"
+            ),
+        )
+    )
 
     # --- PS3: Functional studies — damaging (strong) ---
     ps3_met = am_score > 0.85 and is_critical
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.PS3,
-        met=ps3_met,
-        strength="strong",
-        evidence_source="Structural+AlphaMissense",
-        detail=(
-            f"High AlphaMissense ({am_score:.3f}) in critical domain ({dom_name})"
-            if ps3_met
-            else "Insufficient computational functional evidence"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.PS3,
+            met=ps3_met,
+            strength="strong",
+            evidence_source="Structural+AlphaMissense",
+            detail=(
+                f"High AlphaMissense ({am_score:.3f}) in critical domain ({dom_name})"
+                if ps3_met
+                else "Insufficient computational functional evidence"
+            ),
+        )
+    )
 
     # --- BS3: Functional studies — no damaging effect ---
     bs3_met = am_score < 0.2 and cons_score < 0.3
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.BS3,
-        met=bs3_met,
-        strength="strong",
-        evidence_source="AlphaMissense+Conservation",
-        detail=(
-            f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — computationally tolerated"
-            if bs3_met
-            else "Evidence does not support benign functional impact"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.BS3,
+            met=bs3_met,
+            strength="strong",
+            evidence_source="AlphaMissense+Conservation",
+            detail=(
+                f"AlphaMissense={am_score:.3f}, Conservation={cons_score:.3f} — computationally tolerated"
+                if bs3_met
+                else "Evidence does not support benign functional impact"
+            ),
+        )
+    )
 
     # --- PM1: Located in hot spot / critical domain ---
     pm1_met = bool(is_critical)
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.PM1,
-        met=pm1_met,
-        strength="moderate",
-        evidence_source="Structural annotation",
-        detail=(
-            f"Residue {position} is within {dom_name}"
-            if pm1_met
-            else f"Residue {position} not in annotated critical domain"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.PM1,
+            met=pm1_met,
+            strength="moderate",
+            evidence_source="Structural annotation",
+            detail=(
+                f"Residue {position} is within {dom_name}"
+                if pm1_met
+                else f"Residue {position} not in annotated critical domain"
+            ),
+        )
+    )
 
     # --- PM5: Novel missense at position with known pathogenic missense ---
     pm5_met = known_path_at_pos and not _is_known_variant(gene, variant)
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.PM5,
-        met=pm5_met,
-        strength="moderate",
-        evidence_source="ClinVar/structural cross-reference",
-        detail=(
-            f"Different pathogenic missense known at residue {position}"
-            if pm5_met
-            else f"No known pathogenic missense at residue {position} or variant is itself known"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.PM5,
+            met=pm5_met,
+            strength="moderate",
+            evidence_source="ClinVar/structural cross-reference",
+            detail=(
+                f"Different pathogenic missense known at residue {position}"
+                if pm5_met
+                else f"No known pathogenic missense at residue {position} or variant is itself known"
+            ),
+        )
+    )
 
     # --- PP2: Missense in gene with low benign variation ---
     pp2_met = gene in _LOW_BENIGN_MISSENSE_GENES
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.PP2,
-        met=pp2_met,
-        strength="supporting",
-        evidence_source="Gene-level constraint",
-        detail=(
-            f"{gene} has low missense benign variation (constrained gene)"
-            if pp2_met
-            else f"{gene} not in low-benign-missense gene list"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.PP2,
+            met=pp2_met,
+            strength="supporting",
+            evidence_source="Gene-level constraint",
+            detail=(
+                f"{gene} has low missense benign variation (constrained gene)"
+                if pp2_met
+                else f"{gene} not in low-benign-missense gene list"
+            ),
+        )
+    )
 
     # --- BP1: Missense in gene where truncating variants cause disease ---
     bp1_met = gene in _TRUNCATING_DISEASE_GENES
-    evidences.append(ACMGEvidence(
-        criterion=ACMGCriterion.BP1,
-        met=bp1_met,
-        strength="supporting",
-        evidence_source="Gene-level disease mechanism",
-        detail=(
-            f"{gene} primarily causes disease via truncating variants"
-            if bp1_met
-            else f"{gene} not in truncating-disease-mechanism gene list"
-        ),
-    ))
+    evidences.append(
+        ACMGEvidence(
+            criterion=ACMGCriterion.BP1,
+            met=bp1_met,
+            strength="supporting",
+            evidence_source="Gene-level disease mechanism",
+            detail=(
+                f"{gene} primarily causes disease via truncating variants"
+                if bp1_met
+                else f"{gene} not in truncating-disease-mechanism gene list"
+            ),
+        )
+    )
 
     # --- Combine criteria into classification ---
     path_score = sum(
-        _STRENGTH_WEIGHTS[e.strength] for e in evidences
-        if e.met and e.criterion in (
-            ACMGCriterion.PP3, ACMGCriterion.PS3, ACMGCriterion.PM1,
-            ACMGCriterion.PM5, ACMGCriterion.PP2
+        _STRENGTH_WEIGHTS[e.strength]
+        for e in evidences
+        if e.met
+        and e.criterion
+        in (
+            ACMGCriterion.PP3,
+            ACMGCriterion.PS3,
+            ACMGCriterion.PM1,
+            ACMGCriterion.PM5,
+            ACMGCriterion.PP2,
         )
     )
     benign_score = sum(
-        _STRENGTH_WEIGHTS[e.strength] for e in evidences
-        if e.met and e.criterion in (
-            ACMGCriterion.BP4, ACMGCriterion.BS3, ACMGCriterion.BP1
-        )
+        _STRENGTH_WEIGHTS[e.strength]
+        for e in evidences
+        if e.met and e.criterion in (ACMGCriterion.BP4, ACMGCriterion.BS3, ACMGCriterion.BP1)
     )
 
     if path_score >= 6.0 and benign_score == 0.0:
@@ -339,6 +370,7 @@ def _is_known_variant(gene: str, variant: str) -> bool:
     """Return True if variant is in the AlphaMissense stub table."""
     try:
         from backend.app.modes.variant_pathogenicity import ALPHAMISSENSE_SCORES
+
         return (gene.upper(), variant) in ALPHAMISSENSE_SCORES
     except ImportError:
         return False
@@ -448,8 +480,12 @@ def rescore_vus(variant_id: str) -> ReclassificationResult:
         if e.met:
             evidence_delta.append(f"{e.criterion.value} ({e.strength}): {e.detail}")
 
-    confidence = classification.overall_score if new_class in ("pathogenic", "likely_pathogenic") else (
-        1.0 - classification.overall_score if new_class in ("benign", "likely_benign") else 0.5
+    confidence = (
+        classification.overall_score
+        if new_class in ("pathogenic", "likely_pathogenic")
+        else (
+            1.0 - classification.overall_score if new_class in ("benign", "likely_benign") else 0.5
+        )
     )
 
     return ReclassificationResult(
@@ -531,47 +567,347 @@ def _clinvar(
 
 MOCK_CLINVAR_DB: list[ClinVarEvidence] = [
     # TP53 entries
-    _clinvar("CV-100001", "R175H", "TP53", "Pathogenic", 4, ["Li-Fraumeni syndrome", "Breast cancer"], "2024-01-10", 175, "DNA-binding domain"),
-    _clinvar("CV-100002", "G245S", "TP53", "Pathogenic", 4, ["Li-Fraumeni syndrome"], "2024-01-10", 245, "DNA-binding domain"),
-    _clinvar("CV-100003", "R248W", "TP53", "Pathogenic", 4, ["Li-Fraumeni syndrome", "Colorectal cancer"], "2024-01-10", 248, "DNA-binding domain"),
-    _clinvar("CV-100004", "R248Q", "TP53", "Pathogenic", 4, ["Li-Fraumeni syndrome"], "2024-03-15", 248, "DNA-binding domain"),
-    _clinvar("CV-100005", "R273H", "TP53", "Pathogenic", 4, ["Multiple cancers"], "2024-02-20", 273, "DNA-binding domain"),
-    _clinvar("CV-100006", "V143A", "TP53", "Uncertain significance", 1, ["Li-Fraumeni syndrome"], "2023-06-01", 143, "DNA-binding domain"),
+    _clinvar(
+        "CV-100001",
+        "R175H",
+        "TP53",
+        "Pathogenic",
+        4,
+        ["Li-Fraumeni syndrome", "Breast cancer"],
+        "2024-01-10",
+        175,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-100002",
+        "G245S",
+        "TP53",
+        "Pathogenic",
+        4,
+        ["Li-Fraumeni syndrome"],
+        "2024-01-10",
+        245,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-100003",
+        "R248W",
+        "TP53",
+        "Pathogenic",
+        4,
+        ["Li-Fraumeni syndrome", "Colorectal cancer"],
+        "2024-01-10",
+        248,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-100004",
+        "R248Q",
+        "TP53",
+        "Pathogenic",
+        4,
+        ["Li-Fraumeni syndrome"],
+        "2024-03-15",
+        248,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-100005",
+        "R273H",
+        "TP53",
+        "Pathogenic",
+        4,
+        ["Multiple cancers"],
+        "2024-02-20",
+        273,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-100006",
+        "V143A",
+        "TP53",
+        "Uncertain significance",
+        1,
+        ["Li-Fraumeni syndrome"],
+        "2023-06-01",
+        143,
+        "DNA-binding domain",
+    ),
     # KRAS entries
-    _clinvar("CV-200001", "G12V", "KRAS", "Pathogenic", 3, ["Non-small cell lung cancer", "Colorectal cancer"], "2024-01-15", 12, "G-domain"),
-    _clinvar("CV-200002", "G12D", "KRAS", "Pathogenic", 3, ["Pancreatic cancer", "Colorectal cancer"], "2024-01-15", 12, "G-domain"),
-    _clinvar("CV-200003", "G12C", "KRAS", "Pathogenic", 4, ["Non-small cell lung cancer"], "2024-02-01", 12, "G-domain"),
-    _clinvar("CV-200004", "Q61H", "KRAS", "Likely pathogenic", 2, ["Colorectal cancer"], "2023-11-20", 61, "G-domain"),
+    _clinvar(
+        "CV-200001",
+        "G12V",
+        "KRAS",
+        "Pathogenic",
+        3,
+        ["Non-small cell lung cancer", "Colorectal cancer"],
+        "2024-01-15",
+        12,
+        "G-domain",
+    ),
+    _clinvar(
+        "CV-200002",
+        "G12D",
+        "KRAS",
+        "Pathogenic",
+        3,
+        ["Pancreatic cancer", "Colorectal cancer"],
+        "2024-01-15",
+        12,
+        "G-domain",
+    ),
+    _clinvar(
+        "CV-200003",
+        "G12C",
+        "KRAS",
+        "Pathogenic",
+        4,
+        ["Non-small cell lung cancer"],
+        "2024-02-01",
+        12,
+        "G-domain",
+    ),
+    _clinvar(
+        "CV-200004",
+        "Q61H",
+        "KRAS",
+        "Likely pathogenic",
+        2,
+        ["Colorectal cancer"],
+        "2023-11-20",
+        61,
+        "G-domain",
+    ),
     # BRCA1 entries
-    _clinvar("CV-300001", "C61G", "BRCA1", "Pathogenic", 4, ["Hereditary breast and ovarian cancer"], "2024-01-05", 61, "RING domain"),
-    _clinvar("CV-300002", "R1699W", "BRCA1", "Pathogenic", 3, ["Hereditary breast cancer"], "2024-03-10", 1699, "BRCT domain"),
-    _clinvar("CV-300003", "M1775R", "BRCA1", "Pathogenic", 4, ["Hereditary breast and ovarian cancer"], "2024-01-05", 1775, "BRCT domain"),
-    _clinvar("CV-300004", "P1749R", "BRCA1", "Uncertain significance", 1, ["Hereditary breast cancer"], "2023-09-15", 1749, "BRCT domain"),
+    _clinvar(
+        "CV-300001",
+        "C61G",
+        "BRCA1",
+        "Pathogenic",
+        4,
+        ["Hereditary breast and ovarian cancer"],
+        "2024-01-05",
+        61,
+        "RING domain",
+    ),
+    _clinvar(
+        "CV-300002",
+        "R1699W",
+        "BRCA1",
+        "Pathogenic",
+        3,
+        ["Hereditary breast cancer"],
+        "2024-03-10",
+        1699,
+        "BRCT domain",
+    ),
+    _clinvar(
+        "CV-300003",
+        "M1775R",
+        "BRCA1",
+        "Pathogenic",
+        4,
+        ["Hereditary breast and ovarian cancer"],
+        "2024-01-05",
+        1775,
+        "BRCT domain",
+    ),
+    _clinvar(
+        "CV-300004",
+        "P1749R",
+        "BRCA1",
+        "Uncertain significance",
+        1,
+        ["Hereditary breast cancer"],
+        "2023-09-15",
+        1749,
+        "BRCT domain",
+    ),
     # BRCA2 entries
-    _clinvar("CV-400001", "D2723H", "BRCA2", "Likely pathogenic", 2, ["Hereditary breast cancer"], "2024-02-15", 2723, "DNA-binding domain"),
-    _clinvar("CV-400002", "K3326X", "BRCA2", "Benign", 3, ["Hereditary cancer — general"], "2024-01-20", 3326, None),
+    _clinvar(
+        "CV-400001",
+        "D2723H",
+        "BRCA2",
+        "Likely pathogenic",
+        2,
+        ["Hereditary breast cancer"],
+        "2024-02-15",
+        2723,
+        "DNA-binding domain",
+    ),
+    _clinvar(
+        "CV-400002",
+        "K3326X",
+        "BRCA2",
+        "Benign",
+        3,
+        ["Hereditary cancer — general"],
+        "2024-01-20",
+        3326,
+        None,
+    ),
     # EGFR entries
-    _clinvar("CV-500001", "L858R", "EGFR", "Pathogenic", 4, ["Non-small cell lung cancer"], "2024-04-01", 858, "kinase domain"),
-    _clinvar("CV-500002", "T790M", "EGFR", "Pathogenic", 4, ["Non-small cell lung cancer — drug resistance"], "2024-04-01", 790, "kinase domain"),
-    _clinvar("CV-500003", "E746A", "EGFR", "Pathogenic", 3, ["Non-small cell lung cancer"], "2024-03-15", 746, "kinase domain"),
-    _clinvar("CV-500004", "G719S", "EGFR", "Uncertain significance", 2, ["Non-small cell lung cancer"], "2023-12-10", 719, "kinase domain"),
+    _clinvar(
+        "CV-500001",
+        "L858R",
+        "EGFR",
+        "Pathogenic",
+        4,
+        ["Non-small cell lung cancer"],
+        "2024-04-01",
+        858,
+        "kinase domain",
+    ),
+    _clinvar(
+        "CV-500002",
+        "T790M",
+        "EGFR",
+        "Pathogenic",
+        4,
+        ["Non-small cell lung cancer — drug resistance"],
+        "2024-04-01",
+        790,
+        "kinase domain",
+    ),
+    _clinvar(
+        "CV-500003",
+        "E746A",
+        "EGFR",
+        "Pathogenic",
+        3,
+        ["Non-small cell lung cancer"],
+        "2024-03-15",
+        746,
+        "kinase domain",
+    ),
+    _clinvar(
+        "CV-500004",
+        "G719S",
+        "EGFR",
+        "Uncertain significance",
+        2,
+        ["Non-small cell lung cancer"],
+        "2023-12-10",
+        719,
+        "kinase domain",
+    ),
     # BRAF entries
-    _clinvar("CV-600001", "V600E", "BRAF", "Pathogenic", 4, ["Melanoma", "Colorectal cancer", "Thyroid cancer"], "2024-04-15", 600, "kinase domain"),
-    _clinvar("CV-600002", "V600K", "BRAF", "Pathogenic", 3, ["Melanoma"], "2024-02-28", 600, "kinase domain"),
+    _clinvar(
+        "CV-600001",
+        "V600E",
+        "BRAF",
+        "Pathogenic",
+        4,
+        ["Melanoma", "Colorectal cancer", "Thyroid cancer"],
+        "2024-04-15",
+        600,
+        "kinase domain",
+    ),
+    _clinvar(
+        "CV-600002",
+        "V600K",
+        "BRAF",
+        "Pathogenic",
+        3,
+        ["Melanoma"],
+        "2024-02-28",
+        600,
+        "kinase domain",
+    ),
     # PIK3CA entries
-    _clinvar("CV-700001", "H1047R", "PIK3CA", "Pathogenic", 4, ["Breast cancer", "Colorectal cancer"], "2024-01-30", 1047, "kinase domain"),
-    _clinvar("CV-700002", "E545K", "PIK3CA", "Pathogenic", 3, ["Breast cancer"], "2024-02-10", 545, "helical domain"),
+    _clinvar(
+        "CV-700001",
+        "H1047R",
+        "PIK3CA",
+        "Pathogenic",
+        4,
+        ["Breast cancer", "Colorectal cancer"],
+        "2024-01-30",
+        1047,
+        "kinase domain",
+    ),
+    _clinvar(
+        "CV-700002",
+        "E545K",
+        "PIK3CA",
+        "Pathogenic",
+        3,
+        ["Breast cancer"],
+        "2024-02-10",
+        545,
+        "helical domain",
+    ),
     # PTEN entries
-    _clinvar("CV-800001", "R130Q", "PTEN", "Pathogenic", 3, ["Cowden syndrome"], "2024-03-20", 130, "phosphatase domain"),
+    _clinvar(
+        "CV-800001",
+        "R130Q",
+        "PTEN",
+        "Pathogenic",
+        3,
+        ["Cowden syndrome"],
+        "2024-03-20",
+        130,
+        "phosphatase domain",
+    ),
     # IDH1 entries
-    _clinvar("CV-900001", "R132H", "IDH1", "Pathogenic", 4, ["Glioma", "AML"], "2024-04-10", 132, "catalytic domain"),
+    _clinvar(
+        "CV-900001",
+        "R132H",
+        "IDH1",
+        "Pathogenic",
+        4,
+        ["Glioma", "AML"],
+        "2024-04-10",
+        132,
+        "catalytic domain",
+    ),
     # MET entries
-    _clinvar("CV-1000001", "Y1253D", "MET", "Pathogenic", 3, ["Hereditary papillary renal carcinoma"], "2024-03-01", 1253, "kinase domain"),
+    _clinvar(
+        "CV-1000001",
+        "Y1253D",
+        "MET",
+        "Pathogenic",
+        3,
+        ["Hereditary papillary renal carcinoma"],
+        "2024-03-01",
+        1253,
+        "kinase domain",
+    ),
     # CDKN2A entries
-    _clinvar("CV-1100001", "P114L", "CDKN2A", "Likely pathogenic", 2, ["Melanoma — germline"], "2023-10-15", 114, None),
+    _clinvar(
+        "CV-1100001",
+        "P114L",
+        "CDKN2A",
+        "Likely pathogenic",
+        2,
+        ["Melanoma — germline"],
+        "2023-10-15",
+        114,
+        None,
+    ),
     # Additional VUS / benign entries
-    _clinvar("CV-1200001", "V408M", "LDLR", "Benign", 3, ["Familial hypercholesterolemia"], "2024-01-15", 408, None),
-    _clinvar("CV-1200002", "A57V", "CDKN2A", "Uncertain significance", 1, ["Melanoma"], "2023-08-20", 57, None),
+    _clinvar(
+        "CV-1200001",
+        "V408M",
+        "LDLR",
+        "Benign",
+        3,
+        ["Familial hypercholesterolemia"],
+        "2024-01-15",
+        408,
+        None,
+    ),
+    _clinvar(
+        "CV-1200002",
+        "A57V",
+        "CDKN2A",
+        "Uncertain significance",
+        1,
+        ["Melanoma"],
+        "2023-08-20",
+        57,
+        None,
+    ),
 ]
 
 
@@ -601,25 +937,36 @@ def map_clinvar_to_structure(gene: str) -> StructuralClinVarMapping:
     # Identify pathogenic hotspot residues
     pathogenic_residues: dict[int, list[ClinVarEvidence]] = {}
     for e in mapped:
-        if e.significance in ("Pathogenic", "Likely pathogenic") and e.structural_residue is not None:
+        if (
+            e.significance in ("Pathogenic", "Likely pathogenic")
+            and e.structural_residue is not None
+        ):
             pathogenic_residues.setdefault(e.structural_residue, []).append(e)
 
     hotspots = []
     for residue, evs in sorted(pathogenic_residues.items()):
-        hotspots.append({
-            "residue": residue,
-            "domain": evs[0].structural_domain,
-            "variant_count": len(evs),
-            "variants": [e.variant for e in evs],
-            "max_review_stars": max(e.review_stars for e in evs),
-        })
+        hotspots.append(
+            {
+                "residue": residue,
+                "domain": evs[0].structural_domain,
+                "variant_count": len(evs),
+                "variants": [e.variant for e in evs],
+                "max_review_stars": max(e.review_stars for e in evs),
+            }
+        )
 
     # Domain-level summary
     domain_counts: dict[str, dict[str, int]] = {}
     for e in mapped:
         dom = e.structural_domain or "Unknown"
         if dom not in domain_counts:
-            domain_counts[dom] = {"pathogenic": 0, "likely_pathogenic": 0, "VUS": 0, "benign": 0, "other": 0}
+            domain_counts[dom] = {
+                "pathogenic": 0,
+                "likely_pathogenic": 0,
+                "VUS": 0,
+                "benign": 0,
+                "other": 0,
+            }
         sig = e.significance
         if sig == "Pathogenic":
             domain_counts[dom]["pathogenic"] += 1

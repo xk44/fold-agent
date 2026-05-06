@@ -10,12 +10,12 @@ Provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # PPI prediction
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PPIResult:
@@ -258,6 +258,7 @@ def predict_ppi(gene_a: str, gene_b: str) -> PPIResult:
 # Druggability assessment
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DruggabilityScore:
     ppi_pair: str
@@ -373,6 +374,7 @@ def assess_interface_druggability(gene_a: str, gene_b: str) -> DruggabilityScore
 # Signaling pathway mapping
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PathwayNode:
     gene: str
@@ -383,7 +385,20 @@ class PathwayNode:
 SIGNALING_PATHWAYS: dict[str, dict] = {
     "RAS-MAPK": {
         "description": "RAS-RAF-MEK-ERK proliferation and survival signaling",
-        "genes": ["EGFR", "HRAS", "KRAS", "NRAS", "RAF1", "BRAF", "MAP2K1", "MAP2K2", "MAPK1", "MAPK3", "GRB2", "SOS1"],
+        "genes": [
+            "EGFR",
+            "HRAS",
+            "KRAS",
+            "NRAS",
+            "RAF1",
+            "BRAF",
+            "MAP2K1",
+            "MAP2K2",
+            "MAPK1",
+            "MAPK3",
+            "GRB2",
+            "SOS1",
+        ],
         "nodes": {
             "EGFR": "receptor",
             "HRAS": "oncogene",
@@ -401,7 +416,20 @@ SIGNALING_PATHWAYS: dict[str, dict] = {
     },
     "PI3K-AKT-mTOR": {
         "description": "PI3K-AKT-mTOR survival, growth, and metabolism axis",
-        "genes": ["EGFR", "PIK3CA", "PIK3R1", "PTEN", "AKT1", "AKT2", "PDPK1", "TSC1", "TSC2", "MTOR", "RPS6KB1", "EIF4EBP1"],
+        "genes": [
+            "EGFR",
+            "PIK3CA",
+            "PIK3R1",
+            "PTEN",
+            "AKT1",
+            "AKT2",
+            "PDPK1",
+            "TSC1",
+            "TSC2",
+            "MTOR",
+            "RPS6KB1",
+            "EIF4EBP1",
+        ],
         "nodes": {
             "EGFR": "receptor",
             "PIK3CA": "kinase",
@@ -419,7 +447,19 @@ SIGNALING_PATHWAYS: dict[str, dict] = {
     },
     "p53": {
         "description": "TP53 tumor suppressor and DNA damage response",
-        "genes": ["TP53", "MDM2", "MDM4", "ATM", "ATR", "CHEK1", "CHEK2", "CDKN1A", "BBC3", "BAX", "PUMA"],
+        "genes": [
+            "TP53",
+            "MDM2",
+            "MDM4",
+            "ATM",
+            "ATR",
+            "CHEK1",
+            "CHEK2",
+            "CDKN1A",
+            "BBC3",
+            "BAX",
+            "PUMA",
+        ],
         "nodes": {
             "TP53": "tumor_suppressor",
             "MDM2": "oncogene",
@@ -436,7 +476,20 @@ SIGNALING_PATHWAYS: dict[str, dict] = {
     },
     "Wnt-beta-catenin": {
         "description": "Wnt/β-catenin developmental and oncogenic signaling",
-        "genes": ["WNT1", "FZD1", "LRP5", "LRP6", "DVL1", "APC", "AXIN1", "GSK3B", "CTNNB1", "TCF7L2", "MYC", "CCND1"],
+        "genes": [
+            "WNT1",
+            "FZD1",
+            "LRP5",
+            "LRP6",
+            "DVL1",
+            "APC",
+            "AXIN1",
+            "GSK3B",
+            "CTNNB1",
+            "TCF7L2",
+            "MYC",
+            "CCND1",
+        ],
         "nodes": {
             "WNT1": "ligand",
             "FZD1": "receptor",
@@ -454,7 +507,18 @@ SIGNALING_PATHWAYS: dict[str, dict] = {
     },
     "JAK-STAT": {
         "description": "Janus kinase – signal transducer and activator of transcription",
-        "genes": ["IL6", "IL6R", "JAK1", "JAK2", "TYK2", "STAT1", "STAT3", "STAT5A", "SOCS1", "SOCS3"],
+        "genes": [
+            "IL6",
+            "IL6R",
+            "JAK1",
+            "JAK2",
+            "TYK2",
+            "STAT1",
+            "STAT3",
+            "STAT5A",
+            "SOCS1",
+            "SOCS3",
+        ],
         "nodes": {
             "IL6": "cytokine",
             "IL6R": "receptor",
@@ -470,7 +534,19 @@ SIGNALING_PATHWAYS: dict[str, dict] = {
     },
     "Notch": {
         "description": "Notch developmental signaling and cancer stem cell maintenance",
-        "genes": ["DLL4", "JAG1", "NOTCH1", "NOTCH2", "NOTCH3", "ADAM10", "PSEN1", "RBPJ", "HES1", "HEY1", "MAML1"],
+        "genes": [
+            "DLL4",
+            "JAG1",
+            "NOTCH1",
+            "NOTCH2",
+            "NOTCH3",
+            "ADAM10",
+            "PSEN1",
+            "RBPJ",
+            "HES1",
+            "HEY1",
+            "MAML1",
+        ],
         "nodes": {
             "DLL4": "ligand",
             "JAG1": "ligand",
@@ -496,11 +572,13 @@ def map_to_pathway(genes: list[str]) -> dict:
         hits = []
         for g in upper_genes:
             if g in pathway_data["genes"]:
-                hits.append({
-                    "gene": g,
-                    "role": pathway_data["nodes"].get(g, "unknown"),
-                    "position_in_pathway": pathway_data["genes"].index(g),
-                })
+                hits.append(
+                    {
+                        "gene": g,
+                        "role": pathway_data["nodes"].get(g, "unknown"),
+                        "position_in_pathway": pathway_data["genes"].index(g),
+                    }
+                )
         if hits:
             result[pathway_name] = {
                 "description": pathway_data["description"],
@@ -513,6 +591,7 @@ def map_to_pathway(genes: list[str]) -> dict:
 # ---------------------------------------------------------------------------
 # Host-pathogen interaction
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class HostPathogenPPI:
@@ -617,6 +696,7 @@ def predict_host_pathogen_ppi(host_gene: str, pathogen_protein: str) -> HostPath
 # Combination therapy targets
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CombinationTarget:
     target_a: str
@@ -633,7 +713,11 @@ _COMBINATION_DB: list[dict] = [
         "target_b": "MAP2K1",
         "rationale": "Vertical MAPK pathway inhibition prevents adaptive resistance to single-agent BRAF or MEK blockade",
         "synergy_score": 0.87,
-        "known_combinations": ["Dabrafenib+Trametinib", "Vemurafenib+Cobimetinib", "Encorafenib+Binimetinib"],
+        "known_combinations": [
+            "Dabrafenib+Trametinib",
+            "Vemurafenib+Cobimetinib",
+            "Encorafenib+Binimetinib",
+        ],
     },
     {
         "trigger_genes": {"EGFR", "PIK3CA", "AKT1", "PTEN"},
@@ -704,12 +788,14 @@ def suggest_combinations(mutated_genes: list[str]) -> list[CombinationTarget]:
             key = (entry["target_a"], entry["target_b"])
             if key not in seen:
                 seen.add(key)
-                results.append(CombinationTarget(
-                    target_a=entry["target_a"],
-                    target_b=entry["target_b"],
-                    rationale=entry["rationale"],
-                    synergy_score=entry["synergy_score"],
-                    known_combinations=entry["known_combinations"],
-                ))
+                results.append(
+                    CombinationTarget(
+                        target_a=entry["target_a"],
+                        target_b=entry["target_b"],
+                        rationale=entry["rationale"],
+                        synergy_score=entry["synergy_score"],
+                        known_combinations=entry["known_combinations"],
+                    )
+                )
     results.sort(key=lambda c: c.synergy_score, reverse=True)
     return results

@@ -7,7 +7,6 @@ from backend.app.db import build_engine
 from backend.app.main import app
 from backend.app.models import Base
 
-
 client = TestClient(app)
 
 

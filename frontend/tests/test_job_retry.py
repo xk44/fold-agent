@@ -7,6 +7,7 @@ Covers:
 - enrich_cards_with_retry_info: adds retry metadata to job status cards
 - format_retry_action_summary: operator-facing summary of retry-eligible jobs
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,10 +25,10 @@ from frontend.app.event_stream import (
     retry_eligibility_reason,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j1",
@@ -58,6 +59,7 @@ def _make_api_job(
 # is_retry_eligible
 # ---------------------------------------------------------------------------
 
+
 class TestIsRetryEligible:
     """Retry is eligible when:
     - status is 'failed' or 'timed_out'
@@ -74,7 +76,7 @@ class TestIsRetryEligible:
         assert is_retry_eligible(job) is False
 
     def test_failed_at_max_attempts(self):
-        """attempt=3, max_retries=2 → 3 > 2+1=3 would exceed on next try? 
+        """attempt=3, max_retries=2 → 3 > 2+1=3 would exceed on next try?
         Actually: next_attempt = 4, max_retries+1 = 3, so 4 > 3 — not eligible."""
         job = _make_api_job(status="failed", attempt=3, max_retries=2)
         assert is_retry_eligible(job) is False
@@ -152,6 +154,7 @@ class TestIsRetryEligible:
 # retry_eligibility_reason
 # ---------------------------------------------------------------------------
 
+
 class TestRetryEligibilityReason:
     def test_eligible_failed(self):
         job = _make_api_job(status="failed", attempt=1, max_retries=2)
@@ -185,6 +188,7 @@ class TestRetryEligibilityReason:
 # format_retry_status_badge
 # ---------------------------------------------------------------------------
 
+
 class TestFormatRetryStatusBadge:
     def test_eligible_badge(self):
         job = _make_api_job(status="failed", attempt=1, max_retries=2)
@@ -194,7 +198,13 @@ class TestFormatRetryStatusBadge:
     def test_not_eligible_badge(self):
         job = _make_api_job(status="completed", attempt=1, max_retries=0)
         badge = format_retry_status_badge(job)
-        assert "—" in badge or "—" in badge or "none" in badge.lower() or "n/a" in badge.lower() or badge == ""
+        assert (
+            "—" in badge
+            or "—" in badge
+            or "none" in badge.lower()
+            or "n/a" in badge.lower()
+            or badge == ""
+        )
 
     def test_exhausted_badge(self):
         job = _make_api_job(status="failed", attempt=3, max_retries=2)
@@ -205,6 +215,7 @@ class TestFormatRetryStatusBadge:
 # ---------------------------------------------------------------------------
 # enrich_cards_with_retry_info
 # ---------------------------------------------------------------------------
+
 
 class TestEnrichCardsWithRetryInfo:
     def test_adds_retry_eligible_field(self):
@@ -240,10 +251,13 @@ class TestEnrichCardsWithRetryInfo:
 
     def test_event_sourced_card_not_eligible(self):
         from skills.shared.event_stream_client import SSEEvent
-        events = [SSEEvent(
-            event="pipeline.failed",
-            data={"case_id": "c1", "status": "failed"},
-        )]
+
+        events = [
+            SSEEvent(
+                event="pipeline.failed",
+                data={"case_id": "c1", "status": "failed"},
+            )
+        ]
         cards = derive_job_status_cards(events, [])
         enriched = enrich_cards_with_retry_info(cards)
         # Event-sourced cards have no job_id, so not retry-eligible
@@ -281,6 +295,7 @@ class TestEnrichCardsWithRetryInfo:
 # format_retry_action_summary
 # ---------------------------------------------------------------------------
 
+
 class TestFormatRetryActionSummary:
     def test_no_eligible_jobs(self):
         cards = derive_job_status_cards(
@@ -294,7 +309,9 @@ class TestFormatRetryActionSummary:
     def test_with_eligible_jobs(self):
         jobs = [
             _make_api_job(job_id="j1", status="failed", attempt=1, max_retries=2),
-            _make_api_job(job_id="j2", status="timed_out", attempt=1, max_retries=1, timed_out=True),
+            _make_api_job(
+                job_id="j2", status="timed_out", attempt=1, max_retries=1, timed_out=True
+            ),
         ]
         cards = derive_job_status_cards([], jobs)
         enriched = enrich_cards_with_retry_info(cards)
@@ -309,6 +326,7 @@ class TestFormatRetryActionSummary:
 # ---------------------------------------------------------------------------
 # build_job_status_table_rows with retry info
 # ---------------------------------------------------------------------------
+
 
 class TestBuildJobStatusTableRowsWithRetry:
     def test_retry_eligible_column_in_rows(self):

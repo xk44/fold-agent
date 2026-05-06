@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 from backend.app.alphafold.shells import AlphaFoldExecution
 
 
-def test_alphafold_shell_output_parsing_updates_candidate_structure_evidence(client: TestClient, monkeypatch) -> None:
+def test_alphafold_shell_output_parsing_updates_candidate_structure_evidence(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "AlphaFold parsed case"},
@@ -42,7 +44,9 @@ def test_alphafold_shell_output_parsing_updates_candidate_structure_evidence(cli
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run_response = client.post(
         "/alphafold/backends/colabfold/run",
@@ -82,13 +86,17 @@ def test_candidate_report_reflects_parsed_alphafold_status(client: TestClient, m
             validation_ok=True,
             notes="simulated",
             status="completed",
-            stdout=json.dumps({"structure": {"backend": backend_name, "status": "completed", "pLDDT_mean": 88.4}}),
+            stdout=json.dumps(
+                {"structure": {"backend": backend_name, "status": "completed", "pLDDT_mean": 88.4}}
+            ),
             stderr="",
             timed_out=False,
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     client.post(
         "/alphafold/backends/colabfold/run",

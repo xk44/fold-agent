@@ -39,8 +39,12 @@ def test_register_sample_with_subject_linkage(client: TestClient) -> None:
 
 
 def test_register_sample_rejects_subject_from_other_case(client: TestClient) -> None:
-    case_a = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case a"}).json()["id"]
-    case_b = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case b"}).json()["id"]
+    case_a = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case a"}).json()[
+        "id"
+    ]
+    case_b = client.post("/cases", json={"species": "demo", "diagnosis_summary": "case b"}).json()[
+        "id"
+    ]
 
     subject_id = client.post(
         f"/cases/{case_a}/subjects",

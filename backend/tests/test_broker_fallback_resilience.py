@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import Future
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -19,7 +19,6 @@ from backend.app import jobs
 from backend.app.config import settings
 from backend.app.db import SessionLocal
 from backend.app.models import BackgroundJob, BackgroundJobStatusEnum
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -49,6 +48,7 @@ def _make_job(db, **overrides):
     defaults.update(overrides)
     if defaults["id"] is None:
         from uuid import uuid4
+
         defaults["id"] = str(uuid4())
     job = BackgroundJob(**defaults)
     db.add(job)
@@ -87,7 +87,9 @@ class TestShouldUseCeleryBackendAutoMode:
     def test_auto_has_broker_no_task_metadata(self, monkeypatch):
         """auto + broker present + no task metadata → threadpool (nothing to dispatch)."""
         monkeypatch.setattr(settings, "background_job_backend", "auto", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert jobs._should_use_celery_backend(None, None) is False
         assert jobs._should_use_celery_backend("some.task", None) is False
         assert jobs._should_use_celery_backend(None, {"k": "v"}) is False
@@ -95,7 +97,9 @@ class TestShouldUseCeleryBackendAutoMode:
     def test_auto_has_broker_and_task_metadata(self, monkeypatch):
         """auto + broker present + full task metadata → celery."""
         monkeypatch.setattr(settings, "background_job_backend", "auto", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert (
             jobs._should_use_celery_backend(
                 "backend.app.worker.tasks.pipeline_run",
@@ -163,7 +167,9 @@ class TestShouldUseCeleryBackendForcedCelery:
     def test_celery_forced_with_broker_but_no_task_metadata(self, monkeypatch):
         """Forced celery with broker but no task name/kwargs → threadpool."""
         monkeypatch.setattr(settings, "background_job_backend", "celery", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert jobs._should_use_celery_backend(None, None) is False
         assert jobs._should_use_celery_backend("some.task", None) is False
         assert jobs._should_use_celery_backend(None, {"k": "v"}) is False
@@ -171,7 +177,9 @@ class TestShouldUseCeleryBackendForcedCelery:
     def test_celery_forced_with_broker_and_task_metadata(self, monkeypatch):
         """Forced celery with broker + task metadata → celery."""
         monkeypatch.setattr(settings, "background_job_backend", "celery", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert (
             jobs._should_use_celery_backend(
                 "backend.app.worker.tasks.pipeline_run",
@@ -199,7 +207,9 @@ class TestShouldUseCeleryBackendForcedThreadpool:
 
     def test_threadpool_forced_even_with_broker(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", "threadpool", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert (
             jobs._should_use_celery_backend(
                 "backend.app.worker.tasks.pipeline_run",
@@ -217,7 +227,9 @@ class TestShouldUseCeleryBackendForcedThreadpool:
     def test_threadpool_forced_case_insensitive(self, monkeypatch):
         """'ThreadPool' (mixed case) should still resolve to threadpool."""
         monkeypatch.setattr(settings, "background_job_backend", "ThreadPool", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert (
             jobs._should_use_celery_backend(
                 "backend.app.worker.tasks.pipeline_run",
@@ -232,7 +244,9 @@ class TestShouldUseCeleryBackendWhitespace:
 
     def test_auto_with_leading_trailing_spaces(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", " auto ", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         # _should_use_celery_backend does .lower().strip()
         assert (
             jobs._should_use_celery_backend(
@@ -288,7 +302,9 @@ class TestSubmitJobRoutingIntegration:
         monkeypatch.setattr(jobs, "_submit_via_celery", fake_celery, raising=False)
         monkeypatch.setattr(jobs, "_submit_via_threadpool", fail_threadpool, raising=False)
         monkeypatch.setattr(settings, "background_job_backend", "auto", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
 
         result = jobs.submit_job(
             "job-with-broker",
@@ -336,7 +352,9 @@ class TestSubmitJobRoutingIntegration:
         monkeypatch.setattr(jobs, "_submit_via_threadpool", fake_threadpool, raising=False)
         monkeypatch.setattr(jobs, "_submit_via_celery", fail_celery, raising=False)
         monkeypatch.setattr(settings, "background_job_backend", "celery", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
 
         # celery forced + broker present + NO task metadata → threadpool
         result = jobs.submit_job("job-celery-no-metadata", lambda: None)
@@ -383,7 +401,9 @@ class TestCancelCeleryRevokeSafety:
         mock_result = MagicMock()
         mock_result.revoke = MagicMock()
 
-        job = _make_job(db, job_type="celery_cancel_running", status=BackgroundJobStatusEnum.running)
+        job = _make_job(
+            db, job_type="celery_cancel_running", status=BackgroundJobStatusEnum.running
+        )
         # Put a celery result in the registry
         jobs._celery_results[job.id] = mock_result
         # Also need a cancel event and future since running job path checks those
@@ -443,7 +463,9 @@ class TestCancelCeleryRevokeSafety:
         mock_result = MagicMock()
         mock_result.revoke = MagicMock(side_effect=RuntimeError("broker unavailable"))
 
-        job = _make_job(db, job_type="celery_revoke_error_running", status=BackgroundJobStatusEnum.running)
+        job = _make_job(
+            db, job_type="celery_revoke_error_running", status=BackgroundJobStatusEnum.running
+        )
         jobs._celery_results[job.id] = mock_result
 
         cancel_evt = threading.Event()
@@ -502,24 +524,32 @@ class TestShouldUseCeleryBackendPartialMetadata:
 
     def test_auto_empty_string_task_name(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", "auto", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         # Empty string task name → falsy → no celery
         assert jobs._should_use_celery_backend("", {"job_id": "x"}) is False
 
     def test_auto_empty_dict_kwargs(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", "auto", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         # Empty dict → falsy → no celery
         assert jobs._should_use_celery_backend("some.task", {}) is False
 
     def test_celery_forced_empty_string_task_name(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", "celery", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert jobs._should_use_celery_backend("", {"job_id": "x"}) is False
 
     def test_celery_forced_empty_dict_kwargs(self, monkeypatch):
         monkeypatch.setattr(settings, "background_job_backend", "celery", raising=False)
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://localhost:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://localhost:6379/0", raising=False
+        )
         assert jobs._should_use_celery_backend("some.task", {}) is False
 
 
@@ -538,7 +568,9 @@ class TestWorkerBrokerFallback:
 
     def test_celery_broker_url_takes_precedence_over_redis_url(self, monkeypatch):
         """When celery_broker_url is set, it should be used over redis_url."""
-        monkeypatch.setattr(settings, "celery_broker_url", "redis://celery-host:6379/0", raising=False)
+        monkeypatch.setattr(
+            settings, "celery_broker_url", "redis://celery-host:6379/0", raising=False
+        )
         monkeypatch.setattr(settings, "redis_url", "redis://redis-host:6379/0", raising=False)
         # The worker init would use celery_broker_url as-is
         assert settings.celery_broker_url == "redis://celery-host:6379/0"
@@ -548,9 +580,7 @@ class TestWorkerBrokerFallback:
         monkeypatch.setattr(settings, "celery_broker_url", None, raising=False)
         monkeypatch.setattr(settings, "redis_url", "redis://fallback-host:6379/0", raising=False)
         # _should_use_celery_backend sees this as has_broker=True
-        assert jobs._should_use_celery_backend(
-            "some.task", {"k": "v"}
-        ) is True
+        assert jobs._should_use_celery_backend("some.task", {"k": "v"}) is True
 
     def test_neither_url_set_is_no_broker(self, monkeypatch):
         """When neither URL is set, _should_use_celery_backend returns False."""

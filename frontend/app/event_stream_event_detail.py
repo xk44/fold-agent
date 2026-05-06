@@ -2,6 +2,7 @@
 
 Extracted from event_stream.py for modularity.
 """
+
 from __future__ import annotations
 
 from skills.shared.event_stream_client import SSEEvent
@@ -155,10 +156,21 @@ def format_event_detail(detail: dict) -> str:
 
     # Key data fields (select most useful ones for readability)
     data = detail.get("data") or {}
-    detail_keys = [k for k in (
-        "status", "safety_gate_result", "actor", "details",
-        "message", "error", "step", "total_steps", "completed_steps",
-    ) if k in data and data[k]]
+    detail_keys = [
+        k
+        for k in (
+            "status",
+            "safety_gate_result",
+            "actor",
+            "details",
+            "message",
+            "error",
+            "step",
+            "total_steps",
+            "completed_steps",
+        )
+        if k in data and data[k]
+    ]
     for k in detail_keys:
         val = data[k]
         # Truncate long values

@@ -3,10 +3,10 @@
 Local-first, safety-gated research coordination platform.
 """
 
+import warnings
 from enum import Enum
-from typing import Optional
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SpeciesMode(str, Enum):
@@ -66,9 +66,9 @@ class Settings(BaseSettings):
     db_init_mode: DbInitMode = DbInitMode.create_all
 
     # Optional worker stack
-    redis_url: Optional[str] = None
-    celery_broker_url: Optional[str] = None
-    celery_result_backend: Optional[str] = None
+    redis_url: str | None = None
+    celery_broker_url: str | None = None
+    celery_result_backend: str | None = None
     background_job_backend: str = "auto"  # auto, threadpool, celery
     event_backend: str = "memory"  # memory (default), redis (future)
 
@@ -81,7 +81,7 @@ class Settings(BaseSettings):
 
     # Encryption
     encryption_at_rest_enabled: bool = False
-    encryption_key: Optional[str] = None
+    encryption_key: str | None = None
 
     # AlphaFold
     alphafold_default_backend: AlphaFoldBackendName = AlphaFoldBackendName.MOCK
@@ -134,7 +134,16 @@ class Settings(BaseSettings):
     # Secret
     secret_key: str = "changeme-set-a-real-secret-key"
 
-    model_config = {"env_prefix": "FOLDAGENT_"}
+    model_config = SettingsConfigDict(
+        env_prefix="FOLDAGENT_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
 
 settings = Settings()
+
+if settings.secret_key == "changeme-set-a-real-secret-key":
+    warnings.warn(
+        "FOLDAGENT_SECRET_KEY is using the default insecure value. "
+        "Set a strong random secret key before deploying to production.",
+        stacklevel=1,
+    )

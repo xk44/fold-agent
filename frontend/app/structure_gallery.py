@@ -10,10 +10,7 @@ from typing import Any
 
 from frontend.app.structure_viewer import (
     list_structure_artifacts,
-    select_structure_artifact,
-    viewer_format_for_artifact,
 )
-
 
 BACKEND_INFO = {
     "mock": {
@@ -78,14 +75,16 @@ BACKEND_INFO = {
 def build_backend_comparison_rows() -> list[dict]:
     rows = []
     for key, info in BACKEND_INFO.items():
-        rows.append({
-            "Backend": info["name"],
-            "Mode": info["mode"],
-            "GPU": "Yes" if info["gpu_required"] else "No",
-            "Cloud": "Yes" if info["cloud"] else "No",
-            "Privacy Risk": info["privacy_risk"].title(),
-            "key": key,
-        })
+        rows.append(
+            {
+                "Backend": info["name"],
+                "Mode": info["mode"],
+                "GPU": "Yes" if info["gpu_required"] else "No",
+                "Cloud": "Yes" if info["cloud"] else "No",
+                "Privacy Risk": info["privacy_risk"].title(),
+                "key": key,
+            }
+        )
     return rows
 
 
@@ -104,7 +103,9 @@ def render_structure_gallery(
         status_icon = {"queued": "⏳", "running": "🔄", "completed": "✅", "failed": "❌"}.get(
             job.get("status", ""), "❓"
         )
-        with st.expander(f"{status_icon} Job {job['id'][:8]} — {job.get('backend_used', 'unknown')}"):
+        with st.expander(
+            f"{status_icon} Job {job['id'][:8]} — {job.get('backend_used', 'unknown')}"
+        ):
             cols = st.columns(3)
             cols[0].metric("Status", job.get("status", "unknown"))
             cols[1].metric("Backend", job.get("backend_used", "—"))

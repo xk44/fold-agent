@@ -18,10 +18,9 @@ import subprocess
 import tempfile
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -149,7 +148,9 @@ class ColabFoldBackend(AlphaFoldBackend):
         return BackendValidation(
             name=self.name,
             available=available,
-            reason=f"colabfold_batch found at {path}" if available else "colabfold_batch not found on PATH",
+            reason=f"colabfold_batch found at {path}"
+            if available
+            else "colabfold_batch not found on PATH",
             gpu_required=True,
             cloud=False,
             privacy_risk="low",
@@ -189,16 +190,12 @@ class ColabFoldBackend(AlphaFoldBackend):
                     cmd, capture_output=True, text=True, timeout=timeout, check=False
                 )
             except subprocess.TimeoutExpired as exc:
-                raise RuntimeError(
-                    f"ColabFold timed out after {timeout}s"
-                ) from exc
+                raise RuntimeError(f"ColabFold timed out after {timeout}s") from exc
             except OSError as exc:
                 raise RuntimeError(f"ColabFold failed to launch: {exc}") from exc
 
             if proc.returncode != 0:
-                raise RuntimeError(
-                    f"ColabFold exited {proc.returncode}:\n{proc.stderr[:2000]}"
-                )
+                raise RuntimeError(f"ColabFold exited {proc.returncode}:\n{proc.stderr[:2000]}")
 
             # Find best ranked PDB (ColabFold writes rank_001_*.pdb or .cif)
             pdb_data: str | None = None
@@ -224,7 +221,9 @@ class ColabFoldBackend(AlphaFoldBackend):
                         confidence["pTM"] = scores["ptm"]
                     if "pae" in scores:
                         pae_flat = [v for row in scores["pae"] for v in row]
-                        confidence["pAE_mean"] = round(sum(pae_flat) / len(pae_flat), 2) if pae_flat else None
+                        confidence["pAE_mean"] = (
+                            round(sum(pae_flat) / len(pae_flat), 2) if pae_flat else None
+                        )
                 except (json.JSONDecodeError, OSError):
                     pass
 
@@ -263,7 +262,9 @@ class LocalColabFoldBackend(AlphaFoldBackend):
         reason = (
             "localcolabfold installation found"
             if local_found
-            else ("colabfold_batch on PATH (may be system)" if path else "colabfold_batch not found")
+            else (
+                "colabfold_batch on PATH (may be system)" if path else "colabfold_batch not found"
+            )
         )
         return BackendValidation(
             name=self.name,
@@ -318,9 +319,7 @@ class LocalColabFoldBackend(AlphaFoldBackend):
                     cmd, capture_output=True, text=True, timeout=timeout, check=False
                 )
             except subprocess.TimeoutExpired as exc:
-                raise RuntimeError(
-                    f"LocalColabFold timed out after {timeout}s"
-                ) from exc
+                raise RuntimeError(f"LocalColabFold timed out after {timeout}s") from exc
             except OSError as exc:
                 raise RuntimeError(f"LocalColabFold failed to launch: {exc}") from exc
 
@@ -351,7 +350,9 @@ class LocalColabFoldBackend(AlphaFoldBackend):
                         confidence["pTM"] = scores["ptm"]
                     if "pae" in scores:
                         pae_flat = [v for row in scores["pae"] for v in row]
-                        confidence["pAE_mean"] = round(sum(pae_flat) / len(pae_flat), 2) if pae_flat else None
+                        confidence["pAE_mean"] = (
+                            round(sum(pae_flat) / len(pae_flat), 2) if pae_flat else None
+                        )
                 except (json.JSONDecodeError, OSError):
                     pass
 
@@ -388,7 +389,9 @@ class AlphaFold2LocalBackend(AlphaFoldBackend):
         return BackendValidation(
             name=self.name,
             available=found,
-            reason="AlphaFold2 directory found" if found else "AlphaFold2 installation directory not found",
+            reason="AlphaFold2 directory found"
+            if found
+            else "AlphaFold2 installation directory not found",
             gpu_required=True,
             cloud=False,
             privacy_risk="none",
@@ -450,16 +453,12 @@ class AlphaFold2LocalBackend(AlphaFoldBackend):
                     cmd, capture_output=True, text=True, timeout=timeout, check=False
                 )
             except subprocess.TimeoutExpired as exc:
-                raise RuntimeError(
-                    f"AlphaFold2 timed out after {timeout}s"
-                ) from exc
+                raise RuntimeError(f"AlphaFold2 timed out after {timeout}s") from exc
             except OSError as exc:
                 raise RuntimeError(f"AlphaFold2 failed to launch: {exc}") from exc
 
             if proc.returncode != 0:
-                raise RuntimeError(
-                    f"AlphaFold2 exited {proc.returncode}:\n{proc.stderr[:2000]}"
-                )
+                raise RuntimeError(f"AlphaFold2 exited {proc.returncode}:\n{proc.stderr[:2000]}")
 
             # AF2 writes ranked PDBs: ranked_0.pdb is the top model
             pdb_data: str | None = None
@@ -528,17 +527,16 @@ class AlphaFold3LocalBackend(AlphaFoldBackend):
         return BackendValidation(
             name=self.name,
             available=found,
-            reason="AlphaFold3 directory found" if found else "AlphaFold3 installation directory not found",
+            reason="AlphaFold3 directory found"
+            if found
+            else "AlphaFold3 installation directory not found",
             gpu_required=True,
             cloud=False,
             privacy_risk="none",
         )
 
     def predict(self, sequence: str, options: dict) -> PredictionResult:
-        binary = (
-            os.environ.get("FOLDAGENT_ALPHAFOLD3_BINARY")
-            or shutil.which("alphafold")
-        )
+        binary = os.environ.get("FOLDAGENT_ALPHAFOLD3_BINARY") or shutil.which("alphafold")
         if not binary:
             af3_candidates = [
                 os.path.expanduser("~/alphafold3/run_alphafold.py"),
@@ -562,9 +560,7 @@ class AlphaFold3LocalBackend(AlphaFoldBackend):
             af3_input = {
                 "name": job_name,
                 "modelSeeds": options.get("model_seeds", [1]),
-                "sequences": [
-                    {"protein": {"id": "A", "sequence": sequence}}
-                ],
+                "sequences": [{"protein": {"id": "A", "sequence": sequence}}],
                 "dialect": "alphafold3",
                 "version": 4,
             }
@@ -593,28 +589,28 @@ class AlphaFold3LocalBackend(AlphaFoldBackend):
                     cmd, capture_output=True, text=True, timeout=timeout, check=False
                 )
             except subprocess.TimeoutExpired as exc:
-                raise RuntimeError(
-                    f"AlphaFold3 timed out after {timeout}s"
-                ) from exc
+                raise RuntimeError(f"AlphaFold3 timed out after {timeout}s") from exc
             except OSError as exc:
                 raise RuntimeError(f"AlphaFold3 failed to launch: {exc}") from exc
 
             if proc.returncode != 0:
-                raise RuntimeError(
-                    f"AlphaFold3 exited {proc.returncode}:\n{proc.stderr[:2000]}"
-                )
+                raise RuntimeError(f"AlphaFold3 exited {proc.returncode}:\n{proc.stderr[:2000]}")
 
             confidence: dict[str, Any] = {}
             pdb_data: str | None = None
 
             # AF3 produces <job_name>_model.cif at the output_dir root
             job_dir = output_dir / job_name
-            cif_candidates = sorted((job_dir if job_dir.exists() else output_dir).rglob("*_model.cif"))
+            cif_candidates = sorted(
+                (job_dir if job_dir.exists() else output_dir).rglob("*_model.cif")
+            )
             if cif_candidates:
                 pdb_data = cif_candidates[0].read_text(encoding="utf-8", errors="replace")
 
             # Parse summary confidences JSON
-            summary_candidates = sorted((job_dir if job_dir.exists() else output_dir).rglob("*_summary_confidences.json"))
+            summary_candidates = sorted(
+                (job_dir if job_dir.exists() else output_dir).rglob("*_summary_confidences.json")
+            )
             if summary_candidates:
                 try:
                     summary = json.loads(summary_candidates[0].read_text(encoding="utf-8"))
@@ -625,7 +621,9 @@ class AlphaFold3LocalBackend(AlphaFoldBackend):
                 except (json.JSONDecodeError, OSError):
                     pass
 
-            conf_candidates = sorted((job_dir if job_dir.exists() else output_dir).rglob("*_confidences.json"))
+            conf_candidates = sorted(
+                (job_dir if job_dir.exists() else output_dir).rglob("*_confidences.json")
+            )
             if conf_candidates:
                 try:
                     conf = json.loads(conf_candidates[0].read_text(encoding="utf-8"))
@@ -687,9 +685,7 @@ class AlphaFoldServerBackend(AlphaFoldBackend):
         # Submits a JSON job payload and polls for results.
         # Authentication cookie / API key must be set via FOLDAGENT_AFSERVER_COOKIE or
         # FOLDAGENT_AFSERVER_API_KEY env vars.
-        base_url = os.environ.get(
-            "FOLDAGENT_AFSERVER_BASE_URL", "https://alphafoldserver.com"
-        )
+        base_url = os.environ.get("FOLDAGENT_AFSERVER_BASE_URL", "https://alphafoldserver.com")
         api_key = os.environ.get("FOLDAGENT_AFSERVER_API_KEY")
         auth_cookie = os.environ.get("FOLDAGENT_AFSERVER_COOKIE")
         if not api_key and not auth_cookie:
@@ -850,6 +846,7 @@ class AlphaFoldDBBackend(AlphaFoldBackend):
         # Basic accession sanity check (UniProt format: 1-letter + 5 alphanum, or
         # newer 10-character format)
         import re as _re
+
         if not _re.match(r"^[A-Za-z0-9]{6,10}$", accession):
             raise ValueError(
                 f"Invalid UniProt accession format: {accession!r}. "
@@ -863,7 +860,9 @@ class AlphaFoldDBBackend(AlphaFoldBackend):
         try:
             with httpx.Client(base_url=base_url, timeout=60.0) as client:
                 # Fetch metadata from the EBI API
-                meta_resp = client.get(f"/api/prediction/{accession}?key=AIzaSyCeurAJz7ZGjPQUtEaerUkBZ3TfmuXIVAw")
+                meta_resp = client.get(
+                    f"/api/prediction/{accession}?key=AIzaSyCeurAJz7ZGjPQUtEaerUkBZ3TfmuXIVAw"
+                )
                 if meta_resp.status_code == 404:
                     raise RuntimeError(
                         f"UniProt accession {accession!r} not found in AlphaFold DB. "
@@ -1139,19 +1138,25 @@ class OpenFoldBackend(AlphaFoldBackend):
 
                 data_dir = options.get("data_dir") or os.environ.get("FOLDAGENT_OPENFOLD_DATA_DIR")
                 if data_dir:
-                    cmd.extend(["--uniref90_database_path",
-                                 os.path.join(data_dir, "uniref90/uniref90.fasta")])
-                    cmd.extend(["--mgnify_database_path",
-                                 os.path.join(data_dir, "mgnify/mgy_clusters_2018_12.fa")])
-                    cmd.extend(["--pdb70_database_path",
-                                 os.path.join(data_dir, "pdb70/pdb70")])
+                    cmd.extend(
+                        [
+                            "--uniref90_database_path",
+                            os.path.join(data_dir, "uniref90/uniref90.fasta"),
+                        ]
+                    )
+                    cmd.extend(
+                        [
+                            "--mgnify_database_path",
+                            os.path.join(data_dir, "mgnify/mgy_clusters_2018_12.fa"),
+                        ]
+                    )
+                    cmd.extend(["--pdb70_database_path", os.path.join(data_dir, "pdb70/pdb70")])
 
                 model_device = options.get("model_device", "cuda:0")
                 cmd.extend(["--model_device", model_device])
 
-                jax_param_path = (
-                    options.get("jax_param_path")
-                    or os.environ.get("FOLDAGENT_OPENFOLD_PARAM_PATH")
+                jax_param_path = options.get("jax_param_path") or os.environ.get(
+                    "FOLDAGENT_OPENFOLD_PARAM_PATH"
                 )
                 if jax_param_path:
                     cmd.extend(["--jax_param_path", jax_param_path])
@@ -1162,16 +1167,12 @@ class OpenFoldBackend(AlphaFoldBackend):
                         cmd, capture_output=True, text=True, timeout=timeout, check=False
                     )
                 except subprocess.TimeoutExpired as exc:
-                    raise RuntimeError(
-                        f"OpenFold timed out after {timeout}s"
-                    ) from exc
+                    raise RuntimeError(f"OpenFold timed out after {timeout}s") from exc
                 except OSError as exc:
                     raise RuntimeError(f"OpenFold failed to launch: {exc}") from exc
 
                 if proc.returncode != 0:
-                    raise RuntimeError(
-                        f"OpenFold exited {proc.returncode}:\n{proc.stderr[:2000]}"
-                    )
+                    raise RuntimeError(f"OpenFold exited {proc.returncode}:\n{proc.stderr[:2000]}")
             else:
                 # Module-level invocation stub — openfold lacks a universal CLI entry point
                 raise NotImplementedError(
@@ -1188,9 +1189,7 @@ class OpenFoldBackend(AlphaFoldBackend):
                 pdb_data = pdb_files[0].read_text(encoding="utf-8", errors="replace")
 
             if pdb_data is None:
-                raise RuntimeError(
-                    "OpenFold completed but no output PDB found in output directory"
-                )
+                raise RuntimeError("OpenFold completed but no output PDB found in output directory")
 
             # Extract pLDDT from PDB B-factor column (residue-level pLDDT in OpenFold)
             plddts = []
@@ -1403,16 +1402,12 @@ class Chai1Backend(AlphaFoldBackend):
                         cmd, capture_output=True, text=True, timeout=timeout, check=False
                     )
                 except subprocess.TimeoutExpired as exc:
-                    raise RuntimeError(
-                        f"Chai-1 timed out after {timeout}s"
-                    ) from exc
+                    raise RuntimeError(f"Chai-1 timed out after {timeout}s") from exc
                 except OSError as exc:
                     raise RuntimeError(f"Chai-1 failed to launch: {exc}") from exc
 
                 if proc.returncode != 0:
-                    raise RuntimeError(
-                        f"Chai-1 exited {proc.returncode}:\n{proc.stderr[:2000]}"
-                    )
+                    raise RuntimeError(f"Chai-1 exited {proc.returncode}:\n{proc.stderr[:2000]}")
 
                 # Chai-1 writes pred.model_idx_N.cif or .pdb to the output dir
                 cif_files = sorted(output_dir.rglob("*.cif"))
@@ -1425,6 +1420,7 @@ class Chai1Backend(AlphaFoldBackend):
                 # Parse scores npz if present (chai_lab outputs scores.model_idx_N.npz)
                 try:
                     import numpy as _np
+
                     score_files = sorted(output_dir.rglob("scores.model_idx_*.npz"))
                     if score_files:
                         scores = _np.load(str(score_files[0]))
@@ -1444,6 +1440,7 @@ class Chai1Backend(AlphaFoldBackend):
                 # Python module invocation via chai_lab API
                 try:
                     from pathlib import Path as _Path
+
                     import torch as _torch
                     from chai_lab.chai1 import run_inference
 
@@ -1464,10 +1461,13 @@ class Chai1Backend(AlphaFoldBackend):
                     if cif_path and Path(cif_path).exists():
                         pdb_data = Path(cif_path).read_text(encoding="utf-8", errors="replace")
 
-                    scores_path = output_paths.get("scores") if isinstance(output_paths, dict) else None
+                    scores_path = (
+                        output_paths.get("scores") if isinstance(output_paths, dict) else None
+                    )
                     if scores_path and Path(scores_path).exists():
                         try:
                             import numpy as _np
+
                             scores = _np.load(str(scores_path))
                             if "plddt" in scores:
                                 plddts = scores["plddt"].tolist()

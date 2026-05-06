@@ -15,7 +15,6 @@ from fastapi.testclient import TestClient
 
 from backend.app.safety_reports import (
     AttestationType,
-    Citation,
     EvidenceLevel,
     FalsePositiveRisk,
     ProfessionalAttestation,
@@ -27,13 +26,14 @@ from backend.app.safety_reports import (
     record_attestation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_case(client: TestClient, species: str = "demo", summary: str = "Safety report test") -> str:
+def _make_case(
+    client: TestClient, species: str = "demo", summary: str = "Safety report test"
+) -> str:
     resp = client.post("/cases", json={"species": species, "diagnosis_summary": summary})
     assert resp.status_code == 201
     return resp.json()["id"]
@@ -210,7 +210,7 @@ def test_fp_risk_low_on_empty_candidates(client: TestClient) -> None:
 
 def test_fp_risk_moderate_with_missing_expression(client: TestClient) -> None:
     from backend.app.db import SessionLocal
-    from backend.app.models import CandidateAntigen, Variant
+    from backend.app.models import CandidateAntigen
 
     case_id = _make_case(client)
     v_resp = client.post(

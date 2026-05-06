@@ -6,6 +6,7 @@ Covers:
 - build_operator_timeline_rows: converts timeline to flat row dicts
 - _severity_from_event_action: infers severity from event action strings
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,7 +14,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
     _TL_CREATED,
     _TL_ERROR,
@@ -21,17 +21,17 @@ from frontend.app.event_stream import (
     _TL_LINKBACK,
     _TL_RESULT,
     _TL_RETRY,
-    derive_job_detail,
-    derive_operator_timeline,
-    build_operator_timeline_rows,
-    format_operator_timeline,
     _severity_from_event_action,
+    build_operator_timeline_rows,
+    derive_operator_timeline,
+    format_operator_timeline,
 )
-
+from skills.shared.event_stream_client import SSEEvent
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_api_job(
     job_id: str = "j-timeline-01",
@@ -99,6 +99,7 @@ def _make_pipeline_event(
 # derive_operator_timeline — basic creation entry
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorTimelineCreation:
     """The timeline always starts with a 'created' entry for the job."""
 
@@ -137,6 +138,7 @@ class TestDeriveOperatorTimelineCreation:
 # derive_operator_timeline — lifecycle events
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorTimelineLifecycle:
     """Lifecycle events from SSE are merged into the timeline."""
 
@@ -145,7 +147,9 @@ class TestDeriveOperatorTimelineLifecycle:
         card = _make_card_from_api_job(api_job)
         events = [
             _make_pipeline_event(job_id="j1", action="pipeline.started", ts="2025-04-20T10:00:00"),
-            _make_pipeline_event(job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"),
+            _make_pipeline_event(
+                job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"
+            ),
         ]
         timeline = derive_operator_timeline(card, api_job=api_job, events=events)
         lifecycle = [e for e in timeline if e["type"] == _TL_LIFECYCLE]
@@ -159,7 +163,9 @@ class TestDeriveOperatorTimelineLifecycle:
         card = _make_card_from_api_job(api_job)
         events = [
             _make_pipeline_event(job_id="j1", action="pipeline.created", ts="2025-04-20T09:55:00"),
-            _make_pipeline_event(job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"),
+            _make_pipeline_event(
+                job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"
+            ),
         ]
         timeline = derive_operator_timeline(card, api_job=api_job, events=events)
         lifecycle = [e for e in timeline if e["type"] == _TL_LIFECYCLE]
@@ -193,6 +199,7 @@ class TestDeriveOperatorTimelineLifecycle:
 # derive_operator_timeline — retry milestone
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorTimelineRetry:
     """Retry milestone appears when attempt > 1."""
 
@@ -223,6 +230,7 @@ class TestDeriveOperatorTimelineRetry:
 # derive_operator_timeline — structure linkback milestone
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorTimelineLinkback:
     """Structure linkback milestone appears for alphafold jobs."""
 
@@ -251,6 +259,7 @@ class TestDeriveOperatorTimelineLinkback:
 # ---------------------------------------------------------------------------
 # derive_operator_timeline — result/error terminal state
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveOperatorTimelineTerminalState:
     """Result or error entry reflects terminal state."""
@@ -309,18 +318,22 @@ class TestDeriveOperatorTimelineTerminalState:
 # derive_operator_timeline — chronological sorting
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveOperatorTimelineSorting:
     """Timeline entries are sorted chronologically; empty timestamps go last."""
 
     def test_timestamp_sorting(self):
         api_job = _make_api_job(
-            job_id="j1", case_id="c1",
+            job_id="j1",
+            case_id="c1",
             created_at="2025-04-20T09:55:00",
         )
         card = _make_card_from_api_job(api_job)
         events = [
             _make_pipeline_event(job_id="j1", action="pipeline.started", ts="2025-04-20T10:00:00"),
-            _make_pipeline_event(job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"),
+            _make_pipeline_event(
+                job_id="j1", action="pipeline.completed", ts="2025-04-20T10:05:00"
+            ),
         ]
         timeline = derive_operator_timeline(card, api_job=api_job, events=events)
         # Created + 2 lifecycle entries
@@ -331,8 +344,10 @@ class TestDeriveOperatorTimelineSorting:
 
     def test_empty_timestamps_sort_last(self):
         api_job = _make_api_job(
-            job_id="j1", case_id="c1",
-            status="failed", error="boom",
+            job_id="j1",
+            case_id="c1",
+            status="failed",
+            error="boom",
         )
         card = _make_card_from_api_job(api_job)
         timeline = derive_operator_timeline(card, api_job=api_job)
@@ -348,6 +363,7 @@ class TestDeriveOperatorTimelineSorting:
 # ---------------------------------------------------------------------------
 # derive_operator_timeline — comprehensive integration
 # ---------------------------------------------------------------------------
+
 
 class TestDeriveOperatorTimelineIntegration:
     """Integration: full timeline from card + api_job + events."""
@@ -365,8 +381,18 @@ class TestDeriveOperatorTimelineIntegration:
         )
         card = _make_card_from_api_job(api_job)
         events = [
-            _make_pipeline_event(job_id="j-full-01", case_id="c-full-01", action="pipeline.started", ts="2025-04-20T10:00:00"),
-            _make_pipeline_event(job_id="j-full-01", case_id="c-full-01", action="pipeline.failed", ts="2025-04-20T10:05:00"),
+            _make_pipeline_event(
+                job_id="j-full-01",
+                case_id="c-full-01",
+                action="pipeline.started",
+                ts="2025-04-20T10:00:00",
+            ),
+            _make_pipeline_event(
+                job_id="j-full-01",
+                case_id="c-full-01",
+                action="pipeline.failed",
+                ts="2025-04-20T10:05:00",
+            ),
         ]
         timeline = derive_operator_timeline(card, api_job=api_job, events=events)
         types = [e["type"] for e in timeline]
@@ -387,8 +413,18 @@ class TestDeriveOperatorTimelineIntegration:
         )
         card = _make_card_from_api_job(api_job)
         events = [
-            _make_pipeline_event(job_id="j-comp-01", case_id="c-comp-01", action="pipeline.started", ts="2025-04-20T10:00:00"),
-            _make_pipeline_event(job_id="j-comp-01", case_id="c-comp-01", action="pipeline.completed", ts="2025-04-20T10:05:00"),
+            _make_pipeline_event(
+                job_id="j-comp-01",
+                case_id="c-comp-01",
+                action="pipeline.started",
+                ts="2025-04-20T10:00:00",
+            ),
+            _make_pipeline_event(
+                job_id="j-comp-01",
+                case_id="c-comp-01",
+                action="pipeline.completed",
+                ts="2025-04-20T10:05:00",
+            ),
         ]
         timeline = derive_operator_timeline(card, api_job=api_job, events=events)
         types = [e["type"] for e in timeline]
@@ -420,19 +456,22 @@ class TestDeriveOperatorTimelineIntegration:
 # format_operator_timeline
 # ---------------------------------------------------------------------------
 
+
 class TestFormatOperatorTimeline:
     def test_empty_timeline(self):
         result = format_operator_timeline([])
         assert result == "No timeline entries."
 
     def test_single_entry(self):
-        timeline = [{
-            "type": _TL_CREATED,
-            "timestamp": "2025-04-20T09:55:00",
-            "label": "pipeline_run j1 created",
-            "detail": "case=c1",
-            "severity": "info",
-        }]
+        timeline = [
+            {
+                "type": _TL_CREATED,
+                "timestamp": "2025-04-20T09:55:00",
+                "label": "pipeline_run j1 created",
+                "detail": "case=c1",
+                "severity": "info",
+            }
+        ]
         result = format_operator_timeline(timeline)
         assert "1 entry" in result
         assert "pipeline_run j1 created" in result
@@ -441,9 +480,27 @@ class TestFormatOperatorTimeline:
 
     def test_multiple_entries(self):
         timeline = [
-            {"type": _TL_CREATED, "timestamp": "T1", "label": "job created", "detail": "", "severity": "info"},
-            {"type": _TL_LIFECYCLE, "timestamp": "T2", "label": "pipeline.started", "detail": "running", "severity": "running"},
-            {"type": _TL_ERROR, "timestamp": "", "label": "Failed: error", "detail": "OOM", "severity": "error"},
+            {
+                "type": _TL_CREATED,
+                "timestamp": "T1",
+                "label": "job created",
+                "detail": "",
+                "severity": "info",
+            },
+            {
+                "type": _TL_LIFECYCLE,
+                "timestamp": "T2",
+                "label": "pipeline.started",
+                "detail": "running",
+                "severity": "running",
+            },
+            {
+                "type": _TL_ERROR,
+                "timestamp": "",
+                "label": "Failed: error",
+                "detail": "OOM",
+                "severity": "error",
+            },
         ]
         result = format_operator_timeline(timeline)
         assert "3 entry" in result
@@ -451,13 +508,15 @@ class TestFormatOperatorTimeline:
         assert "OOM" in result
 
     def test_entry_without_detail_has_no_pipe(self):
-        timeline = [{
-            "type": _TL_CREATED,
-            "timestamp": "T1",
-            "label": "job created",
-            "detail": "",
-            "severity": "info",
-        }]
+        timeline = [
+            {
+                "type": _TL_CREATED,
+                "timestamp": "T1",
+                "label": "job created",
+                "detail": "",
+                "severity": "info",
+            }
+        ]
         result = format_operator_timeline(timeline)
         assert "|" not in result
 
@@ -466,14 +525,27 @@ class TestFormatOperatorTimeline:
 # build_operator_timeline_rows
 # ---------------------------------------------------------------------------
 
+
 class TestBuildOperatorTimelineRows:
     def test_empty_timeline(self):
         assert build_operator_timeline_rows([]) == []
 
     def test_row_type_label_mapping(self):
         timeline = [
-            {"type": _TL_CREATED, "timestamp": "", "label": "created", "detail": "", "severity": "info"},
-            {"type": _TL_ERROR, "timestamp": "", "label": "error", "detail": "OOM", "severity": "error"},
+            {
+                "type": _TL_CREATED,
+                "timestamp": "",
+                "label": "created",
+                "detail": "",
+                "severity": "info",
+            },
+            {
+                "type": _TL_ERROR,
+                "timestamp": "",
+                "label": "error",
+                "detail": "OOM",
+                "severity": "error",
+            },
         ]
         rows = build_operator_timeline_rows(timeline)
         assert len(rows) == 2
@@ -483,13 +555,15 @@ class TestBuildOperatorTimelineRows:
         assert rows[1]["detail"] == "OOM"
 
     def test_row_preserves_all_fields(self):
-        timeline = [{
-            "type": _TL_LIFECYCLE,
-            "timestamp": "T1",
-            "label": "pipeline.started",
-            "detail": "running",
-            "severity": "running",
-        }]
+        timeline = [
+            {
+                "type": _TL_LIFECYCLE,
+                "timestamp": "T1",
+                "label": "pipeline.started",
+                "detail": "running",
+                "severity": "running",
+            }
+        ]
         rows = build_operator_timeline_rows(timeline)
         assert len(rows) == 1
         row = rows[0]
@@ -504,6 +578,7 @@ class TestBuildOperatorTimelineRows:
 # ---------------------------------------------------------------------------
 # _severity_from_event_action
 # ---------------------------------------------------------------------------
+
 
 class TestSeverityFromEventAction:
     def test_failure_severity(self):

@@ -10,10 +10,9 @@ import time
 import pytest
 from sqlalchemy.orm import Session
 
+from backend.app import jobs as jobs_module
 from backend.app.db import SessionLocal
 from backend.app.models import BackgroundJob, BackgroundJobStatusEnum
-from backend.app import jobs as jobs_module
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

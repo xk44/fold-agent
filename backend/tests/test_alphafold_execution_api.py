@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
 
 
-def test_alphafold_shell_execution_returns_409_when_backend_validation_fails(client: TestClient) -> None:
+def test_alphafold_shell_execution_returns_409_when_backend_validation_fails(
+    client: TestClient,
+) -> None:
     response = client.post(
         "/alphafold/backends/colabfold/run",
         json={

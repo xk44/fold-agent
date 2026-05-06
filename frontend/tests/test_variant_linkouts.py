@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -51,8 +51,16 @@ def test_build_variant_linkout_targets_prefers_best_related_candidate_and_struct
             },
         ],
         reports=[
-            {"id": "report-1", "report_type": "candidate_review", "generated_at": "2026-04-23T00:00:00Z"},
-            {"id": "report-2", "report_type": "ethics_package", "generated_at": "2026-04-24T00:00:00Z"},
+            {
+                "id": "report-1",
+                "report_type": "candidate_review",
+                "generated_at": "2026-04-23T00:00:00Z",
+            },
+            {
+                "id": "report-2",
+                "report_type": "ethics_package",
+                "generated_at": "2026-04-24T00:00:00Z",
+            },
         ],
         artifacts=[
             {"path": "/tmp/best.cif"},

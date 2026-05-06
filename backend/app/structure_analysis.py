@@ -7,10 +7,8 @@ RESEARCH USE ONLY.
 from __future__ import annotations
 
 import hashlib
-import math
 import re
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 STRUCTURE_ANALYSIS_DISCLAIMER = (
     "RESEARCH ONLY — not for clinical or diagnostic use. "
@@ -42,7 +40,7 @@ class IDRAnalysisResult:
     idr_regions: list[IDRRegion]
     idr_fraction: float
     escalated: bool
-    escalation_reason: Optional[str]
+    escalation_reason: str | None
 
 
 def _mock_plddt_from_sequence(sequence: str) -> list[float]:
@@ -59,7 +57,7 @@ def _mock_plddt_from_sequence(sequence: str) -> list[float]:
 
 
 def detect_low_plddt_regions(
-    sequence: str, plddt_values: Optional[list[float]] = None
+    sequence: str, plddt_values: list[float] | None = None
 ) -> list[tuple[int, int]]:
     """Find contiguous residue ranges below IDR_PLDDT_THRESHOLD.
 
@@ -256,7 +254,7 @@ class PTMSite:
     position: int
     residue: str
     ptm_type: str
-    enzyme: Optional[str]
+    enzyme: str | None
     functional_impact: str
 
 
@@ -292,7 +290,7 @@ def find_nearby_ptms(gene: str, variant_position: int, window: int = 5) -> list[
     return result
 
 
-def _parse_variant(variant: str) -> tuple[Optional[str], Optional[int], Optional[str]]:
+def _parse_variant(variant: str) -> tuple[str | None, int | None, str | None]:
     """Parse variant string like 'S15F' -> ('S', 15, 'F')."""
     m = re.match(r"^([A-Za-z*])(\d+)([A-Za-z*])$", variant.strip())
     if not m:
@@ -474,7 +472,7 @@ def classify_epistatic_interaction(additive: float, actual: float) -> str:
     return "neutral"
 
 
-def _check_known_pair(variants: list[EpistaticVariant], gene: str) -> Optional[str]:
+def _check_known_pair(variants: list[EpistaticVariant], gene: str) -> str | None:
     """Return known interaction effect if variants match a known pair."""
     variant_strs = {f"{v.ref_aa}{v.position}{v.alt_aa}" for v in variants}
     for pair in KNOWN_EPISTATIC_PAIRS:
@@ -484,9 +482,7 @@ def _check_known_pair(variants: list[EpistaticVariant], gene: str) -> Optional[s
     return None
 
 
-def predict_epistatic_effect(
-    variants: list[EpistaticVariant], gene: str = ""
-) -> EpistaticResult:
+def predict_epistatic_effect(variants: list[EpistaticVariant], gene: str = "") -> EpistaticResult:
     """Score epistatic effect for up to 6 simultaneous variants."""
     if len(variants) > 6:
         variants = variants[:6]
@@ -530,8 +526,8 @@ def predict_epistatic_effect(
     epistatic = round(epistatic, 3)
     additive_capped = round(additive_capped, 3)
 
-    effect = known_effect if known_effect else classify_epistatic_interaction(
-        additive_capped, epistatic
+    effect = (
+        known_effect if known_effect else classify_epistatic_interaction(additive_capped, epistatic)
     )
 
     # Confidence: higher with more variants, lower without known data
@@ -643,7 +639,7 @@ class FoldSwitchWarning:
     risk_score: float  # 0-1
     likely_fold_switcher: bool
     features: dict
-    known_match: Optional[str]  # matching KNOWN_FOLD_SWITCHERS key
+    known_match: str | None  # matching KNOWN_FOLD_SWITCHERS key
     recommendation: str
 
 
@@ -687,7 +683,7 @@ def _qn_rich_score(sequence: str) -> float:
     return min(1.0, qn / max(1, len(sequence)) * 5)
 
 
-def check_known_fold_switchers(sequence: str) -> Optional[str]:
+def check_known_fold_switchers(sequence: str) -> str | None:
     """BLAST-like stub: check sequence length/composition against known fold-switchers."""
     n = len(sequence)
     # Simplified: match by length range and Q/N content
@@ -766,8 +762,7 @@ def detect_fold_switching_risk(sequence: str) -> FoldSwitchWarning:
         )
         if known_match:
             recommendation = (
-                f"Sequence features resemble known fold-switcher {known_match}. "
-                + recommendation
+                f"Sequence features resemble known fold-switcher {known_match}. " + recommendation
             )
     else:
         recommendation = (

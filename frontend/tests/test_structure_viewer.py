@@ -201,9 +201,7 @@ def test_format_structure_confidence_summary_handles_empty_payload() -> None:
     }
 
 
-def test_format_structure_confidence_operator_summary_surfaces_scores_and_paths() -> (
-    None
-):
+def test_format_structure_confidence_operator_summary_surfaces_scores_and_paths() -> None:
     text = format_structure_confidence_operator_summary(
         {
             "output_path": "/tmp/fallback.cif",
@@ -227,9 +225,7 @@ def test_format_structure_confidence_operator_summary_surfaces_scores_and_paths(
 
 
 def test_format_structure_confidence_operator_summary_flags_missing_metrics() -> None:
-    text = format_structure_confidence_operator_summary(
-        {"output_path": "/tmp/model.pdb"}
-    )
+    text = format_structure_confidence_operator_summary({"output_path": "/tmp/model.pdb"})
 
     assert text.startswith("Structure confidence incomplete")
     assert "ranking_score=n/a" in text

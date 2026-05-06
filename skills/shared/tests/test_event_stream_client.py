@@ -3,32 +3,30 @@
 These tests verify the SSE parsing, event buffering, and streaming
 client logic without requiring a live server or Streamlit runtime.
 """
+
 from __future__ import annotations
 
 import json
 import threading
-import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-import httpx
 
 # Module under test
 from skills.shared.event_stream_client import (
     EventBuffer,
+    EventClient,
+    EventStreamClient,
     SSEEvent,
+    WebSocketEventClient,
     parse_sse_lines,
     parse_sse_snapshot,
-    EventStreamClient,
-    WebSocketEventClient,
-    EventClient,
 )
-
 
 # ---------------------------------------------------------------------------
 # SSEEvent dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestSSEEvent:
     def test_construct_with_required_fields(self) -> None:
@@ -54,6 +52,7 @@ class TestSSEEvent:
 # ---------------------------------------------------------------------------
 # parse_sse_lines — core SSE wire-format parser
 # ---------------------------------------------------------------------------
+
 
 class TestParseSSELines:
     def test_single_event_with_data(self) -> None:
@@ -157,6 +156,7 @@ class TestParseSSELines:
 # parse_sse_snapshot — convenience parser for full SSE response text
 # ---------------------------------------------------------------------------
 
+
 class TestParseSSESnapshot:
     def test_parse_full_response_text(self) -> None:
         text = (
@@ -180,6 +180,7 @@ class TestParseSSESnapshot:
 # ---------------------------------------------------------------------------
 # EventBuffer — thread-safe event accumulator
 # ---------------------------------------------------------------------------
+
 
 class TestEventBuffer:
     def test_append_and_latest(self) -> None:
@@ -249,6 +250,7 @@ class TestEventBuffer:
 # Helper — fake streaming context manager for SSE mocking
 # ---------------------------------------------------------------------------
 
+
 def _make_stream_cm(raw_lines: list[str]):
     """Create a fake streaming context manager that yields SSE lines via iter_lines()."""
     lines = list(raw_lines)
@@ -273,6 +275,7 @@ def _make_stream_cm(raw_lines: list[str]):
 # ---------------------------------------------------------------------------
 # EventStreamClient — HTTP SSE streaming with parsing
 # ---------------------------------------------------------------------------
+
 
 class TestEventStreamClient:
     def _make_stream_cm(self, raw_lines: list[str]):
@@ -387,6 +390,7 @@ class TestEventStreamClient:
 # ---------------------------------------------------------------------------
 # WebSocketEventClient — parsing and URL construction
 # ---------------------------------------------------------------------------
+
 
 class TestWebSocketEventClientParseMessage:
     """Tests for WebSocketEventClient._parse_ws_message."""
@@ -605,7 +609,9 @@ class TestWebSocketEventClientStreaming:
         mock_ws.__exit__ = MagicMock(return_value=False)
         mock_ws.__iter__ = MagicMock(return_value=iter(messages))
 
-        with patch("skills.shared.event_stream_client.ws_connect", return_value=mock_ws) as mock_connect:
+        with patch(
+            "skills.shared.event_stream_client.ws_connect", return_value=mock_ws
+        ) as mock_connect:
             client.collect_into(buf, "/agent/events/ws", params={"prefix": "agent_task."})
             # Verify prefix was passed in the URL
             call_url = mock_connect.call_args[0][0]
@@ -623,16 +629,19 @@ class TestWebSocketEventClientStreaming:
             events = list(client.stream_events("/agent/events/ws"))
 
         assert events == []
+
     def test_drain_events_stops_on_heartbeat(self) -> None:
         client = WebSocketEventClient(base_url="http://localhost:8000")
 
         mock_ws = MagicMock()
         mock_ws.__enter__ = MagicMock(return_value=mock_ws)
         mock_ws.__exit__ = MagicMock(return_value=False)
-        mock_ws.recv = MagicMock(side_effect=[
-            json.dumps({"event": "case.created", "id": "ws-1", "data": {"case_id": "c1"}}),
-            json.dumps({"type": "ping"}),
-        ])
+        mock_ws.recv = MagicMock(
+            side_effect=[
+                json.dumps({"event": "case.created", "id": "ws-1", "data": {"case_id": "c1"}}),
+                json.dumps({"type": "ping"}),
+            ]
+        )
 
         with patch("skills.shared.event_stream_client.ws_connect", return_value=mock_ws):
             events = client.drain_events("/agent/events/ws", idle_timeout=0.1)
@@ -658,6 +667,7 @@ class TestWebSocketEventClientStreaming:
 # EventClient — transport-agnostic facade
 # ---------------------------------------------------------------------------
 
+
 class TestEventClientFacade:
     """Tests for the EventClient facade over SSE and WS transports."""
 
@@ -678,11 +688,7 @@ class TestEventClientFacade:
     def test_sse_snapshot_delegates(self) -> None:
         client = EventClient(base_url="http://localhost:8000", transport="sse")
 
-        sse_text = (
-            "event: case.created\n"
-            'data: {"case_id": "c1"}\n'
-            "\n"
-        )
+        sse_text = 'event: case.created\ndata: {"case_id": "c1"}\n\n'
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.text = sse_text
@@ -785,7 +791,9 @@ class TestEventClientFacade:
         mock_ws.__exit__ = MagicMock(return_value=False)
         mock_ws.__iter__ = MagicMock(return_value=iter([]))
 
-        with patch("skills.shared.event_stream_client.ws_connect", return_value=mock_ws) as mock_connect:
+        with patch(
+            "skills.shared.event_stream_client.ws_connect", return_value=mock_ws
+        ) as mock_connect:
             list(client.stream_events())
             called_url = mock_connect.call_args[0][0]
             assert "/agent/events/ws" in called_url
@@ -832,7 +840,9 @@ class TestEventClientFacade:
         mock_ws.__exit__ = MagicMock(return_value=False)
         mock_ws.__iter__ = MagicMock(return_value=iter([]))
 
-        with patch("skills.shared.event_stream_client.ws_connect", return_value=mock_ws) as mock_connect:
+        with patch(
+            "skills.shared.event_stream_client.ws_connect", return_value=mock_ws
+        ) as mock_connect:
             list(client.stream_events())
             called_url = mock_connect.call_args[0][0]
             assert "api_key=mykey" in called_url

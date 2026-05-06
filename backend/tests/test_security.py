@@ -1,26 +1,26 @@
 """Tests for FoldAgent security module and RBAC (Phase 19)."""
+
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from backend.app.rbac import Role, Permission, ROLE_PERMISSIONS, check_permission, get_role_permissions
+from backend.app.rbac import (
+    Permission,
+    check_permission,
+    get_role_permissions,
+)
 from backend.app.security import (
     build_upload_confirmation,
     generate_sbom,
     scan_for_secrets,
     scan_skill_directory,
-    verify_audit_chain,
-    verify_data_deletion,
 )
-
 
 # ---------------------------------------------------------------------------
 # SBOM
 # ---------------------------------------------------------------------------
+
 
 class TestSBOM:
     def test_sbom_returns_cyclonedx_structure(self) -> None:
@@ -42,6 +42,7 @@ class TestSBOM:
 # ---------------------------------------------------------------------------
 # Secrets scanning
 # ---------------------------------------------------------------------------
+
 
 class TestSecretsScanning:
     def test_clean_text_passes(self) -> None:
@@ -81,6 +82,7 @@ class TestSecretsScanning:
 # Skill directory scanner
 # ---------------------------------------------------------------------------
 
+
 class TestSkillScanner:
     def test_nonexistent_path(self) -> None:
         result = scan_skill_directory("/nonexistent/path")
@@ -101,7 +103,9 @@ class TestSkillScanner:
 
     def test_detects_hardcoded_url(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            (Path(tmpdir) / "conf.py").write_text("URL = 'https://some-long-service-url.example.com/api/v1'")
+            (Path(tmpdir) / "conf.py").write_text(
+                "URL = 'https://some-long-service-url.example.com/api/v1'"
+            )
             result = scan_skill_directory(tmpdir)
             assert any(f["type"] == "hardcoded_url" for f in result["findings"])
 
@@ -109,6 +113,7 @@ class TestSkillScanner:
 # ---------------------------------------------------------------------------
 # Upload confirmation
 # ---------------------------------------------------------------------------
+
 
 class TestUploadConfirmation:
     def test_basic_confirmation(self) -> None:
@@ -129,6 +134,7 @@ class TestUploadConfirmation:
 # ---------------------------------------------------------------------------
 # RBAC
 # ---------------------------------------------------------------------------
+
 
 class TestRBAC:
     def test_admin_has_all_permissions(self) -> None:
@@ -162,6 +168,7 @@ class TestRBAC:
 # ---------------------------------------------------------------------------
 # Audit chain + deletion (DB-dependent, use client fixture)
 # ---------------------------------------------------------------------------
+
 
 class TestAuditChain:
     def test_empty_case_valid(self, client) -> None:
@@ -199,6 +206,7 @@ class TestDeletionVerification:
 # API endpoints
 # ---------------------------------------------------------------------------
 
+
 class TestSecurityAPI:
     def test_sbom_endpoint(self, client) -> None:
         resp = client.get("/security/sbom")
@@ -221,10 +229,13 @@ class TestSecurityAPI:
         assert resp.json()["safe"] is False
 
     def test_upload_confirmation_endpoint(self, client) -> None:
-        resp = client.post("/security/upload-confirmation", json={
-            "destination": "alphafold_server",
-            "data_summary": "peptide sequences",
-        })
+        resp = client.post(
+            "/security/upload-confirmation",
+            json={
+                "destination": "alphafold_server",
+                "data_summary": "peptide sequences",
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["requires_explicit_consent"] is True
 
@@ -245,17 +256,23 @@ class TestSecurityAPI:
         assert resp.status_code == 404
 
     def test_check_permission_endpoint(self, client) -> None:
-        resp = client.post("/security/check-permission", json={
-            "role": "admin",
-            "permission": "delete_case",
-        })
+        resp = client.post(
+            "/security/check-permission",
+            json={
+                "role": "admin",
+                "permission": "delete_case",
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["allowed"] is True
 
     def test_check_permission_denied(self, client) -> None:
-        resp = client.post("/security/check-permission", json={
-            "role": "readonly",
-            "permission": "delete_case",
-        })
+        resp = client.post(
+            "/security/check-permission",
+            json={
+                "role": "readonly",
+                "permission": "delete_case",
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["allowed"] is False

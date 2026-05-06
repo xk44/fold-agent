@@ -40,9 +40,7 @@ def _minimal_af3_input() -> AF3InputJSON:
         name="af3-inline",
         modelSeeds=[1],
         sequences=[
-            SequenceEntry(
-                protein=ProteinEntity(id="A", sequence="MTEYKLVVVGAGGVGKSALTIQLIQ")
-            )
+            SequenceEntry(protein=ProteinEntity(id="A", sequence="MTEYKLVVVGAGGVGKSALTIQLIQ"))
         ],
     )
 

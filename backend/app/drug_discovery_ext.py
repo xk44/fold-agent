@@ -10,12 +10,12 @@ import hashlib
 import math
 import random
 import time
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Feature 1: Structure → druggability → docking pipeline
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PocketResult:
@@ -47,9 +47,26 @@ class DrugPipelineResult:
 
 # Residue letter codes used in mock pocket generation
 _RESIDUE_POOL = [
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
-    "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER",
-    "THR", "TRP", "TYR", "VAL",
+    "ALA",
+    "ARG",
+    "ASN",
+    "ASP",
+    "CYS",
+    "GLN",
+    "GLU",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LEU",
+    "LYS",
+    "MET",
+    "PHE",
+    "PRO",
+    "SER",
+    "THR",
+    "TRP",
+    "TYR",
+    "VAL",
 ]
 
 # Residue labels with sequence numbers for mock pockets
@@ -123,16 +140,40 @@ def dock_compound(
 
 # Default compound library for pipeline
 _DEFAULT_LIBRARY: list[dict] = [
-    {"name": "Erlotinib",    "smiles": "C1=C2C(=CC(=C1OCC)OCC)C(=NC=N2)NC3=CC=CC(=C3)C#C"},
-    {"name": "Imatinib",     "smiles": "CN1CCN(CC1)CC2=CC=C(C=C2)C(=O)NC3=CC(=CC=C3)NC4=NC=CC(=N4)C5=CC=CN=C5"},
-    {"name": "Sorafenib",    "smiles": "CNC(=O)C1=NC=CC(=C1)OC2=CC=C(C=C2)NC(=O)NC3=CC(=C(C=C3)Cl)C(F)(F)F"},
-    {"name": "Sunitinib",    "smiles": "CCN(CC)CCNC(=O)C1=C(NC2=CC=CC3=CC=CC=C23)C(=C(N1)C)C=O"},  # simplified
-    {"name": "Vemurafenib",  "smiles": "CCCS(=O)(=O)NC1=CC(=C(C=C1)F)C2=CN=C(N=C2)NC3=CC=CC(=C3)C4=CC=NC=C4"},
-    {"name": "Osimertinib",  "smiles": "CN1C=C(C2=CC=CC=C21)C3=NC(=NC=C3)NC4=CC(=C(C=C4)N5CCN(CC5)C)OC"},
-    {"name": "Crizotinib",   "smiles": "CC(C1=C(C=CC(=C1Cl)F)Cl)OC2=CC(=NC=C2)NC3=CC(=CN=C3)N4CCNCC4"},
-    {"name": "Alpelisib",    "smiles": "CC1=C(C(=O)NC2=C(C=CN=C2)C3=CC=CC=C3F)C=NC(=N1)NS(=O)(=O)C4CCCC4"},
-    {"name": "Sotorasib",    "smiles": "C1CN2C(=C(C=N2)NC3=C(C=C(C=C3)F)F)C(=O)N1C4=CC5=CC=CC=C5N=C4"},
-    {"name": "Palbociclib",  "smiles": "CC1=C(C(=O)N(C(=O)N1C2=NC3=CC=CC=C3C=C2)C4=CC=C(C=C4)N5CCNCC5)C"},
+    {"name": "Erlotinib", "smiles": "C1=C2C(=CC(=C1OCC)OCC)C(=NC=N2)NC3=CC=CC(=C3)C#C"},
+    {
+        "name": "Imatinib",
+        "smiles": "CN1CCN(CC1)CC2=CC=C(C=C2)C(=O)NC3=CC(=CC=C3)NC4=NC=CC(=N4)C5=CC=CN=C5",
+    },
+    {
+        "name": "Sorafenib",
+        "smiles": "CNC(=O)C1=NC=CC(=C1)OC2=CC=C(C=C2)NC(=O)NC3=CC(=C(C=C3)Cl)C(F)(F)F",
+    },
+    {
+        "name": "Sunitinib",
+        "smiles": "CCN(CC)CCNC(=O)C1=C(NC2=CC=CC3=CC=CC=C23)C(=C(N1)C)C=O",
+    },  # simplified
+    {
+        "name": "Vemurafenib",
+        "smiles": "CCCS(=O)(=O)NC1=CC(=C(C=C1)F)C2=CN=C(N=C2)NC3=CC=CC(=C3)C4=CC=NC=C4",
+    },
+    {
+        "name": "Osimertinib",
+        "smiles": "CN1C=C(C2=CC=CC=C21)C3=NC(=NC=C3)NC4=CC(=C(C=C4)N5CCN(CC5)C)OC",
+    },
+    {
+        "name": "Crizotinib",
+        "smiles": "CC(C1=C(C=CC(=C1Cl)F)Cl)OC2=CC(=NC=C2)NC3=CC(=CN=C3)N4CCNCC4",
+    },
+    {
+        "name": "Alpelisib",
+        "smiles": "CC1=C(C(=O)NC2=C(C=CN=C2)C3=CC=CC=C3F)C=NC(=N1)NS(=O)(=O)C4CCCC4",
+    },
+    {"name": "Sotorasib", "smiles": "C1CN2C(=C(C=N2)NC3=C(C=C(C=C3)F)F)C(=O)N1C4=CC5=CC=CC=C5N=C4"},
+    {
+        "name": "Palbociclib",
+        "smiles": "CC1=C(C(=O)N(C(=O)N1C2=NC3=CC=CC=C3C=C2)C4=CC=C(C=C4)N5CCNCC5)C",
+    },
 ]
 
 
@@ -147,7 +188,10 @@ def run_drug_pipeline(
     # Mock PDB data seeded from gene name
     seed = _seed_from_string(target_gene)
     rng = random.Random(seed)
-    mock_pdb = f"ATOM      1  CA  ALA A   1    {rng.uniform(-10,10):.3f} {rng.uniform(-10,10):.3f} {rng.uniform(-10,10):.3f}  1.00 10.00           C\n" * 10
+    mock_pdb = (
+        f"ATOM      1  CA  ALA A   1    {rng.uniform(-10, 10):.3f} {rng.uniform(-10, 10):.3f} {rng.uniform(-10, 10):.3f}  1.00 10.00           C\n"
+        * 10
+    )
 
     pockets = predict_pockets(mock_pdb, gene=target_gene)
     top_pocket = pockets[0] if pockets else None
@@ -155,7 +199,9 @@ def run_drug_pipeline(
     docking_results: list[DockingResult] = []
     if top_pocket:
         for compound in library:
-            dr = dock_compound(top_pocket, compound.get("smiles", ""), compound.get("name", "unknown"))
+            dr = dock_compound(
+                top_pocket, compound.get("smiles", ""), compound.get("name", "unknown")
+            )
             docking_results.append(dr)
         docking_results.sort(key=lambda d: d.binding_energy_kcal)
 
@@ -174,6 +220,7 @@ def run_drug_pipeline(
 # ---------------------------------------------------------------------------
 # Feature 2: Cryptic binding site detection
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CrypticSite:
@@ -283,10 +330,13 @@ def detect_cryptic_sites(sequence: str, gene: str = "") -> list[CrypticSite]:
     n_de_novo = min(rng.randint(0, 3), max(0, len(buried_regions)))
     start_id = len(sites) + 1
     for j in range(n_de_novo):
-        region_start = buried_regions[j * max(1, len(buried_regions) // max(1, n_de_novo))] if buried_regions else rng.randint(0, max(0, n - 10))
+        region_start = (
+            buried_regions[j * max(1, len(buried_regions) // max(1, n_de_novo))]
+            if buried_regions
+            else rng.randint(0, max(0, n - 10))
+        )
         residues = [
-            f"{rng.choice(_RESIDUE_POOL)}{region_start + k + 1}"
-            for k in range(rng.randint(4, 9))
+            f"{rng.choice(_RESIDUE_POOL)}{region_start + k + 1}" for k in range(rng.randint(4, 9))
         ]
         trigger = rng.choice(["ligand_induced", "conformational", "allosteric"])
         sites.append(
@@ -306,6 +356,7 @@ def detect_cryptic_sites(sequence: str, gene: str = "") -> list[CrypticSite]:
 # ---------------------------------------------------------------------------
 # Feature 3: Allostery prediction
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AllostericSite:
@@ -328,13 +379,13 @@ class AllosteryResult:
 
 # Known active site residues for common targets
 _KNOWN_ACTIVE_SITES: dict[str, list[str]] = {
-    "EGFR":   ["LYS745", "THR790", "CYS797", "ASP855", "PHE856"],
-    "ABL1":   ["LYS271", "THR315", "GLU286", "ASP381", "PHE382"],
-    "BRAF":   ["LYS483", "GLU501", "ASP594", "PHE595", "GLY466"],
-    "KRAS":   ["GLY12",  "GLY13",  "GLN61",  "LYS117", "ASP119"],
-    "TP53":   ["CYS176", "HIS179", "CYS238", "CYS242", "ARG248"],
+    "EGFR": ["LYS745", "THR790", "CYS797", "ASP855", "PHE856"],
+    "ABL1": ["LYS271", "THR315", "GLU286", "ASP381", "PHE382"],
+    "BRAF": ["LYS483", "GLU501", "ASP594", "PHE595", "GLY466"],
+    "KRAS": ["GLY12", "GLY13", "GLN61", "LYS117", "ASP119"],
+    "TP53": ["CYS176", "HIS179", "CYS238", "CYS242", "ARG248"],
     "PIK3CA": ["LYS802", "ASP810", "TRP780", "SER831", "ASN832"],
-    "MAPK14": ["LYS53",  "GLU71",  "THR106", "ASP168", "PHE169"],
+    "MAPK14": ["LYS53", "GLU71", "THR106", "ASP168", "PHE169"],
     "HSP90AA1": ["ASP93", "GLY97", "ASN51", "THR184", "GLY137"],
 }
 
@@ -386,10 +437,16 @@ def predict_allostery(
 
         # Communication pathway as residue indices
         path_len = rng.randint(3, 8)
-        pathway = sorted(rng.sample(range(1, max(2, len(sequence))), min(path_len, len(sequence) - 1)))
+        pathway = sorted(
+            rng.sample(range(1, max(2, len(sequence))), min(path_len, len(sequence) - 1))
+        )
         pathways.append(pathway)
 
-    overall = round(sum(s.communication_score for s in allo_sites) / max(1, len(allo_sites)), 3) if allo_sites else 0.0
+    overall = (
+        round(sum(s.communication_score for s in allo_sites) / max(1, len(allo_sites)), 3)
+        if allo_sites
+        else 0.0
+    )
 
     return AllosteryResult(
         gene=gene,
@@ -403,6 +460,7 @@ def predict_allostery(
 # ---------------------------------------------------------------------------
 # Feature 4: Therapeutic reasoning chain
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ReasoningStep:
@@ -427,65 +485,220 @@ class TherapeuticReasoningResult:
 # 15 gene → drug pocket similarity entries (ChEMBL mock)
 CHEMBL_MOCK_SIMILARITIES: dict[str, list[dict]] = {
     "EGFR": [
-        {"drug": "Erlotinib",   "chembl_id": "CHEMBL553",  "pocket_similarity": 0.94, "mechanism": "ATP-competitive"},
-        {"drug": "Gefitinib",   "chembl_id": "CHEMBL939",  "pocket_similarity": 0.91, "mechanism": "ATP-competitive"},
-        {"drug": "Osimertinib", "chembl_id": "CHEMBL3353410", "pocket_similarity": 0.87, "mechanism": "covalent"},
+        {
+            "drug": "Erlotinib",
+            "chembl_id": "CHEMBL553",
+            "pocket_similarity": 0.94,
+            "mechanism": "ATP-competitive",
+        },
+        {
+            "drug": "Gefitinib",
+            "chembl_id": "CHEMBL939",
+            "pocket_similarity": 0.91,
+            "mechanism": "ATP-competitive",
+        },
+        {
+            "drug": "Osimertinib",
+            "chembl_id": "CHEMBL3353410",
+            "pocket_similarity": 0.87,
+            "mechanism": "covalent",
+        },
     ],
     "ABL1": [
-        {"drug": "Imatinib",   "chembl_id": "CHEMBL941",  "pocket_similarity": 0.93, "mechanism": "Type-II"},
-        {"drug": "Dasatinib",  "chembl_id": "CHEMBL1642", "pocket_similarity": 0.88, "mechanism": "Type-I"},
-        {"drug": "Ponatinib",  "chembl_id": "CHEMBL1171837", "pocket_similarity": 0.82, "mechanism": "Type-II"},
+        {
+            "drug": "Imatinib",
+            "chembl_id": "CHEMBL941",
+            "pocket_similarity": 0.93,
+            "mechanism": "Type-II",
+        },
+        {
+            "drug": "Dasatinib",
+            "chembl_id": "CHEMBL1642",
+            "pocket_similarity": 0.88,
+            "mechanism": "Type-I",
+        },
+        {
+            "drug": "Ponatinib",
+            "chembl_id": "CHEMBL1171837",
+            "pocket_similarity": 0.82,
+            "mechanism": "Type-II",
+        },
     ],
     "BRAF": [
-        {"drug": "Vemurafenib", "chembl_id": "CHEMBL1229517", "pocket_similarity": 0.90, "mechanism": "Type-I½"},
-        {"drug": "Dabrafenib",  "chembl_id": "CHEMBL2028663", "pocket_similarity": 0.86, "mechanism": "Type-I½"},
+        {
+            "drug": "Vemurafenib",
+            "chembl_id": "CHEMBL1229517",
+            "pocket_similarity": 0.90,
+            "mechanism": "Type-I½",
+        },
+        {
+            "drug": "Dabrafenib",
+            "chembl_id": "CHEMBL2028663",
+            "pocket_similarity": 0.86,
+            "mechanism": "Type-I½",
+        },
     ],
     "KRAS": [
-        {"drug": "Sotorasib",  "chembl_id": "CHEMBL4523659", "pocket_similarity": 0.88, "mechanism": "covalent-G12C"},
-        {"drug": "Adagrasib",  "chembl_id": "CHEMBL4523582", "pocket_similarity": 0.84, "mechanism": "covalent-G12C"},
+        {
+            "drug": "Sotorasib",
+            "chembl_id": "CHEMBL4523659",
+            "pocket_similarity": 0.88,
+            "mechanism": "covalent-G12C",
+        },
+        {
+            "drug": "Adagrasib",
+            "chembl_id": "CHEMBL4523582",
+            "pocket_similarity": 0.84,
+            "mechanism": "covalent-G12C",
+        },
     ],
     "PIK3CA": [
-        {"drug": "Alpelisib",  "chembl_id": "CHEMBL2007641", "pocket_similarity": 0.89, "mechanism": "isoform-selective"},
-        {"drug": "Idelalisib", "chembl_id": "CHEMBL2180676", "pocket_similarity": 0.76, "mechanism": "PI3Kδ-selective"},
+        {
+            "drug": "Alpelisib",
+            "chembl_id": "CHEMBL2007641",
+            "pocket_similarity": 0.89,
+            "mechanism": "isoform-selective",
+        },
+        {
+            "drug": "Idelalisib",
+            "chembl_id": "CHEMBL2180676",
+            "pocket_similarity": 0.76,
+            "mechanism": "PI3Kδ-selective",
+        },
     ],
     "ALK": [
-        {"drug": "Crizotinib",  "chembl_id": "CHEMBL601719", "pocket_similarity": 0.91, "mechanism": "Type-I"},
-        {"drug": "Alectinib",   "chembl_id": "CHEMBL2180692", "pocket_similarity": 0.88, "mechanism": "Type-I"},
-        {"drug": "Brigatinib",  "chembl_id": "CHEMBL3545063", "pocket_similarity": 0.85, "mechanism": "Type-I"},
+        {
+            "drug": "Crizotinib",
+            "chembl_id": "CHEMBL601719",
+            "pocket_similarity": 0.91,
+            "mechanism": "Type-I",
+        },
+        {
+            "drug": "Alectinib",
+            "chembl_id": "CHEMBL2180692",
+            "pocket_similarity": 0.88,
+            "mechanism": "Type-I",
+        },
+        {
+            "drug": "Brigatinib",
+            "chembl_id": "CHEMBL3545063",
+            "pocket_similarity": 0.85,
+            "mechanism": "Type-I",
+        },
     ],
     "CDK4": [
-        {"drug": "Palbociclib",  "chembl_id": "CHEMBL189963", "pocket_similarity": 0.90, "mechanism": "ATP-competitive"},
-        {"drug": "Ribociclib",   "chembl_id": "CHEMBL3545112", "pocket_similarity": 0.87, "mechanism": "ATP-competitive"},
+        {
+            "drug": "Palbociclib",
+            "chembl_id": "CHEMBL189963",
+            "pocket_similarity": 0.90,
+            "mechanism": "ATP-competitive",
+        },
+        {
+            "drug": "Ribociclib",
+            "chembl_id": "CHEMBL3545112",
+            "pocket_similarity": 0.87,
+            "mechanism": "ATP-competitive",
+        },
     ],
     "MAPK14": [
-        {"drug": "SB-203580",  "chembl_id": "CHEMBL57850", "pocket_similarity": 0.85, "mechanism": "ATP-competitive"},
+        {
+            "drug": "SB-203580",
+            "chembl_id": "CHEMBL57850",
+            "pocket_similarity": 0.85,
+            "mechanism": "ATP-competitive",
+        },
     ],
     "HSP90AA1": [
-        {"drug": "Geldanamycin",  "chembl_id": "CHEMBL37",    "pocket_similarity": 0.83, "mechanism": "N-terminal ATPase"},
-        {"drug": "17-AAG",        "chembl_id": "CHEMBL52734",  "pocket_similarity": 0.80, "mechanism": "N-terminal ATPase"},
+        {
+            "drug": "Geldanamycin",
+            "chembl_id": "CHEMBL37",
+            "pocket_similarity": 0.83,
+            "mechanism": "N-terminal ATPase",
+        },
+        {
+            "drug": "17-AAG",
+            "chembl_id": "CHEMBL52734",
+            "pocket_similarity": 0.80,
+            "mechanism": "N-terminal ATPase",
+        },
     ],
     "MDM2": [
-        {"drug": "Nutlin-3",   "chembl_id": "CHEMBL1290562", "pocket_similarity": 0.86, "mechanism": "p53-MDM2 disruptor"},
-        {"drug": "AMG-232",    "chembl_id": "CHEMBL3707339", "pocket_similarity": 0.81, "mechanism": "piperidinone"},
+        {
+            "drug": "Nutlin-3",
+            "chembl_id": "CHEMBL1290562",
+            "pocket_similarity": 0.86,
+            "mechanism": "p53-MDM2 disruptor",
+        },
+        {
+            "drug": "AMG-232",
+            "chembl_id": "CHEMBL3707339",
+            "pocket_similarity": 0.81,
+            "mechanism": "piperidinone",
+        },
     ],
     "VEGFR": [
-        {"drug": "Sunitinib",  "chembl_id": "CHEMBL535", "pocket_similarity": 0.88, "mechanism": "multi-kinase"},
-        {"drug": "Pazopanib",  "chembl_id": "CHEMBL477772", "pocket_similarity": 0.85, "mechanism": "multi-kinase"},
+        {
+            "drug": "Sunitinib",
+            "chembl_id": "CHEMBL535",
+            "pocket_similarity": 0.88,
+            "mechanism": "multi-kinase",
+        },
+        {
+            "drug": "Pazopanib",
+            "chembl_id": "CHEMBL477772",
+            "pocket_similarity": 0.85,
+            "mechanism": "multi-kinase",
+        },
     ],
     "MET": [
-        {"drug": "Cabozantinib", "chembl_id": "CHEMBL2105717", "pocket_similarity": 0.87, "mechanism": "multi-kinase"},
-        {"drug": "Tepotinib",    "chembl_id": "CHEMBL3955278", "pocket_similarity": 0.83, "mechanism": "Type-Ib"},
+        {
+            "drug": "Cabozantinib",
+            "chembl_id": "CHEMBL2105717",
+            "pocket_similarity": 0.87,
+            "mechanism": "multi-kinase",
+        },
+        {
+            "drug": "Tepotinib",
+            "chembl_id": "CHEMBL3955278",
+            "pocket_similarity": 0.83,
+            "mechanism": "Type-Ib",
+        },
     ],
     "RET": [
-        {"drug": "Selpercatinib",  "chembl_id": "CHEMBL4523578", "pocket_similarity": 0.89, "mechanism": "selective"},
-        {"drug": "Pralsetinib",    "chembl_id": "CHEMBL4523625", "pocket_similarity": 0.86, "mechanism": "selective"},
+        {
+            "drug": "Selpercatinib",
+            "chembl_id": "CHEMBL4523578",
+            "pocket_similarity": 0.89,
+            "mechanism": "selective",
+        },
+        {
+            "drug": "Pralsetinib",
+            "chembl_id": "CHEMBL4523625",
+            "pocket_similarity": 0.86,
+            "mechanism": "selective",
+        },
     ],
     "FGFR1": [
-        {"drug": "Erdafitinib", "chembl_id": "CHEMBL3836085", "pocket_similarity": 0.88, "mechanism": "pan-FGFR"},
-        {"drug": "Infigratinib","chembl_id": "CHEMBL3188463", "pocket_similarity": 0.83, "mechanism": "pan-FGFR"},
+        {
+            "drug": "Erdafitinib",
+            "chembl_id": "CHEMBL3836085",
+            "pocket_similarity": 0.88,
+            "mechanism": "pan-FGFR",
+        },
+        {
+            "drug": "Infigratinib",
+            "chembl_id": "CHEMBL3188463",
+            "pocket_similarity": 0.83,
+            "mechanism": "pan-FGFR",
+        },
     ],
     "IDH1": [
-        {"drug": "Ivosidenib",  "chembl_id": "CHEMBL3989839", "pocket_similarity": 0.90, "mechanism": "allosteric-IDH1m"},
+        {
+            "drug": "Ivosidenib",
+            "chembl_id": "CHEMBL3989839",
+            "pocket_similarity": 0.90,
+            "mechanism": "allosteric-IDH1m",
+        },
     ],
 }
 
@@ -499,78 +712,98 @@ def run_therapeutic_reasoning(gene: str, variant: str) -> TherapeuticReasoningRe
     steps: list[ReasoningStep] = []
 
     # Step 1: Identify affected protein
-    steps.append(ReasoningStep(
-        step=1,
-        description="Identify affected protein and functional domain",
-        input_data=f"Gene: {gene}, Variant: {variant}",
-        output_data=f"{gene} protein — variant {variant} maps to {'kinase domain' if 'kinase' not in gene_upper else 'active region'}",
-        confidence=0.95,
-    ))
+    steps.append(
+        ReasoningStep(
+            step=1,
+            description="Identify affected protein and functional domain",
+            input_data=f"Gene: {gene}, Variant: {variant}",
+            output_data=f"{gene} protein — variant {variant} maps to {'kinase domain' if 'kinase' not in gene_upper else 'active region'}",
+            confidence=0.95,
+        )
+    )
 
     # Step 2: Predict structural impact
     aa_change = variant  # e.g. "V600E"
-    structural_impact = rng.choice([
-        "disrupts hydrophobic core packing",
-        "alters activation loop conformation",
-        "introduces steric clash at binding interface",
-        "modifies electrostatic surface potential",
-        "destabilizes α-helix C positioning",
-    ])
-    steps.append(ReasoningStep(
-        step=2,
-        description="Predict structural impact of variant",
-        input_data=f"Variant: {aa_change}",
-        output_data=f"Predicted effect: {structural_impact}",
-        confidence=round(rng.uniform(0.65, 0.88), 3),
-    ))
+    structural_impact = rng.choice(
+        [
+            "disrupts hydrophobic core packing",
+            "alters activation loop conformation",
+            "introduces steric clash at binding interface",
+            "modifies electrostatic surface potential",
+            "destabilizes α-helix C positioning",
+        ]
+    )
+    steps.append(
+        ReasoningStep(
+            step=2,
+            description="Predict structural impact of variant",
+            input_data=f"Variant: {aa_change}",
+            output_data=f"Predicted effect: {structural_impact}",
+            confidence=round(rng.uniform(0.65, 0.88), 3),
+        )
+    )
 
     # Step 3: Find druggable pocket
-    pocket_type = rng.choice([
-        "ATP-binding cleft (deep, hydrophobic)",
-        "allosteric DFG-out pocket",
-        "protein-protein interaction groove",
-        "covalent cysteine-proximal pocket",
-    ])
-    steps.append(ReasoningStep(
-        step=3,
-        description="Identify druggable binding pocket on variant structure",
-        input_data=f"Structural model with {aa_change} mutation",
-        output_data=f"Top pocket: {pocket_type}, druggability score {round(rng.uniform(0.55, 0.95), 2)}",
-        confidence=round(rng.uniform(0.60, 0.85), 3),
-    ))
+    pocket_type = rng.choice(
+        [
+            "ATP-binding cleft (deep, hydrophobic)",
+            "allosteric DFG-out pocket",
+            "protein-protein interaction groove",
+            "covalent cysteine-proximal pocket",
+        ]
+    )
+    steps.append(
+        ReasoningStep(
+            step=3,
+            description="Identify druggable binding pocket on variant structure",
+            input_data=f"Structural model with {aa_change} mutation",
+            output_data=f"Top pocket: {pocket_type}, druggability score {round(rng.uniform(0.55, 0.95), 2)}",
+            confidence=round(rng.uniform(0.60, 0.85), 3),
+        )
+    )
 
     # Step 4: Compare pocket to ChEMBL
     chembl_hits = CHEMBL_MOCK_SIMILARITIES.get(gene_upper, [])
-    chembl_result = f"{len(chembl_hits)} ChEMBL drug-pocket matches found" if chembl_hits else "No direct ChEMBL matches; searching structural analogs"
-    steps.append(ReasoningStep(
-        step=4,
-        description="Compare pocket geometry to ChEMBL known drug-target pockets",
-        input_data=f"Pocket shape descriptor for {gene_upper}",
-        output_data=chembl_result,
-        confidence=round(rng.uniform(0.70, 0.92), 3),
-    ))
+    chembl_result = (
+        f"{len(chembl_hits)} ChEMBL drug-pocket matches found"
+        if chembl_hits
+        else "No direct ChEMBL matches; searching structural analogs"
+    )
+    steps.append(
+        ReasoningStep(
+            step=4,
+            description="Compare pocket geometry to ChEMBL known drug-target pockets",
+            input_data=f"Pocket shape descriptor for {gene_upper}",
+            output_data=chembl_result,
+            confidence=round(rng.uniform(0.70, 0.92), 3),
+        )
+    )
 
     # Step 5: Drug similarity scoring
     drug_matches = []
     for entry in chembl_hits:
         adj_sim = round(max(0.3, entry["pocket_similarity"] - rng.uniform(0.0, 0.15)), 3)
-        drug_matches.append({
-            "drug": entry["drug"],
-            "chembl_id": entry["chembl_id"],
-            "pocket_similarity": adj_sim,
-            "mechanism": entry["mechanism"],
-            "repurposing_confidence": round(adj_sim * rng.uniform(0.8, 1.0), 3),
-        })
+        drug_matches.append(
+            {
+                "drug": entry["drug"],
+                "chembl_id": entry["chembl_id"],
+                "pocket_similarity": adj_sim,
+                "mechanism": entry["mechanism"],
+                "repurposing_confidence": round(adj_sim * rng.uniform(0.8, 1.0), 3),
+            }
+        )
     drug_matches.sort(key=lambda x: x["pocket_similarity"], reverse=True)
     top_drug = drug_matches[0]["drug"] if drug_matches else "novel scaffold required"
 
-    steps.append(ReasoningStep(
-        step=5,
-        description="Rank existing drugs by pocket similarity score",
-        input_data=f"{len(drug_matches)} candidate drugs",
-        output_data=f"Top match: {top_drug}",
-        confidence=round(rng.uniform(0.65, 0.88), 3),
-    ))
+    steps.append(
+        ReasoningStep(
+            step=5,
+            description="Rank existing drugs by pocket similarity score",
+            input_data=f"{len(drug_matches)} candidate drugs",
+            output_data=f"Top match: {top_drug}",
+            confidence=round(rng.uniform(0.65, 0.88), 3),
+        )
+    )
 
     # Step 6: Strategy recommendation
     if drug_matches and drug_matches[0]["pocket_similarity"] >= 0.80:
@@ -580,13 +813,15 @@ def run_therapeutic_reasoning(gene: str, variant: str) -> TherapeuticReasoningRe
     else:
         strategy = f"NOVEL: {gene_upper}-{variant} creates a unique pocket. De novo drug design or covalent fragment screening recommended."
 
-    steps.append(ReasoningStep(
-        step=6,
-        description="Generate therapeutic strategy recommendation",
-        input_data="Drug similarity ranking + structural analysis",
-        output_data=strategy,
-        confidence=round(rng.uniform(0.55, 0.80), 3),
-    ))
+    steps.append(
+        ReasoningStep(
+            step=6,
+            description="Generate therapeutic strategy recommendation",
+            input_data="Drug similarity ranking + structural analysis",
+            output_data=strategy,
+            confidence=round(rng.uniform(0.55, 0.80), 3),
+        )
+    )
 
     novel_score = round(1.0 - (drug_matches[0]["pocket_similarity"] if drug_matches else 1.0), 3)
     chain_confidence = round(sum(s.confidence for s in steps) / len(steps), 3)
@@ -605,6 +840,7 @@ def run_therapeutic_reasoning(gene: str, variant: str) -> TherapeuticReasoningRe
 # ---------------------------------------------------------------------------
 # Feature 5: Batch ΔΔG prediction
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DDGPrediction:
@@ -628,40 +864,129 @@ class BatchDDGResult:
 
 # Amino acid biophysical properties (hydrophobicity, charge, size, flexibility)
 AMINO_ACID_PROPERTIES: dict[str, dict] = {
-    "A": {"hydrophobicity": 1.8,  "charge": 0,   "size": 1.0, "flexibility": 0.36, "name": "Alanine"},
-    "R": {"hydrophobicity": -4.5, "charge": 1,   "size": 4.7, "flexibility": 0.53, "name": "Arginine"},
-    "N": {"hydrophobicity": -3.5, "charge": 0,   "size": 2.6, "flexibility": 0.46, "name": "Asparagine"},
-    "D": {"hydrophobicity": -3.5, "charge": -1,  "size": 2.5, "flexibility": 0.51, "name": "Aspartate"},
-    "C": {"hydrophobicity": 2.5,  "charge": 0,   "size": 1.9, "flexibility": 0.35, "name": "Cysteine"},
-    "Q": {"hydrophobicity": -3.5, "charge": 0,   "size": 3.4, "flexibility": 0.49, "name": "Glutamine"},
-    "E": {"hydrophobicity": -3.5, "charge": -1,  "size": 3.4, "flexibility": 0.50, "name": "Glutamate"},
-    "G": {"hydrophobicity": -0.4, "charge": 0,   "size": 0.5, "flexibility": 0.54, "name": "Glycine"},
-    "H": {"hydrophobicity": -3.2, "charge": 0.1, "size": 3.2, "flexibility": 0.32, "name": "Histidine"},
-    "I": {"hydrophobicity": 4.5,  "charge": 0,   "size": 2.8, "flexibility": 0.30, "name": "Isoleucine"},
-    "L": {"hydrophobicity": 3.8,  "charge": 0,   "size": 2.8, "flexibility": 0.40, "name": "Leucine"},
-    "K": {"hydrophobicity": -3.9, "charge": 1,   "size": 3.6, "flexibility": 0.47, "name": "Lysine"},
-    "M": {"hydrophobicity": 1.9,  "charge": 0,   "size": 3.0, "flexibility": 0.28, "name": "Methionine"},
-    "F": {"hydrophobicity": 2.8,  "charge": 0,   "size": 3.8, "flexibility": 0.31, "name": "Phenylalanine"},
-    "P": {"hydrophobicity": -1.6, "charge": 0,   "size": 2.0, "flexibility": 0.51, "name": "Proline"},
-    "S": {"hydrophobicity": -0.8, "charge": 0,   "size": 1.6, "flexibility": 0.51, "name": "Serine"},
-    "T": {"hydrophobicity": -0.7, "charge": 0,   "size": 2.0, "flexibility": 0.44, "name": "Threonine"},
-    "W": {"hydrophobicity": -0.9, "charge": 0,   "size": 5.2, "flexibility": 0.28, "name": "Tryptophan"},
-    "Y": {"hydrophobicity": -1.3, "charge": 0,   "size": 4.6, "flexibility": 0.42, "name": "Tyrosine"},
-    "V": {"hydrophobicity": 4.2,  "charge": 0,   "size": 2.3, "flexibility": 0.39, "name": "Valine"},
+    "A": {"hydrophobicity": 1.8, "charge": 0, "size": 1.0, "flexibility": 0.36, "name": "Alanine"},
+    "R": {
+        "hydrophobicity": -4.5,
+        "charge": 1,
+        "size": 4.7,
+        "flexibility": 0.53,
+        "name": "Arginine",
+    },
+    "N": {
+        "hydrophobicity": -3.5,
+        "charge": 0,
+        "size": 2.6,
+        "flexibility": 0.46,
+        "name": "Asparagine",
+    },
+    "D": {
+        "hydrophobicity": -3.5,
+        "charge": -1,
+        "size": 2.5,
+        "flexibility": 0.51,
+        "name": "Aspartate",
+    },
+    "C": {"hydrophobicity": 2.5, "charge": 0, "size": 1.9, "flexibility": 0.35, "name": "Cysteine"},
+    "Q": {
+        "hydrophobicity": -3.5,
+        "charge": 0,
+        "size": 3.4,
+        "flexibility": 0.49,
+        "name": "Glutamine",
+    },
+    "E": {
+        "hydrophobicity": -3.5,
+        "charge": -1,
+        "size": 3.4,
+        "flexibility": 0.50,
+        "name": "Glutamate",
+    },
+    "G": {"hydrophobicity": -0.4, "charge": 0, "size": 0.5, "flexibility": 0.54, "name": "Glycine"},
+    "H": {
+        "hydrophobicity": -3.2,
+        "charge": 0.1,
+        "size": 3.2,
+        "flexibility": 0.32,
+        "name": "Histidine",
+    },
+    "I": {
+        "hydrophobicity": 4.5,
+        "charge": 0,
+        "size": 2.8,
+        "flexibility": 0.30,
+        "name": "Isoleucine",
+    },
+    "L": {"hydrophobicity": 3.8, "charge": 0, "size": 2.8, "flexibility": 0.40, "name": "Leucine"},
+    "K": {"hydrophobicity": -3.9, "charge": 1, "size": 3.6, "flexibility": 0.47, "name": "Lysine"},
+    "M": {
+        "hydrophobicity": 1.9,
+        "charge": 0,
+        "size": 3.0,
+        "flexibility": 0.28,
+        "name": "Methionine",
+    },
+    "F": {
+        "hydrophobicity": 2.8,
+        "charge": 0,
+        "size": 3.8,
+        "flexibility": 0.31,
+        "name": "Phenylalanine",
+    },
+    "P": {"hydrophobicity": -1.6, "charge": 0, "size": 2.0, "flexibility": 0.51, "name": "Proline"},
+    "S": {"hydrophobicity": -0.8, "charge": 0, "size": 1.6, "flexibility": 0.51, "name": "Serine"},
+    "T": {
+        "hydrophobicity": -0.7,
+        "charge": 0,
+        "size": 2.0,
+        "flexibility": 0.44,
+        "name": "Threonine",
+    },
+    "W": {
+        "hydrophobicity": -0.9,
+        "charge": 0,
+        "size": 5.2,
+        "flexibility": 0.28,
+        "name": "Tryptophan",
+    },
+    "Y": {
+        "hydrophobicity": -1.3,
+        "charge": 0,
+        "size": 4.6,
+        "flexibility": 0.42,
+        "name": "Tyrosine",
+    },
+    "V": {"hydrophobicity": 4.2, "charge": 0, "size": 2.3, "flexibility": 0.39, "name": "Valine"},
 }
 
 # Three-letter to one-letter AA code
 _AA3TO1: dict[str, str] = {
-    "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C",
-    "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I",
-    "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
-    "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V",
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLN": "Q",
+    "GLU": "E",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
 }
 
 
 def _parse_variant(variant: str) -> tuple[str, int, str] | None:
     """Parse variant string like 'V600E' → (wt_aa, position, mut_aa)."""
     import re
+
     m = re.match(r"^([A-Za-z*]+)(\d+)([A-Za-z*]+)$", variant.strip())
     if not m:
         return None
@@ -694,10 +1019,10 @@ def predict_ddg(gene: str, variant: str) -> DDGPrediction:
 
         # Empirical weights (loosely calibrated to observed ΔΔG ranges)
         base_ddg = (
-            -0.4 * delta_hyd           # burial of hydrophobic residues stabilizes
-            + 1.8 * delta_charge       # charge changes destabilize in hydrophobic core
-            + 0.9 * delta_size         # size clashes are costly
-            + 2.5 * delta_flex         # flexibility changes near rigid cores
+            -0.4 * delta_hyd  # burial of hydrophobic residues stabilizes
+            + 1.8 * delta_charge  # charge changes destabilize in hydrophobic core
+            + 0.9 * delta_size  # size clashes are costly
+            + 2.5 * delta_flex  # flexibility changes near rigid cores
         )
         # Position penalty: buried positions (middle of protein) are more sensitive
         # We model this as a mild position-dependent noise
@@ -706,18 +1031,18 @@ def predict_ddg(gene: str, variant: str) -> DDGPrediction:
 
         # Correlated noise for the three tools (correlated via shared offset)
         shared_noise = rng.gauss(0, 0.5)
-        ddg_foldx   = round(base_ddg + shared_noise + rng.gauss(0, 0.3), 2)
+        ddg_foldx = round(base_ddg + shared_noise + rng.gauss(0, 0.3), 2)
         ddg_rosetta = round(base_ddg + shared_noise + rng.gauss(0, 0.4), 2)
-        ddg_spurs   = round(base_ddg + shared_noise + rng.gauss(0, 0.35), 2)
-        confidence  = round(rng.uniform(0.70, 0.92), 3)
+        ddg_spurs = round(base_ddg + shared_noise + rng.gauss(0, 0.35), 2)
+        confidence = round(rng.uniform(0.70, 0.92), 3)
     else:
         # Unknown / non-standard variant — use hash-seeded values
         base = rng.gauss(1.5, 2.5)
         shared_noise = rng.gauss(0, 0.5)
-        ddg_foldx   = round(base + shared_noise + rng.gauss(0, 0.3), 2)
+        ddg_foldx = round(base + shared_noise + rng.gauss(0, 0.3), 2)
         ddg_rosetta = round(base + shared_noise + rng.gauss(0, 0.4), 2)
-        ddg_spurs   = round(base + shared_noise + rng.gauss(0, 0.35), 2)
-        confidence  = round(rng.uniform(0.40, 0.65), 3)
+        ddg_spurs = round(base + shared_noise + rng.gauss(0, 0.35), 2)
+        confidence = round(rng.uniform(0.40, 0.65), 3)
 
     consensus_ddg = round((ddg_foldx + ddg_rosetta + ddg_spurs) / 3.0, 2)
 
@@ -746,8 +1071,7 @@ def batch_predict_ddg(gene: str, variants: list[str]) -> BatchDDGResult:
     predictions = [predict_ddg(gene, v) for v in variants]
 
     destabilizing = sum(
-        1 for p in predictions
-        if p.stability_effect in ("destabilizing", "highly_destabilizing")
+        1 for p in predictions if p.stability_effect in ("destabilizing", "highly_destabilizing")
     )
     stabilizing = sum(1 for p in predictions if p.stability_effect == "stabilizing")
 

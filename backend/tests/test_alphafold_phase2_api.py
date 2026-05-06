@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 from backend.app.alphafold.shells import AlphaFoldExecution
 
 
-def test_alphafold_db_backend_is_listed_and_lookup_run_updates_candidate(client: TestClient) -> None:
+def test_alphafold_db_backend_is_listed_and_lookup_run_updates_candidate(
+    client: TestClient,
+) -> None:
     backends = client.get("/alphafold/backends")
     assert backends.status_code == 200
     payload = backends.json()
@@ -60,7 +62,9 @@ def test_alphafold_server_run_requires_external_upload_acknowledgement(client: T
     assert "External data upload" in response.json()["detail"]
 
 
-def test_richer_alphafold_output_parsing_persists_extended_metrics(client: TestClient, monkeypatch) -> None:
+def test_richer_alphafold_output_parsing_persists_extended_metrics(
+    client: TestClient, monkeypatch
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "AF rich parse case"},
@@ -99,7 +103,9 @@ def test_richer_alphafold_output_parsing_persists_extended_metrics(client: TestC
             return_code=0,
         )
 
-    monkeypatch.setattr("backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend)
+    monkeypatch.setattr(
+        "backend.app.main.execute_alphafold_backend", fake_execute_alphafold_backend
+    )
 
     run = client.post(
         "/alphafold/backends/alphafold3_local/run",
@@ -116,7 +122,10 @@ def test_richer_alphafold_output_parsing_persists_extended_metrics(client: TestC
     candidates_after = client.get(f"/cases/{case_id}/candidates").json()
     structure_evidence = candidates_after[0]["structure_evidence"]
     assert structure_evidence["model_cif"] == "/tmp/af3_out/best_model.cif"
-    assert structure_evidence["summary_confidences_json"] == "/tmp/af3_out/best_summary_confidences.json"
+    assert (
+        structure_evidence["summary_confidences_json"]
+        == "/tmp/af3_out/best_summary_confidences.json"
+    )
     assert structure_evidence["ranking_score"] == 0.91
     assert structure_evidence["ptm"] == 0.72
     assert structure_evidence["iptm"] == 0.88

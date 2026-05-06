@@ -13,8 +13,7 @@ Provides:
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Known antibody targets
@@ -511,7 +510,9 @@ def predict_nanobody_binding(
     variation = (seq_hash % 1000) / 1000.0
     epitope_residues = [50 + i * 11 + (seq_hash % 5) for i in range(6)]
     cdr3_len = 10 + seq_hash % 8
-    cdr3_stub = (nanobody_sequence[-cdr3_len:] if len(nanobody_sequence) >= cdr3_len else nanobody_sequence)
+    cdr3_stub = (
+        nanobody_sequence[-cdr3_len:] if len(nanobody_sequence) >= cdr3_len else nanobody_sequence
+    )
 
     return NanobodyHit(
         nanobody_id=f"nb_denovo_{gene_upper[:4].lower()}",
@@ -654,7 +655,7 @@ def identify_cdr_regions(antibody_sequence: str) -> list[CDRRegion]:
         start, end = _KABAT_CDR_POSITIONS[name]
         start = min(start, len(vh_seq))
         end = min(end, len(vh_seq))
-        cdr_seq = vh_seq[start - 1:end] if start <= end else ""
+        cdr_seq = vh_seq[start - 1 : end] if start <= end else ""
         regions.append(
             CDRRegion(
                 name=name,
@@ -671,7 +672,7 @@ def identify_cdr_regions(antibody_sequence: str) -> list[CDRRegion]:
         start, end = _KABAT_CDR_POSITIONS[name]
         start = min(start, len(vl_seq))
         end = min(end, len(vl_seq))
-        cdr_seq = vl_seq[start - 1:end] if start <= end else ""
+        cdr_seq = vl_seq[start - 1 : end] if start <= end else ""
         regions.append(
             CDRRegion(
                 name=name,
@@ -714,13 +715,9 @@ def score_cdr_h3(sequence: str) -> dict:
 
 # Human germline VH framework consensus (simplified): positions known to cause
 # immunogenicity if they retain murine residues. Heuristic only.
-_HUMAN_GERMLINE_VH_CONSENSUS = (
-    "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAR"
-)
+_HUMAN_GERMLINE_VH_CONSENSUS = "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAR"
 
-_HUMAN_GERMLINE_VL_CONSENSUS = (
-    "DIQMTQSPSSLSASVGDRVTITCRASQSVSSFLAWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPFT"
-)
+_HUMAN_GERMLINE_VL_CONSENSUS = "DIQMTQSPSSLSASVGDRVTITCRASQSVSSFLAWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPFT"
 
 
 def assess_humanization(antibody_sequence: str) -> HumanizationResult:

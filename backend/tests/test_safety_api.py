@@ -19,7 +19,9 @@ def test_safety_preflight_endpoint_blocks_unsafe_content(client: TestClient) -> 
     assert body["blocked_patterns"]
 
 
-def test_safety_preflight_endpoint_requires_approval_for_external_upload(client: TestClient) -> None:
+def test_safety_preflight_endpoint_requires_approval_for_external_upload(
+    client: TestClient,
+) -> None:
     response = client.post(
         "/safety/preflight",
         json={
@@ -34,7 +36,6 @@ def test_safety_preflight_endpoint_requires_approval_for_external_upload(client:
     assert body["status"] == "requires_approval"
     assert body["needs_approval"] is True
     assert "External data upload" in body["reason"]
-
 
 
 def test_safety_preflight_endpoint_rejects_invalid_mode(client: TestClient) -> None:

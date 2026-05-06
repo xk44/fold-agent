@@ -19,11 +19,11 @@ RESEARCH ONLY — not for clinical or regulatory decision-making.
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, field
 
 try:
     import numpy as _np
+
     _NUMPY_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _NUMPY_AVAILABLE = False
@@ -38,23 +38,23 @@ except ImportError:  # pragma: no cover
 class MDExportConfig:
     """Configuration parameters for an MD simulation export."""
 
-    force_field: str = "amber14"           # "amber14" | "charmm36"
-    water_model: str = "tip3p"             # "tip3p" | "tip4pew" | "spce"
-    box_padding_nm: float = 1.0            # minimum distance from protein to box edge
-    ion_concentration_mol: float = 0.15    # NaCl concentration (mol/L)
-    temperature_k: float = 300.0           # simulation temperature (K)
-    simulation_ns: float = 100.0           # target production length (ns)
+    force_field: str = "amber14"  # "amber14" | "charmm36"
+    water_model: str = "tip3p"  # "tip3p" | "tip4pew" | "spce"
+    box_padding_nm: float = 1.0  # minimum distance from protein to box edge
+    ion_concentration_mol: float = 0.15  # NaCl concentration (mol/L)
+    temperature_k: float = 300.0  # simulation temperature (K)
+    simulation_ns: float = 100.0  # target production length (ns)
 
 
 @dataclass
 class MDExportResult:
     """Result of an MD export operation."""
 
-    format: str                            # "openmm" | "gromacs"
-    topology_data: str                     # topology file content (placeholder)
-    coordinate_data: str                   # coordinate file content (placeholder)
-    config_script: str                     # runnable script / mdp file
-    estimated_runtime_hours: float         # rough GPU runtime estimate
+    format: str  # "openmm" | "gromacs"
+    topology_data: str  # topology file content (placeholder)
+    coordinate_data: str  # coordinate file content (placeholder)
+    config_script: str  # runnable script / mdp file
+    estimated_runtime_hours: float  # rough GPU runtime estimate
     warnings: list[str] = field(default_factory=list)
 
 
@@ -300,8 +300,10 @@ def export_for_gromacs(pdb_data: str, config: MDExportConfig) -> MDExportResult:
 
     supported_ff = {"amber14", "charmm36"}
     if config.force_field not in supported_ff:
-        warnings.append(f"Force field '{config.force_field}' may not be bundled with GROMACS. "
-                        "Use 'amber14' or 'charmm36'.")
+        warnings.append(
+            f"Force field '{config.force_field}' may not be bundled with GROMACS. "
+            "Use 'amber14' or 'charmm36'."
+        )
 
     nsteps = int(config.simulation_ns * 1_000 / 0.002)
     mdp_name = "md_production.mdp"
@@ -404,16 +406,16 @@ def validate_structure_for_md(pdb_data: str) -> dict:
 
         if len(coords) >= 2:
             xyz = _np.array(coords, dtype=_np.float64)
-            clash_threshold_sq = 2.0 ** 2  # 4.0 Å²
+            clash_threshold_sq = 2.0**2  # 4.0 Å²
             n = len(coords)
             # Iterate over inter-residue pairs only; stop at first clash
             for i in range(n):
                 if steric_clashes:
                     break
                 # Compute distances from atom i to all atoms j > i at once
-                diffs = xyz[i + 1:] - xyz[i]                          # (n-i-1, 3)
-                d2 = (diffs * diffs).sum(axis=1)                       # (n-i-1,)
-                close_mask = d2 < clash_threshold_sq                   # potential clashes
+                diffs = xyz[i + 1 :] - xyz[i]  # (n-i-1, 3)
+                d2 = (diffs * diffs).sum(axis=1)  # (n-i-1,)
+                close_mask = d2 < clash_threshold_sq  # potential clashes
                 if not close_mask.any():
                     continue
                 # Check that close atoms are not in the same residue
@@ -423,7 +425,9 @@ def validate_structure_for_md(pdb_data: str) -> dict:
                         steric_clashes = True
                         break
 
-    passed = has_atoms and not missing_heavy_atoms and not chain_break_remarks and not steric_clashes
+    passed = (
+        has_atoms and not missing_heavy_atoms and not chain_break_remarks and not steric_clashes
+    )
 
     warnings: list[str] = []
     if not has_atoms:

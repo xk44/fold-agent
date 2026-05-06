@@ -23,7 +23,9 @@ def test_candidate_review_report_contains_structured_sections(client: TestClient
     assert content["review_status"] == "unreviewed"
 
 
-def test_candidate_review_markdown_export_contains_expert_style_sections(client: TestClient) -> None:
+def test_candidate_review_markdown_export_contains_expert_style_sections(
+    client: TestClient,
+) -> None:
     create_case = client.post(
         "/cases",
         json={"species": "demo", "diagnosis_summary": "Markdown report case"},

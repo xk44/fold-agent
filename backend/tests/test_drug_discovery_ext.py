@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.modes.drug_discovery import (
     ADMETProfile,
     CoFoldingResult,
-    KNOWN_DRUG_TARGETS,
     predict_admet,
     predict_cofold,
 )
-
 
 # ---------------------------------------------------------------------------
 # predict_cofold — unit tests
@@ -91,26 +88,34 @@ def test_cofold_unknown_target_still_returns_result() -> None:
 
 
 def test_api_cofold_200(client: TestClient) -> None:
-    resp = client.post("/drug-discovery/cofold", json={"target_gene": "EGFR", "ligand_smiles": "CC"})
+    resp = client.post(
+        "/drug-discovery/cofold", json={"target_gene": "EGFR", "ligand_smiles": "CC"}
+    )
     assert resp.status_code == 200
 
 
 def test_api_cofold_has_binding_energy(client: TestClient) -> None:
-    resp = client.post("/drug-discovery/cofold", json={"target_gene": "BRAF", "ligand_smiles": "c1ccccc1"})
+    resp = client.post(
+        "/drug-discovery/cofold", json={"target_gene": "BRAF", "ligand_smiles": "c1ccccc1"}
+    )
     data = resp.json()
     assert "binding_energy_kcal" in data
     assert -12.0 <= data["binding_energy_kcal"] <= -3.0
 
 
 def test_api_cofold_has_contact_residues(client: TestClient) -> None:
-    resp = client.post("/drug-discovery/cofold", json={"target_gene": "KRAS", "ligand_smiles": "CCN"})
+    resp = client.post(
+        "/drug-discovery/cofold", json={"target_gene": "KRAS", "ligand_smiles": "CCN"}
+    )
     data = resp.json()
     assert "contact_residues" in data
     assert isinstance(data["contact_residues"], list)
 
 
 def test_api_cofold_has_safety_label(client: TestClient) -> None:
-    resp = client.post("/drug-discovery/cofold", json={"target_gene": "ABL1", "ligand_smiles": "CC"})
+    resp = client.post(
+        "/drug-discovery/cofold", json={"target_gene": "ABL1", "ligand_smiles": "CC"}
+    )
     assert "safety_label" in resp.json()
 
 
@@ -178,7 +183,10 @@ def test_admet_compound_name_preserved() -> None:
 
 
 def test_api_admet_200(client: TestClient) -> None:
-    resp = client.post("/drug-discovery/admet", json={"compound_name": "Aspirin", "smiles": "CC(=O)Oc1ccccc1C(=O)O"})
+    resp = client.post(
+        "/drug-discovery/admet",
+        json={"compound_name": "Aspirin", "smiles": "CC(=O)Oc1ccccc1C(=O)O"},
+    )
     assert resp.status_code == 200
 
 

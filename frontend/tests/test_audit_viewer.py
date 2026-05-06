@@ -1,9 +1,13 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from frontend.app.audit_viewer import build_audit_action_options, filter_audit_entries, format_audit_entry_preview
+from frontend.app.audit_viewer import (
+    build_audit_action_options,
+    filter_audit_entries,
+    format_audit_entry_preview,
+)
 
 
 def test_build_audit_action_options_sorts_unique_actions_with_all_first() -> None:

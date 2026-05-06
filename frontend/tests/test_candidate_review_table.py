@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -62,8 +62,16 @@ def test_filter_candidates_by_status_mhc_score_ranges_and_none_defaults() -> Non
 
 def test_sort_candidates_prefers_requested_numeric_keys_and_missing_values_last() -> None:
     candidates = [
-        {"id": "cand-1", "structure_evidence": {"ranking_score": 0.7}, "prediction_scores": {"binding_rank": 0.08}},
-        {"id": "cand-2", "structure_evidence": {"ranking_score": 0.91}, "prediction_scores": {"binding_rank": 0.12}},
+        {
+            "id": "cand-1",
+            "structure_evidence": {"ranking_score": 0.7},
+            "prediction_scores": {"binding_rank": 0.08},
+        },
+        {
+            "id": "cand-2",
+            "structure_evidence": {"ranking_score": 0.91},
+            "prediction_scores": {"binding_rank": 0.12},
+        },
         {"id": "cand-3", "prediction_scores": {"binding_rank": 0.03}},
         {"id": "cand-4"},
     ]
@@ -109,9 +117,23 @@ def test_build_candidate_detail_flattens_nested_sections_and_handles_defaults() 
 
 def test_build_candidate_review_summary_and_option_formatting() -> None:
     candidates = [
-        {"id": "cand-1", "mhc_context": "HLA-A*02:01", "review_status": "unreviewed", "structure_evidence": {"ranking_score": 0.7}},
-        {"id": "cand-2", "mhc_context": None, "review_status": "needs_data", "structure_evidence": {"ranking_score": 0.91}},
-        {"id": "cand-3", "mhc_context": "HLA-A*02:01", "review_status": "expert_accepted_for_further_research"},
+        {
+            "id": "cand-1",
+            "mhc_context": "HLA-A*02:01",
+            "review_status": "unreviewed",
+            "structure_evidence": {"ranking_score": 0.7},
+        },
+        {
+            "id": "cand-2",
+            "mhc_context": None,
+            "review_status": "needs_data",
+            "structure_evidence": {"ranking_score": 0.91},
+        },
+        {
+            "id": "cand-3",
+            "mhc_context": "HLA-A*02:01",
+            "review_status": "expert_accepted_for_further_research",
+        },
     ]
 
     summary = build_candidate_review_summary(candidates)
@@ -154,9 +176,21 @@ def test_candidate_column_presets_and_linkouts_cover_review_targets() -> None:
             "structure_evidence": {"model_cif": "/tmp/model.cif"},
         },
         reports=[
-            {"id": "report-older", "report_type": "candidate_review", "generated_at": "2026-04-22T00:00:00Z"},
-            {"id": "report-1", "report_type": "candidate_review", "generated_at": "2026-04-23T00:00:00Z"},
-            {"id": "report-2", "report_type": "ethics_package", "generated_at": "2026-04-24T00:00:00Z"},
+            {
+                "id": "report-older",
+                "report_type": "candidate_review",
+                "generated_at": "2026-04-22T00:00:00Z",
+            },
+            {
+                "id": "report-1",
+                "report_type": "candidate_review",
+                "generated_at": "2026-04-23T00:00:00Z",
+            },
+            {
+                "id": "report-2",
+                "report_type": "ethics_package",
+                "generated_at": "2026-04-24T00:00:00Z",
+            },
         ],
         artifacts=[
             {"path": "/tmp/model.cif"},

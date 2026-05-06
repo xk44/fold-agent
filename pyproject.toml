@@ -46,8 +46,8 @@ requires = ["setuptools>=69.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["backend*"]
-exclude = ["frontend*", "skills*"]
+include = ["backend*", "skills*"]
+exclude = ["frontend*"]
 
 [tool.ruff]
 target-version = "py311"

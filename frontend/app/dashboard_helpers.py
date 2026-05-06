@@ -4,16 +4,18 @@ Pure-logic utilities with no Streamlit dependency.  The dashboard and the
 extracted panel modules all import from here so that behaviour stays
 identical while dashboard.py gets shorter.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
-
 
 HealthStatusLevel = Literal["ok", "degraded", "unreachable"]
 
 
-def classify_health_status(payload: dict[str, Any] | None, error: str | None = None) -> HealthStatusLevel:
+def classify_health_status(
+    payload: dict[str, Any] | None, error: str | None = None
+) -> HealthStatusLevel:
     """Classify a health payload for operator-facing dashboard rendering."""
     if error or not payload:
         return "unreachable"
@@ -66,17 +68,19 @@ def is_task_overdue(task: dict[str, Any], now: datetime | None = None) -> bool:
     due = parse_due_date(task.get("due_date"))
     if due is None:
         return False
-    current_time = now or datetime.now(timezone.utc)
+    current_time = now or datetime.now(UTC)
     return bool(due < current_time and task.get("status") not in {"done"})
 
 
 def task_sort_key(task: dict):
     """Sort key that orders tasks by due-date, then title."""
     due = parse_due_date(task.get("due_date"))
-    return (due is None, due or datetime.max.replace(tzinfo=timezone.utc), task.get("title") or "")
+    return (due is None, due or datetime.max.replace(tzinfo=UTC), task.get("title") or "")
 
 
-def build_provenance_summary(variants: list[dict] | None, candidates: list[dict] | None) -> dict[str, Any]:
+def build_provenance_summary(
+    variants: list[dict] | None, candidates: list[dict] | None
+) -> dict[str, Any]:
     """Collect provenance/source metrics used by the case inspection view."""
     variant_sources = sorted(
         {
@@ -107,7 +111,9 @@ def build_provenance_summary(variants: list[dict] | None, candidates: list[dict]
         }
     )
     variant_execution_ids = [
-        variant.get("last_parsed_execution_id") for variant in (variants or []) if variant.get("last_parsed_execution_id")
+        variant.get("last_parsed_execution_id")
+        for variant in (variants or [])
+        if variant.get("last_parsed_execution_id")
     ]
     candidate_execution_ids = [
         candidate.get("last_parsed_execution_id")
@@ -131,11 +137,21 @@ def build_provenance_summary(variants: list[dict] | None, candidates: list[dict]
         "variant_execution_ids": variant_execution_ids,
         "candidate_execution_ids": candidate_execution_ids,
         "best_ranking_score": max(
-            (item.get("ranking_score") for item in structure_scores if item.get("ranking_score") is not None),
+            (
+                item.get("ranking_score")
+                for item in structure_scores
+                if item.get("ranking_score") is not None
+            ),
             default="n/a",
         ),
-        "best_ptm": max((item.get("ptm") for item in structure_scores if item.get("ptm") is not None), default="n/a"),
-        "best_iptm": max((item.get("iptm") for item in structure_scores if item.get("iptm") is not None), default="n/a"),
+        "best_ptm": max(
+            (item.get("ptm") for item in structure_scores if item.get("ptm") is not None),
+            default="n/a",
+        ),
+        "best_iptm": max(
+            (item.get("iptm") for item in structure_scores if item.get("iptm") is not None),
+            default="n/a",
+        ),
         "combined_execution_ids": combined_execution_ids,
     }
 
@@ -189,14 +205,19 @@ def build_subject_governance_rows(
     for subject in subjects or []:
         metadata = subject.get("metadata_json") or {}
         privacy_flags = subject.get("privacy_flags") or {}
-        subject_sample_types = sorted({item for item in sample_buckets.get(subject.get("id"), []) if item})
+        subject_sample_types = sorted(
+            {item for item in sample_buckets.get(subject.get("id"), []) if item}
+        )
         rows.append(
             {
                 "id": subject.get("id"),
-                "display_name": subject.get("anonymized_display_name") or subject.get("id") or "unknown",
+                "display_name": subject.get("anonymized_display_name")
+                or subject.get("id")
+                or "unknown",
                 "privacy_mode": (
                     str(subject.get("redaction_level"))
-                    if str(subject.get("redaction_level") or "full") in {"deidentify", "anonymous", "deleted"}
+                    if str(subject.get("redaction_level") or "full")
+                    in {"deidentify", "anonymous", "deleted"}
                     else ("redacted" if privacy_flags.get("redacted") else "standard")
                 ),
                 "species": metadata.get("species") or "",

@@ -5,9 +5,16 @@ Run with:
 
 Or via the Makefile:
     make worker
+
+When no broker URL is configured the module loads without error but the
+``app`` object is ``None``.  Callers that dispatch Celery tasks should check
+``backend.app.jobs`` which already falls back to the threadpool when Celery
+is unavailable.
 """
 
 from __future__ import annotations
+
+import warnings
 
 from backend.app.config import settings
 
@@ -20,44 +27,49 @@ if not _celery_broker:
     if _redis_url:
         _celery_broker = _redis_url
     else:
-        raise SystemExit(
+        warnings.warn(
             "Neither FOLDAGENT_CELERY_BROKER_URL nor FOLDAGENT_REDIS_URL is set. "
-            "The worker requires a message broker to function. "
-            "See .env.example for configuration options."
+            "The Celery worker will not be available; background jobs will use the "
+            "in-process threadpool instead. See .env.example for configuration options.",
+            stacklevel=1,
+        )
+        app = None
+
+if _celery_broker:
+    if not _celery_backend:
+        if _redis_url:
+            _celery_backend = _redis_url.rstrip("/") + "/1"
+        else:
+            _celery_backend = _celery_broker.rstrip("/") + "/1"
+
+    try:
+        from celery import Celery
+    except ImportError:
+        warnings.warn(
+            "Celery is not installed. Install with: pip install -e '.[worker]'",
+            stacklevel=1,
+        )
+        app = None
+    else:
+        app = Celery(
+            "foldagent",
+            broker=_celery_broker,
+            backend=_celery_backend,
         )
 
-if not _celery_backend:
-    if _redis_url:
-        _celery_backend = _redis_url.rstrip("/") + "/1"
-    else:
-        _celery_backend = _celery_broker.rstrip("/") + "/1"
+        app.conf.update(
+            task_serializer="json",
+            accept_content=["json"],
+            result_serializer="json",
+            timezone="UTC",
+            enable_utc=True,
+            task_track_started=True,
+            task_acks_late=True,
+            worker_prefetch_multiplier=1,
+            task_routes={
+                "backend.app.worker.tasks.pipeline_run": {"queue": "pipeline"},
+                "backend.app.worker.tasks.structure_prediction": {"queue": "alphafold"},
+            },
+        )
 
-try:
-    from celery import Celery
-except ImportError:
-    raise SystemExit(
-        "Celery is not installed. Install with: pip install -e '.[worker]'"
-    ) from None
-
-app = Celery(
-    "foldagent",
-    broker=_celery_broker,
-    backend=_celery_backend,
-)
-
-app.conf.update(
-    task_serializer="json",
-    accept_content=["json"],
-    result_serializer="json",
-    timezone="UTC",
-    enable_utc=True,
-    task_track_started=True,
-    task_acks_late=True,
-    worker_prefetch_multiplier=1,
-    task_routes={
-        "backend.app.worker.tasks.pipeline_run": {"queue": "pipeline"},
-        "backend.app.worker.tasks.structure_prediction": {"queue": "alphafold"},
-    },
-)
-
-app.autodiscover_tasks(["backend.app.worker"])
+        app.autodiscover_tasks(["backend.app.worker"])

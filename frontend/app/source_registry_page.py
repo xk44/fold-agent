@@ -29,7 +29,10 @@ SOURCE_CATEGORIES = [
         "links": [
             {"label": "Paul X profile", "url": "https://x.com/paul_conyngham"},
             {"label": "Paul GitHub", "url": "https://github.com/PaulConyngham"},
-            {"label": "Rosie repo", "url": "https://github.com/PaulConyngham/AutologousCancerVaccineWithQuantumParticles"},
+            {
+                "label": "Rosie repo",
+                "url": "https://github.com/PaulConyngham/AutologousCancerVaccineWithQuantumParticles",
+            },
         ],
         "warning": "Paul's GitHub repo is an autologous tumor-lysate protocol, not the exact mRNA neoantigen Rosie pipeline.",
     },
@@ -51,10 +54,16 @@ SOURCE_CATEGORIES = [
         "icon": "🔬",
         "links": [
             {"label": "BWA/BWA-MEM2", "url": "https://github.com/bwa-mem2/bwa-mem2"},
-            {"label": "GATK Mutect2", "url": "https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2"},
+            {
+                "label": "GATK Mutect2",
+                "url": "https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2",
+            },
             {"label": "Ensembl VEP", "url": "https://www.ensembl.org/vep"},
             {"label": "pVACtools", "url": "https://pvactools.readthedocs.io/"},
-            {"label": "NetMHCpan", "url": "https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/"},
+            {
+                "label": "NetMHCpan",
+                "url": "https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/",
+            },
         ],
     },
     {
@@ -72,9 +81,18 @@ SOURCE_CATEGORIES = [
         "description": "Media coverage of the Paul Conyngham / Rosie story.",
         "icon": "📰",
         "links": [
-            {"label": "UNSW Article", "url": "https://news.unsw.edu.au/en/meet-the-man-who-designed-a-cancer-vaccine-for-his-dog"},
-            {"label": "The Scientist", "url": "https://www.the-scientist.com/chatgpt-and-alphafold-help-design-personalized-vaccine-for-dog-with-cancer-74227"},
-            {"label": "Fortune", "url": "https://fortune.com/2026/03/15/australian-tech-entrepreneur-ai-cancer-vaccine-dog-rosie-unsw-mrna/"},
+            {
+                "label": "UNSW Article",
+                "url": "https://news.unsw.edu.au/en/meet-the-man-who-designed-a-cancer-vaccine-for-his-dog",
+            },
+            {
+                "label": "The Scientist",
+                "url": "https://www.the-scientist.com/chatgpt-and-alphafold-help-design-personalized-vaccine-for-dog-with-cancer-74227",
+            },
+            {
+                "label": "Fortune",
+                "url": "https://fortune.com/2026/03/15/australian-tech-entrepreneur-ai-cancer-vaccine-dog-rosie-unsw-mrna/",
+            },
         ],
     },
 ]

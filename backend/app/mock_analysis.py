@@ -13,8 +13,15 @@ from sqlalchemy.orm import Session
 from backend.app.models import CandidateAntigen, Case, ReviewStatusEnum, Variant
 
 
-def ensure_mock_analysis_data(db: Session, case: Case) -> tuple[list[Variant], list[CandidateAntigen]]:
-    variants = db.query(Variant).filter(Variant.case_id == case.id).order_by(Variant.created_at.asc()).all()
+def ensure_mock_analysis_data(
+    db: Session, case: Case
+) -> tuple[list[Variant], list[CandidateAntigen]]:
+    variants = (
+        db.query(Variant)
+        .filter(Variant.case_id == case.id)
+        .order_by(Variant.created_at.asc())
+        .all()
+    )
     candidates = (
         db.query(CandidateAntigen)
         .filter(CandidateAntigen.case_id == case.id)

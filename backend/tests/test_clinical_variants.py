@@ -9,15 +9,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.clinical_variants import (
-    ACMGClassification,
-    ACMGCriterion,
-    ACMGEvidence,
-    ClinVarEvidence,
     MOCK_CLINVAR_DB,
     MOCK_VUS_DATABASE,
+    ACMGClassification,
+    ACMGCriterion,
     ReclassificationResult,
     StructuralClinVarMapping,
-    VUSEntry,
     get_clinvar_stats,
     get_vus_queue,
     lookup_clinvar,
@@ -26,7 +23,6 @@ from backend.app.clinical_variants import (
     rescore_vus,
     score_acmg_criteria,
 )
-
 
 # ---------------------------------------------------------------------------
 # Feature 1: ACMG auto-scoring — unit tests
@@ -56,33 +52,45 @@ class TestACMGScoring:
         assert pp3.met is True
 
     def test_pp3_not_met_when_low_alphamissense(self) -> None:
-        result = score_acmg_criteria("LDLR", "V408M", alphamissense_score=0.15, conservation_score=0.1)
+        result = score_acmg_criteria(
+            "LDLR", "V408M", alphamissense_score=0.15, conservation_score=0.1
+        )
         pp3 = next(e for e in result.evidences if e.criterion == ACMGCriterion.PP3)
         assert pp3.met is False
 
     def test_pp3_met_at_threshold_0_7(self) -> None:
         # Exactly 0.7 should not meet (>0.7)
-        result = score_acmg_criteria("GENE1", "A100B", alphamissense_score=0.70, conservation_score=0.0)
+        result = score_acmg_criteria(
+            "GENE1", "A100B", alphamissense_score=0.70, conservation_score=0.0
+        )
         pp3 = next(e for e in result.evidences if e.criterion == ACMGCriterion.PP3)
         assert pp3.met is False
 
     def test_pp3_met_above_threshold(self) -> None:
-        result = score_acmg_criteria("GENE1", "A100B", alphamissense_score=0.71, conservation_score=0.0)
+        result = score_acmg_criteria(
+            "GENE1", "A100B", alphamissense_score=0.71, conservation_score=0.0
+        )
         pp3 = next(e for e in result.evidences if e.criterion == ACMGCriterion.PP3)
         assert pp3.met is True
 
     def test_bp4_met_when_both_scores_low(self) -> None:
-        result = score_acmg_criteria("LDLR", "V408M", alphamissense_score=0.10, conservation_score=0.20)
+        result = score_acmg_criteria(
+            "LDLR", "V408M", alphamissense_score=0.10, conservation_score=0.20
+        )
         bp4 = next(e for e in result.evidences if e.criterion == ACMGCriterion.BP4)
         assert bp4.met is True
 
     def test_bp4_not_met_when_am_score_high(self) -> None:
-        result = score_acmg_criteria("TP53", "R175H", alphamissense_score=0.95, conservation_score=0.10)
+        result = score_acmg_criteria(
+            "TP53", "R175H", alphamissense_score=0.95, conservation_score=0.10
+        )
         bp4 = next(e for e in result.evidences if e.criterion == ACMGCriterion.BP4)
         assert bp4.met is False
 
     def test_bp4_not_met_when_cons_score_high(self) -> None:
-        result = score_acmg_criteria("TP53", "R175H", alphamissense_score=0.20, conservation_score=0.50)
+        result = score_acmg_criteria(
+            "TP53", "R175H", alphamissense_score=0.20, conservation_score=0.50
+        )
         bp4 = next(e for e in result.evidences if e.criterion == ACMGCriterion.BP4)
         assert bp4.met is False
 
@@ -100,7 +108,8 @@ class TestACMGScoring:
 
     def test_pm1_met_via_structural_context(self) -> None:
         result = score_acmg_criteria(
-            "MYGENE", "X999Y",
+            "MYGENE",
+            "X999Y",
             structural_context={"in_critical_domain": True, "domain_name": "active site"},
         )
         pm1 = next(e for e in result.evidences if e.criterion == ACMGCriterion.PM1)
@@ -127,7 +136,8 @@ class TestACMGScoring:
 
     def test_high_am_score_yields_likely_pathogenic_or_pathogenic(self) -> None:
         result = score_acmg_criteria(
-            "TP53", "R175H",
+            "TP53",
+            "R175H",
             alphamissense_score=0.98,
             conservation_score=0.95,
             structural_context={"in_critical_domain": True, "domain_name": "DNA-binding domain"},
@@ -136,7 +146,8 @@ class TestACMGScoring:
 
     def test_low_am_score_yields_benign_spectrum(self) -> None:
         result = score_acmg_criteria(
-            "LDLR", "V408M",
+            "LDLR",
+            "V408M",
             alphamissense_score=0.05,
             conservation_score=0.10,
             structural_context={"in_critical_domain": False},
@@ -386,7 +397,13 @@ class TestACMGEndpoints:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["pathogenicity_class"] in ("pathogenic", "likely_pathogenic", "VUS", "likely_benign", "benign")
+        assert data["pathogenicity_class"] in (
+            "pathogenic",
+            "likely_pathogenic",
+            "VUS",
+            "likely_benign",
+            "benign",
+        )
 
     def test_post_acmg_score_with_all_params(self, client: TestClient) -> None:
         response = client.post(

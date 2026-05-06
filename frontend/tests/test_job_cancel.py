@@ -1,4 +1,5 @@
 """Tests for cancel-background-job UX helpers — pure helpers, no Streamlit."""
+
 from __future__ import annotations
 
 import sys
@@ -7,11 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from frontend.app.event_stream import (
+    cancel_eligibility_reason,
     enrich_cards_with_cancel_info,
     format_cancel_action_summary,
     format_cancel_status_badge,
     is_cancel_eligible,
-    cancel_eligibility_reason,
 )
 
 
@@ -67,19 +68,23 @@ class TestCancelBadgesAndSummary:
         assert format_cancel_status_badge(_make_api_job(status="completed")) == "—"
 
     def test_enrich_cards_with_cancel_info(self):
-        enriched = enrich_cards_with_cancel_info([
-            _make_api_job(job_id="j1", status="running"),
-            _make_api_job(job_id="j2", status="completed"),
-        ])
+        enriched = enrich_cards_with_cancel_info(
+            [
+                _make_api_job(job_id="j1", status="running"),
+                _make_api_job(job_id="j2", status="completed"),
+            ]
+        )
         assert enriched[0]["cancel_eligible"] is True
         assert enriched[1]["cancel_eligible"] is False
 
     def test_cancel_action_summary(self):
-        enriched = enrich_cards_with_cancel_info([
-            _make_api_job(job_id="j1", status="running"),
-            _make_api_job(job_id="j2", status="pending"),
-            _make_api_job(job_id="j3", status="completed"),
-        ])
+        enriched = enrich_cards_with_cancel_info(
+            [
+                _make_api_job(job_id="j1", status="running"),
+                _make_api_job(job_id="j2", status="pending"),
+                _make_api_job(job_id="j3", status="completed"),
+            ]
+        )
         text = format_cancel_action_summary(enriched)
         assert "Cancel-eligible jobs — 2 job(s)" in text
         assert "pipeline_run (running)" in text

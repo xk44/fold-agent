@@ -274,15 +274,17 @@ def predict_ternary_complex(
     for i in range(n_contacts):
         pep_pos = (abs(hash(key + str(i))) % pep_len) + 1
         tcr_pos = (abs(hash(key + str(i) + "tcr")) % 30) + 90
-        contacts.append({
-            "peptide_residue": pep_pos,
-            "peptide_aa": peptide[pep_pos - 1],
-            "tcr_residue": tcr_pos,
-            "contact_type": ["hydrogen_bond", "van_der_waals", "hydrophobic", "salt_bridge"][
-                abs(hash(key + str(i))) % 4
-            ],
-            "distance_angstrom": round(2.8 + _seq_hash_score(key + str(i), 0.0, 2.2), 2),
-        })
+        contacts.append(
+            {
+                "peptide_residue": pep_pos,
+                "peptide_aa": peptide[pep_pos - 1],
+                "tcr_residue": tcr_pos,
+                "contact_type": ["hydrogen_bond", "van_der_waals", "hydrophobic", "salt_bridge"][
+                    abs(hash(key + str(i))) % 4
+                ],
+                "distance_angstrom": round(2.8 + _seq_hash_score(key + str(i), 0.0, 2.2), 2),
+            }
+        )
 
     groove_score = _seq_hash_score(key + "groove", 0.4, 1.0)
     docking_angle = round(_seq_hash_score(key + "angle", 10.0, 50.0), 1)
@@ -449,10 +451,10 @@ def run_multiseed_sampling(
 
     mean_s = round(sum(scores) / len(scores), 6)
     variance = sum((x - mean_s) ** 2 for x in scores) / len(scores)
-    std_s = round(variance ** 0.5, 6)
+    std_s = round(variance**0.5, 6)
 
     # 95% CI approximation
-    margin = round(1.96 * std_s / (n_seeds ** 0.5), 6)
+    margin = round(1.96 * std_s / (n_seeds**0.5), 6)
     ci = (round(max(0.0, mean_s - margin), 6), round(min(1.0, mean_s + margin), 6))
 
     # Convergence: coefficient of variation (lower = better converged)
@@ -494,9 +496,7 @@ def predict_immunogenicity(
 
     # Normalize kd component (lower kd = higher binding component)
     max_kd = 50.0
-    mhc_component = round(
-        max(0.0, min(1.0, 1.0 - complex_result.predicted_kd_nm / max_kd)), 4
-    )
+    mhc_component = round(max(0.0, min(1.0, 1.0 - complex_result.predicted_kd_nm / max_kd)), 4)
     tcr_component = round(complex_result.confidence_score, 4)
     response_component = round(tcell_score.binding_geometry_score, 4)
 
@@ -519,9 +519,7 @@ def predict_immunogenicity(
     else:
         resp_class = "non_immunogenic"
 
-    confidence = round(
-        (complex_result.confidence_score + multiseed.reproducibility_score) / 2, 4
-    )
+    confidence = round((complex_result.confidence_score + multiseed.reproducibility_score) / 2, 4)
 
     factors: list[str] = []
     if mhc_component > 0.7:

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from shutil import which
 
 PROBE_TIMEOUT = 5
@@ -234,7 +234,9 @@ def _gpu_runtime_detail() -> dict:
         if m:
             base["cuda_version"] = m.group(1)
         # Count GPUs: lines like "|   0  NVIDIA ..." or "|   1  NVIDIA ..."
-        gpu_lines = re.findall(r"^\|\s+\d+\s+(NVIDIA\s+\S[^\|]+?)\s*(?:On|Off)\s*\|", out, re.MULTILINE)
+        gpu_lines = re.findall(
+            r"^\|\s+\d+\s+(NVIDIA\s+\S[^\|]+?)\s*(?:On|Off)\s*\|", out, re.MULTILINE
+        )
         if gpu_lines:
             base["gpu_count"] = len(gpu_lines)
             base["gpu_name"] = gpu_lines[0].strip()
@@ -412,7 +414,9 @@ def _build_shell_status(name: str) -> AlphaFoldShellStatus:
     gpu_ok = _gpu_runtime_available() if gpu_required else True
     configured_paths = _configured_path_checks(spec["env_paths"])
     missing_paths = [
-        key for key, value in configured_paths.items() if value["configured"] and value["exists"] is False
+        key
+        for key, value in configured_paths.items()
+        if value["configured"] and value["exists"] is False
     ]
 
     validation_ok = bool(probe["probe_ok"]) and gpu_ok and not missing_paths
@@ -543,7 +547,9 @@ def list_alphafold_shell_statuses() -> dict[str, dict]:
     return combined
 
 
-def build_alphafold_command(backend_name: str, payload: dict) -> tuple[AlphaFoldShellStatus, list[str]]:
+def build_alphafold_command(
+    backend_name: str, payload: dict
+) -> tuple[AlphaFoldShellStatus, list[str]]:
     if backend_name not in SHELL_BACKEND_SPECS:
         raise KeyError(backend_name)
     backend = get_shell_backend_status(backend_name)
@@ -613,7 +619,9 @@ def execute_alphafold_backend(backend_name: str, payload: dict) -> AlphaFoldExec
 
     timeout = int(payload.get("timeout_seconds", 30))
     try:
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
+        completed = subprocess.run(
+            command, capture_output=True, text=True, timeout=timeout, check=False
+        )
         return AlphaFoldExecution(
             backend=backend.name,
             mode="execute",

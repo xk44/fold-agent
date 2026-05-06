@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _CANDIDATE_COLUMN_PRESETS: dict[str, list[str]] = {
     "review": [
         "mhc_context",
@@ -57,9 +56,17 @@ def filter_candidates(
 ) -> list[dict]:
     filtered = list(candidates or [])
     if review_status != "all":
-        filtered = [candidate for candidate in filtered if str(candidate.get("review_status") or "") == review_status]
+        filtered = [
+            candidate
+            for candidate in filtered
+            if str(candidate.get("review_status") or "") == review_status
+        ]
     if mhc_context != "all":
-        filtered = [candidate for candidate in filtered if str(candidate.get("mhc_context") or "") == mhc_context]
+        filtered = [
+            candidate
+            for candidate in filtered
+            if str(candidate.get("mhc_context") or "") == mhc_context
+        ]
     if ranking_score_min is not None:
         filtered = [
             candidate
@@ -85,18 +92,30 @@ def sort_candidates(
 ) -> list[dict]:
     ordered = list(candidates or [])
     if sort_key in {"ranking_score", "binding_rank"}:
-        present = [candidate for candidate in ordered if _candidate_numeric_value(candidate, sort_key) is not None]
-        missing = [candidate for candidate in ordered if _candidate_numeric_value(candidate, sort_key) is None]
+        present = [
+            candidate
+            for candidate in ordered
+            if _candidate_numeric_value(candidate, sort_key) is not None
+        ]
+        missing = [
+            candidate
+            for candidate in ordered
+            if _candidate_numeric_value(candidate, sort_key) is None
+        ]
         present = sorted(
             present,
             key=lambda candidate: float(_candidate_numeric_value(candidate, sort_key) or 0.0),
             reverse=reverse,
         )
         return present + missing
-    return sorted(ordered, key=lambda candidate: str(candidate.get(sort_key) or "").lower(), reverse=reverse)
+    return sorted(
+        ordered, key=lambda candidate: str(candidate.get(sort_key) or "").lower(), reverse=reverse
+    )
 
 
-def apply_candidate_column_preset(rows: list[dict[str, Any]] | None, preset: str) -> list[dict[str, Any]]:
+def apply_candidate_column_preset(
+    rows: list[dict[str, Any]] | None, preset: str
+) -> list[dict[str, Any]]:
     columns = _CANDIDATE_COLUMN_PRESETS.get(preset)
     if not columns:
         return list(rows or [])
@@ -134,7 +153,8 @@ def build_candidate_detail(candidate: dict | None) -> dict[str, Any]:
         "structure_ptm": structure_evidence.get("ptm"),
         "structure_iptm": structure_evidence.get("iptm"),
         "structure_source_url": structure_evidence.get("source_url"),
-        "structure_model_path": structure_evidence.get("model_cif") or structure_evidence.get("pdb_file"),
+        "structure_model_path": structure_evidence.get("model_cif")
+        or structure_evidence.get("pdb_file"),
     }
     for key, value in uncertainty_flags.items():
         detail[f"uncertainty_{key}"] = value
@@ -184,12 +204,16 @@ def build_candidate_linkout_targets(
     matching_structure_jobs = [
         job for job in (structure_jobs or []) if job.get("candidate_id") == candidate_id
     ]
-    matching_structure_jobs = sorted(matching_structure_jobs, key=_structure_job_sort_key, reverse=True)
+    matching_structure_jobs = sorted(
+        matching_structure_jobs, key=_structure_job_sort_key, reverse=True
+    )
     structure_job_id = matching_structure_jobs[0].get("id") if matching_structure_jobs else None
 
     sorted_reports = sorted(reports or [], key=_report_sort_key)
     sorted_reports.reverse()
-    candidate_review_reports = [report for report in sorted_reports if report.get("report_type") == "candidate_review"]
+    candidate_review_reports = [
+        report for report in sorted_reports if report.get("report_type") == "candidate_review"
+    ]
     report_id = None
     if candidate_review_reports:
         report_id = candidate_review_reports[0].get("id")
@@ -197,18 +221,28 @@ def build_candidate_linkout_targets(
         report_id = sorted_reports[0].get("id")
 
     artifact_path = next(
-        (artifact.get("path") for artifact in artifacts or [] if artifact.get("path") == preferred_artifact),
+        (
+            artifact.get("path")
+            for artifact in artifacts or []
+            if artifact.get("path") == preferred_artifact
+        ),
         None,
     )
     if artifact_path is None and report_id is not None:
         artifact_path = next(
-            (artifact.get("path") for artifact in artifacts or [] if artifact.get("report_id") == report_id),
+            (
+                artifact.get("path")
+                for artifact in artifacts or []
+                if artifact.get("report_id") == report_id
+            ),
             None,
         )
     if artifact_path is None:
         artifact_path = preferred_artifact
     if artifact_path is None and artifacts:
-        artifact_path = next((artifact.get("path") for artifact in artifacts if artifact.get("path")), None)
+        artifact_path = next(
+            (artifact.get("path") for artifact in artifacts if artifact.get("path")), None
+        )
 
     return {
         "candidate_id": candidate_id,

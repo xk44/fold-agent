@@ -11,6 +11,7 @@ Covers:
 - operator_focus_store: save then load roundtrip, missing file returns {},
   corrupt JSON returns {}, wrong version returns {}, atomic write
 """
+
 from __future__ import annotations
 
 import json
@@ -20,31 +21,31 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from frontend.app.event_stream import (
-    FILTER_ALL,
     _CTX_EVENT_KEY,
+    _CTX_FILTER_CASE_ID_KEY,
+    _CTX_FILTER_JOB_TYPE_KEY,
+    _CTX_FILTER_STATUS_KEY,
+    _CTX_INSPECT_CASE_KEY,
     _CTX_JOB_KEY,
     _CTX_PIPELINE_CASE_KEY,
-    _CTX_INSPECT_CASE_KEY,
-    _CTX_FILTER_STATUS_KEY,
-    _CTX_FILTER_JOB_TYPE_KEY,
-    _CTX_FILTER_CASE_ID_KEY,
     _CTX_REPORT_KEY_PREFIX,
     _CTX_STRUCTURE_JOB_KEY_PREFIX,
     _RESTORABLE_FOCUS_KEYS,
     _RESTORABLE_FOCUS_PREFIXES,
-    extract_restorable_focus,
+    FILTER_ALL,
     apply_restored_focus,
+    extract_restorable_focus,
 )
 from frontend.app.operator_focus_store import (
+    default_focus_path,
     load_operator_focus,
     save_operator_focus,
-    default_focus_path,
 )
-
 
 # ---------------------------------------------------------------------------
 # extract_restorable_focus
 # ---------------------------------------------------------------------------
+
 
 class TestExtractRestorableFocusEmpty:
     """Empty session state produces an empty focus dict."""
@@ -241,6 +242,7 @@ class TestExtractRestorableFocusCombined:
 # apply_restored_focus
 # ---------------------------------------------------------------------------
 
+
 class TestApplyRestoredFocusEmpty:
     """Applying empty or no focus doesn't change session state."""
 
@@ -394,6 +396,7 @@ class TestApplyRestoredFocusPartialSaved:
 # Roundtrip: extract → apply
 # ---------------------------------------------------------------------------
 
+
 class TestExtractApplyRoundtrip:
     """extraction followed by application restores the original focus."""
 
@@ -457,6 +460,7 @@ class TestExtractApplyMergeWithExisting:
 # ---------------------------------------------------------------------------
 # operator_focus_store — file I/O tests
 # ---------------------------------------------------------------------------
+
 
 class TestOperatorFocusStore:
     """File-based persistence round-trip and edge cases."""

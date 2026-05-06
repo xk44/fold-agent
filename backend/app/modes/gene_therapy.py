@@ -12,12 +12,12 @@ Provides:
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # CRISPR-Cas variants
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CasVariant:
@@ -162,20 +162,36 @@ def predict_cas_structure(cas_name: str) -> dict:
     if variant.cas_type == "Cas9":
         domains = [
             {"name": "REC lobe", "residues": [1, 500], "function": "guide RNA binding"},
-            {"name": "NUC lobe", "residues": [501, variant.sequence_length], "function": "DNA cleavage"},
+            {
+                "name": "NUC lobe",
+                "residues": [501, variant.sequence_length],
+                "function": "DNA cleavage",
+            },
             {"name": "RuvC domain", "residues": [1, 60], "function": "non-target strand cleavage"},
             {"name": "HNH domain", "residues": [775, 908], "function": "target strand cleavage"},
         ]
     elif variant.cas_type == "Cas12":
         domains = [
-            {"name": "RuvC domain", "residues": [1, 200], "function": "DNA cleavage (both strands)"},
+            {
+                "name": "RuvC domain",
+                "residues": [1, 200],
+                "function": "DNA cleavage (both strands)",
+            },
             {"name": "WED domain", "residues": [201, 500], "function": "PAM recognition"},
-            {"name": "PI domain", "residues": [501, variant.sequence_length], "function": "PAM interaction"},
+            {
+                "name": "PI domain",
+                "residues": [501, variant.sequence_length],
+                "function": "PAM interaction",
+            },
         ]
     elif variant.cas_type == "Cas13":
         domains = [
             {"name": "HEPN domain 1", "residues": [1, 350], "function": "RNA cleavage"},
-            {"name": "HEPN domain 2", "residues": [700, variant.sequence_length], "function": "RNA cleavage"},
+            {
+                "name": "HEPN domain 2",
+                "residues": [700, variant.sequence_length],
+                "function": "RNA cleavage",
+            },
         ]
 
     return {
@@ -195,6 +211,7 @@ def predict_cas_structure(cas_name: str) -> dict:
 # ---------------------------------------------------------------------------
 # Guide RNA design
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GuideRNA:
@@ -325,7 +342,9 @@ def score_guide(guide_sequence: str) -> dict:
     matches = sum(
         1
         for k in range(half)
-        if k < length and (length - 1 - k) < length and seq[k] == complement.get(seq[length - 1 - k], "")
+        if k < length
+        and (length - 1 - k) < length
+        and seq[k] == complement.get(seq[length - 1 - k], "")
     )
     self_comp_score = round(matches / half, 3) if half > 0 else 0.0
 
@@ -342,6 +361,7 @@ def score_guide(guide_sequence: str) -> dict:
 # ---------------------------------------------------------------------------
 # PAM specificity analysis
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PAMAnalysis:
@@ -440,6 +460,7 @@ def analyze_pam_specificity(cas_type: str) -> PAMAnalysis:
 # ---------------------------------------------------------------------------
 # AAV capsid tropism modeling
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AAVSerotype:
@@ -656,6 +677,7 @@ def model_capsid_receptor(serotype: str) -> dict:
 # Transgene safety scoring
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TransgeneSafety:
     gene: str
@@ -763,6 +785,7 @@ def score_transgene_safety(gene: str, sequence: str) -> TransgeneSafety:
 # Base/prime editor modeling
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EditorResult:
     editor_type: str  # ABE | CBE | PE
@@ -843,12 +866,14 @@ def model_base_edit(
             continue
         if bystander_start <= pos_1idx <= bystander_end:
             if target_base == "any" or base == target_base:
-                bystander_edits.append({
-                    "position": pos_1idx,
-                    "original_base": base,
-                    "edited_base": result_base if target_base != "any" else base,
-                    "estimated_frequency": round(efficiency * 0.3, 3),
-                })
+                bystander_edits.append(
+                    {
+                        "position": pos_1idx,
+                        "original_base": base,
+                        "edited_base": result_base if target_base != "any" else base,
+                        "estimated_frequency": round(efficiency * 0.3, 3),
+                    }
+                )
 
     # Actual base at position
     actual_base = seq[position - 1] if 0 < position <= len(seq) else "N"
@@ -856,7 +881,9 @@ def model_base_edit(
     return EditorResult(
         editor_type=specs["editor_type"],
         target_base=actual_base,
-        result_base=result_base if target_base == "any" else (result_base if actual_base == target_base else actual_base),
+        result_base=result_base
+        if target_base == "any"
+        else (result_base if actual_base == target_base else actual_base),
         edit_window=(win_start, win_end),
         bystander_edits=bystander_edits,
         efficiency_estimate=efficiency,
@@ -891,8 +918,10 @@ def model_prime_edit(
         "pbs_length": rng.randint(10, 17),
         "efficiency_estimate": efficiency,
         "edit_type": (
-            "substitution" if len(desired_edit) == 1
-            else "insertion" if len(desired_edit) > 1
+            "substitution"
+            if len(desired_edit) == 1
+            else "insertion"
+            if len(desired_edit) > 1
             else "deletion"
         ),
         "note": "Stub model — pegRNA optimization not performed",

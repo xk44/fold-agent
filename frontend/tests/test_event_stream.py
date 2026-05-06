@@ -3,6 +3,7 @@
 Only tests pure functions — format_sse_event_feed, format_sse_event_summary,
 and format_sse_event_table_rows — which have no Streamlit dependency.
 """
+
 from __future__ import annotations
 
 import sys
@@ -10,15 +11,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from skills.shared.event_stream_client import SSEEvent
 from frontend.app.event_stream import (
-    build_job_status_table_rows,
-    derive_job_status_cards,
-    format_job_status_cards,
     format_sse_event_feed,
     format_sse_event_summary,
     format_sse_event_table_rows,
 )
+from skills.shared.event_stream_client import SSEEvent
 
 
 class TestFormatSSEEventSummary:
@@ -79,10 +77,7 @@ class TestFormatSSEEventFeed:
         assert "case=c1" in result
 
     def test_limit_truncates_display(self) -> None:
-        events = [
-            SSEEvent(event=f"evt.{i}", data={"case_id": f"c{i}"})
-            for i in range(20)
-        ]
+        events = [SSEEvent(event=f"evt.{i}", data={"case_id": f"c{i}"}) for i in range(20)]
         result = format_sse_event_feed(events, limit=5)
         # Summary still shows total of 20
         assert "20 events" in result
@@ -106,9 +101,7 @@ class TestFormatSSEEventFeed:
         assert "status=ok" in result
 
     def test_event_without_timestamp(self) -> None:
-        events = [
-            SSEEvent(event="case.created", data={"case_id": "c1"})
-        ]
+        events = [SSEEvent(event="case.created", data={"case_id": "c1"})]
         result = format_sse_event_feed(events)
         assert "n/a" in result
 

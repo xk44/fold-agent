@@ -6,7 +6,7 @@ Provides multi-backend ensemble scoring and backend comparison utilities.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from backend.app.alphafold_backends import (
     PredictionResult,
@@ -48,7 +48,7 @@ def _plddt_correlation(values: list[float]) -> float:
     if mean == 0.0:
         return 0.0
     variance = sum((v - mean) ** 2 for v in values) / n
-    std = variance ** 0.5
+    std = variance**0.5
     cv = std / mean  # coefficient of variation
     # Convert: perfect agreement → 1.0, high disagreement → 0.0 (clamp at 0)
     return max(0.0, round(1.0 - cv, 4))
@@ -88,9 +88,7 @@ def run_ensemble(
             errors.append(f"{name}: {exc}")
 
     if not results:
-        raise RuntimeError(
-            f"All backends failed: {errors}"
-        )
+        raise RuntimeError(f"All backends failed: {errors}")
 
     # Consensus pLDDT — average across backends that report it
     plddt_values = [v for r in results if (v := _mean_plddt(r)) is not None]

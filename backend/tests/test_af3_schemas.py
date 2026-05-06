@@ -10,14 +10,16 @@ TDD: These tests cover:
 from __future__ import annotations
 
 import json
-import os
-import tempfile
-from pathlib import Path
 
 import pytest
 
+from backend.app.alphafold.alphafold3_local import (
+    build_af3_json_input_file,
+    build_alphafold3_local_command,
+)
 from backend.app.alphafold.schemas import (
     AF3InputJSON,
+    AlphaFold3LocalJobRequest,
     BondAtomSpec,
     DnaEntity,
     DnaModification,
@@ -29,16 +31,11 @@ from backend.app.alphafold.schemas import (
     RnaModification,
     SequenceEntry,
 )
-from backend.app.alphafold.alphafold3_local import (
-    build_alphafold3_local_command,
-    build_af3_json_input_file,
-)
-from backend.app.alphafold.schemas import AlphaFold3LocalJobRequest
-
 
 # ---------------------------------------------------------------------------
 # ProteinModification
 # ---------------------------------------------------------------------------
+
 
 class TestProteinModification:
     def test_basic_creation(self):
@@ -55,6 +52,7 @@ class TestProteinModification:
 # ---------------------------------------------------------------------------
 # ProteinTemplate
 # ---------------------------------------------------------------------------
+
 
 class TestProteinTemplate:
     def test_template_with_inline_mmcif(self):
@@ -104,6 +102,7 @@ class TestProteinTemplate:
 # ---------------------------------------------------------------------------
 # ProteinEntity
 # ---------------------------------------------------------------------------
+
 
 class TestProteinEntity:
     def test_minimal_protein(self):
@@ -200,6 +199,7 @@ class TestProteinEntity:
 # RnaModification / RnaEntity
 # ---------------------------------------------------------------------------
 
+
 class TestRnaModification:
     def test_basic_creation(self):
         m = RnaModification(modificationType="2MG", basePosition=1)
@@ -246,6 +246,7 @@ class TestRnaEntity:
 # DnaModification / DnaEntity
 # ---------------------------------------------------------------------------
 
+
 class TestDnaModification:
     def test_basic_creation(self):
         m = DnaModification(modificationType="6OG", basePosition=1)
@@ -278,6 +279,7 @@ class TestDnaEntity:
 # ---------------------------------------------------------------------------
 # LigandEntity
 # ---------------------------------------------------------------------------
+
 
 class TestLigandEntity:
     def test_ligand_with_ccd_codes(self):
@@ -313,6 +315,7 @@ class TestLigandEntity:
 # ---------------------------------------------------------------------------
 # SequenceEntry
 # ---------------------------------------------------------------------------
+
 
 class TestSequenceEntry:
     def test_protein_entry(self):
@@ -351,6 +354,7 @@ class TestSequenceEntry:
 # BondAtomSpec
 # ---------------------------------------------------------------------------
 
+
 class TestBondAtomSpec:
     def test_valid_spec(self):
         spec = BondAtomSpec(root=["A", 145, "SG"])
@@ -381,6 +385,7 @@ class TestBondAtomSpec:
 # ---------------------------------------------------------------------------
 # AF3InputJSON (top-level)
 # ---------------------------------------------------------------------------
+
 
 class TestAF3InputJSON:
     def test_minimal_input(self):
@@ -436,12 +441,8 @@ class TestAF3InputJSON:
                         unpairedMsa=">query\nAGCU",
                     )
                 ),
-                SequenceEntry(
-                    ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"])
-                ),
-                SequenceEntry(
-                    ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")
-                ),
+                SequenceEntry(ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"])),
+                SequenceEntry(ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")),
             ],
             bondedAtomPairs=[
                 [BondAtomSpec(root=["A", 145, "SG"]), BondAtomSpec(root=["L", 1, "C04"])],
@@ -530,14 +531,13 @@ class TestAF3InputJSON:
 # Serialization to AF3 JSON format
 # ---------------------------------------------------------------------------
 
+
 class TestAF3JSONSerialization:
     def test_minimal_protein_serialization(self):
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="PVLSCGEWQL"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="PVLSCGEWQL"))],
         )
         d = af3.to_af3_json_dict()
         assert d["name"] == "test"
@@ -553,9 +553,7 @@ class TestAF3JSONSerialization:
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))],
         )
         d = af3.to_af3_json_dict()
         protein_dict = d["sequences"][0]["protein"]
@@ -570,9 +568,7 @@ class TestAF3JSONSerialization:
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"]))
-            ],
+            sequences=[SequenceEntry(ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"]))],
         )
         d = af3.to_af3_json_dict()
         lig_dict = d["sequences"][0]["ligand"]
@@ -597,9 +593,7 @@ class TestAF3JSONSerialization:
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))],
             bondedAtomPairs=[
                 [BondAtomSpec(root=["A", 145, "SG"]), BondAtomSpec(root=["L", 1, "C04"])],
             ],
@@ -611,9 +605,7 @@ class TestAF3JSONSerialization:
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))],
             userCCD="data_MY-X7F\n...",
         )
         d = af3.to_af3_json_dict()
@@ -624,9 +616,7 @@ class TestAF3JSONSerialization:
         af3 = AF3InputJSON(
             name="test",
             modelSeeds=[1],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))],
             userCCDPath="/path/to/custom.cif",
         )
         d = af3.to_af3_json_dict()
@@ -692,9 +682,7 @@ class TestAF3JSONSerialization:
                         description="Test protein",
                     )
                 ),
-                SequenceEntry(
-                    ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")
-                ),
+                SequenceEntry(ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")),
             ],
         )
         d = af3.to_af3_json_dict()
@@ -708,6 +696,7 @@ class TestAF3JSONSerialization:
 # ---------------------------------------------------------------------------
 # AF3InputJSON.model_validate from dict
 # ---------------------------------------------------------------------------
+
 
 class TestAF3InputJSONFromDict:
     def test_from_dict_minimal(self):
@@ -725,7 +714,13 @@ class TestAF3InputJSONFromDict:
             "name": "Hello fold",
             "modelSeeds": [10, 42],
             "sequences": [
-                {"protein": {"id": "A", "sequence": "PVLSCGEWQL", "modifications": [{"ptmType": "HY3", "ptmPosition": 1}]}},
+                {
+                    "protein": {
+                        "id": "A",
+                        "sequence": "PVLSCGEWQL",
+                        "modifications": [{"ptmType": "HY3", "ptmPosition": 1}],
+                    }
+                },
                 {"dna": {"id": "C", "sequence": "GACCTCT"}},
                 {"rna": {"id": "E", "sequence": "AGCU"}},
                 {"ligand": {"id": ["F", "G"], "ccdCodes": ["ATP"]}},
@@ -746,14 +741,13 @@ class TestAF3InputJSONFromDict:
 # Command builder: build_af3_json_input_file
 # ---------------------------------------------------------------------------
 
+
 class TestBuildAF3JsonInputFile:
     def test_writes_json_file(self, tmp_path):
         af3 = AF3InputJSON(
             name="test_cmd",
             modelSeeds=[42],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="PVLSCGEWQL"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="PVLSCGEWQL"))],
         )
         output_path = tmp_path / "input.json"
         result_path = build_af3_json_input_file(af3, output_path)
@@ -791,6 +785,7 @@ class TestBuildAF3JsonInputFile:
 # ---------------------------------------------------------------------------
 # Command builder: build_alphafold3_local_command
 # ---------------------------------------------------------------------------
+
 
 class TestBuildAlphafold3LocalCommand:
     def test_json_path_command(self):
@@ -838,9 +833,7 @@ class TestBuildAlphafold3LocalCommand:
         af3 = AF3InputJSON(
             name="cmd_test",
             modelSeeds=[99],
-            sequences=[
-                SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))
-            ],
+            sequences=[SequenceEntry(protein=ProteinEntity(id="A", sequence="SEQ"))],
         )
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -874,6 +867,7 @@ class TestBuildAlphafold3LocalCommand:
 # ---------------------------------------------------------------------------
 # Integration-style: full example from docs
 # ---------------------------------------------------------------------------
+
 
 class TestFullExampleFromDocs:
     def test_full_example_roundtrip(self):
@@ -929,15 +923,9 @@ class TestFullExampleFromDocs:
                         unpairedMsa=">query\nAGCU",
                     )
                 ),
-                SequenceEntry(
-                    ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"])
-                ),
-                SequenceEntry(
-                    ligand=LigandEntity(id="I", ccdCodes=["NAG", "FUC"])
-                ),
-                SequenceEntry(
-                    ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")
-                ),
+                SequenceEntry(ligand=LigandEntity(id=["F", "G", "H"], ccdCodes=["ATP"])),
+                SequenceEntry(ligand=LigandEntity(id="I", ccdCodes=["NAG", "FUC"])),
+                SequenceEntry(ligand=LigandEntity(id="Z", smiles="CC(=O)OC1C[NH+]2CCC1CC2")),
             ],
             bondedAtomPairs=[
                 [BondAtomSpec(root=["A", 1, "CA"]), BondAtomSpec(root=["G", 1, "CHA"])],
@@ -961,7 +949,10 @@ class TestFullExampleFromDocs:
         prot_a = parsed["sequences"][0]["protein"]
         assert prot_a["id"] == "A"
         assert prot_a["sequence"] == "PVLSCGEWQL"
-        assert prot_a["modifications"] == [{"ptmType": "HY3", "ptmPosition": 1}, {"ptmType": "P1L", "ptmPosition": 5}]
+        assert prot_a["modifications"] == [
+            {"ptmType": "HY3", "ptmPosition": 1},
+            {"ptmType": "P1L", "ptmPosition": 5},
+        ]
         assert prot_a["description"] == "10-residue protein with 2 modifications"
 
         # Verify protein with template

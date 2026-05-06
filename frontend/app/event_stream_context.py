@@ -2,10 +2,10 @@
 
 Extracted from event_stream.py for modularity.
 """
+
 from __future__ import annotations
 
 from frontend.app.event_stream_filters import FILTER_ALL
-
 
 # ---------------------------------------------------------------------------
 # Well-known session-state keys used across the dashboard.  Keeping them
@@ -92,7 +92,7 @@ def extract_restorable_focus(session_state: dict) -> dict:
                 if sval is None or sval == "" or sval == FILTER_ALL:
                     continue
                 # The part after the prefix is the case_id / identifier
-                dynamic[skey[len(prefix):]] = str(sval)
+                dynamic[skey[len(prefix) :]] = str(sval)
         if dynamic:
             focus[_bucket] = dynamic
 
@@ -192,23 +192,21 @@ def derive_operator_context(
     job_label = session_state.get(_CTX_JOB_KEY, "") or ""
 
     case_id = (
-        session_state.get(_CTX_PIPELINE_CASE_KEY, "") or ""
-        or session_state.get(_CTX_INSPECT_CASE_KEY, "") or ""
+        session_state.get(_CTX_PIPELINE_CASE_KEY, "")
+        or ""
+        or session_state.get(_CTX_INSPECT_CASE_KEY, "")
+        or ""
     )
 
     # Report ID is keyed per-case: report-detail-{case_id}
     report_id = ""
     if case_id:
-        report_id = session_state.get(
-            f"{_CTX_REPORT_KEY_PREFIX}{case_id}", ""
-        ) or ""
+        report_id = session_state.get(f"{_CTX_REPORT_KEY_PREFIX}{case_id}", "") or ""
 
     # Structure job ID is also keyed per-case: structure-job-{case_id}
     structure_job_id = ""
     if case_id:
-        structure_job_id = session_state.get(
-            f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}", ""
-        ) or ""
+        structure_job_id = session_state.get(f"{_CTX_STRUCTURE_JOB_KEY_PREFIX}{case_id}", "") or ""
 
     # Active filters — suppress the "all" sentinel
     active_filters: dict[str, str] = {}
@@ -251,7 +249,9 @@ def derive_operator_context(
                 job_id = card.get("job_id") or ""
                 job_type = card.get("job_type") or ""
                 job_status = card.get("status") or ""
-                enriched_job = f"{card.get('job_type', '?')} · {card.get('status', '?')} · {job_id[:8]}"
+                enriched_job = (
+                    f"{card.get('job_type', '?')} · {card.get('status', '?')} · {job_id[:8]}"
+                )
                 break
         if not enriched_job:
             enriched_job = job_label

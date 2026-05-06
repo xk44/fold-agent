@@ -10,14 +10,16 @@ pick SSE or WebSocket without changing their event-handling code.
 This module is the live-event foundation — it contains no Streamlit
 dependencies and is fully testable in isolation.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import threading
 from collections import deque
+from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import Generator, Literal
+from typing import Literal
 from urllib.parse import urlencode
 
 import httpx
@@ -36,6 +38,7 @@ logger = logging.getLogger(__name__)
 # SSEEvent — structured representation of one SSE event
 # ---------------------------------------------------------------------------
 
+
 @dataclass(eq=True)
 class SSEEvent:
     """A single parsed Server-Sent Event."""
@@ -48,6 +51,7 @@ class SSEEvent:
 # ---------------------------------------------------------------------------
 # parse_sse_lines — core wire-format parser
 # ---------------------------------------------------------------------------
+
 
 def parse_sse_lines(lines: list[str]) -> Generator[SSEEvent, None, None]:
     """Parse SSE wire-format lines and yield :class:`SSEEvent` objects.
@@ -89,16 +93,16 @@ def parse_sse_lines(lines: list[str]) -> Generator[SSEEvent, None, None]:
 
         # Field parsing
         if stripped.startswith("event: "):
-            current_event = stripped[len("event: "):]
+            current_event = stripped[len("event: ") :]
         elif stripped.startswith("data: "):
-            data_fragments.append(stripped[len("data: "):])
+            data_fragments.append(stripped[len("data: ") :])
         elif stripped.startswith("data:"):
             # "data:" with no space — treat as empty data fragment
-            data_fragments.append(stripped[len("data:"):])
+            data_fragments.append(stripped[len("data:") :])
         elif stripped.startswith("id: "):
-            current_id = stripped[len("id: "):]
+            current_id = stripped[len("id: ") :]
         elif stripped.startswith("id:"):
-            current_id = stripped[len("id:"):].strip()
+            current_id = stripped[len("id:") :].strip()
         elif stripped.startswith("retry: "):
             pass  # acknowledged but not stored
 
@@ -115,6 +119,7 @@ def parse_sse_snapshot(text: str) -> list[SSEEvent]:
 # ---------------------------------------------------------------------------
 # EventBuffer — thread-safe event accumulator
 # ---------------------------------------------------------------------------
+
 
 class EventBuffer:
     """Thread-safe, bounded buffer that accumulates :class:`SSEEvent` objects.
@@ -160,6 +165,7 @@ class EventBuffer:
 # ---------------------------------------------------------------------------
 # EventStreamClient — HTTP SSE streaming with parsing
 # ---------------------------------------------------------------------------
+
 
 class EventStreamClient:
     """HTTP client that connects to SSE endpoints and yields parsed events.
@@ -238,15 +244,15 @@ class EventStreamClient:
                     current_id = None
                     continue
                 if line.startswith("event: "):
-                    current_event = line[len("event: "):]
+                    current_event = line[len("event: ") :]
                 elif line.startswith("data: "):
-                    data_fragments.append(line[len("data: "):])
+                    data_fragments.append(line[len("data: ") :])
                 elif line.startswith("data:"):
-                    data_fragments.append(line[len("data:"):])
+                    data_fragments.append(line[len("data:") :])
                 elif line.startswith("id: "):
-                    current_id = line[len("id: "):]
+                    current_id = line[len("id: ") :]
                 elif line.startswith("id:"):
-                    current_id = line[len("id:"):].strip()
+                    current_id = line[len("id:") :].strip()
                 elif line.startswith("retry: "):
                     pass
 
@@ -278,6 +284,7 @@ class EventStreamClient:
 # ---------------------------------------------------------------------------
 # WebSocketEventClient — WebSocket transport that yields SSEEvent objects
 # ---------------------------------------------------------------------------
+
 
 class WebSocketEventClient:
     """WebSocket client that connects to a FoldAgent event endpoint and
@@ -318,9 +325,9 @@ class WebSocketEventClient:
         # Derive WS URL from HTTP URL
         ws_base = base_url.rstrip("/")
         if ws_base.startswith("https://"):
-            ws_base = "wss://" + ws_base[len("https://"):]
+            ws_base = "wss://" + ws_base[len("https://") :]
         elif ws_base.startswith("http://"):
-            ws_base = "ws://" + ws_base[len("http://"):]
+            ws_base = "ws://" + ws_base[len("http://") :]
         self._ws_url_base = ws_base
         self._api_key = api_key
         self._ping_interval = ping_interval
@@ -364,7 +371,10 @@ class WebSocketEventClient:
                 event_id=msg.get("id"),
             )
 
-        logger.debug("WS: ignoring unrecognised message shape: %s", list(msg.keys()) if isinstance(msg, dict) else type(msg).__name__)
+        logger.debug(
+            "WS: ignoring unrecognised message shape: %s",
+            list(msg.keys()) if isinstance(msg, dict) else type(msg).__name__,
+        )
         return None
 
     def stream_events(
@@ -454,6 +464,7 @@ class WebSocketEventClient:
 # EventClient — transport-agnostic facade
 # ---------------------------------------------------------------------------
 
+
 class EventClient:
     """Transport-agnostic event client that delegates to SSE or WebSocket.
 
@@ -499,12 +510,16 @@ class EventClient:
         self._transport = transport
         if transport == "sse":
             self._inner: EventStreamClient | WebSocketEventClient = EventStreamClient(
-                base_url=base_url, api_key=api_key, timeout=timeout,
+                base_url=base_url,
+                api_key=api_key,
+                timeout=timeout,
             )
         else:
             self._inner = WebSocketEventClient(
-                base_url=base_url, api_key=api_key,
-                ping_interval=ping_interval, close_timeout=close_timeout,
+                base_url=base_url,
+                api_key=api_key,
+                ping_interval=ping_interval,
+                close_timeout=close_timeout,
             )
 
     @property
