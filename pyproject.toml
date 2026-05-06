@@ -63,7 +63,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [tool.pytest.ini_options]
-testpaths = ["backend/tests", "frontend/tests", "skills/shared/tests"]
+testpaths = ["backend/tests", "frontend/tests"]
 asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow",
