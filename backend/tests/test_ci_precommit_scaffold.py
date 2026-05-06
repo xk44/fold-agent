@@ -14,7 +14,9 @@ class TestPreCommitConfig:
     def _load_config(self) -> None:
         self.config_file = PROJECT_ROOT / ".pre-commit-config.yaml"
         self.content = (
-            self.config_file.read_text(encoding="utf-8") if self.config_file.is_file() else ""
+            self.config_file.read_text(encoding="utf-8")
+            if self.config_file.is_file()
+            else ""
         )
 
     def test_pre_commit_config_exists(self) -> None:
@@ -34,7 +36,9 @@ class TestGithubActionsCI:
     @pytest.fixture(autouse=True)
     def _load_workflow(self) -> None:
         self.workflow = PROJECT_ROOT / ".github" / "workflows" / "ci.yml"
-        self.content = self.workflow.read_text(encoding="utf-8") if self.workflow.is_file() else ""
+        self.content = (
+            self.workflow.read_text(encoding="utf-8") if self.workflow.is_file() else ""
+        )
 
     def test_ci_workflow_exists(self) -> None:
         assert self.workflow.is_file(), ".github/workflows/ci.yml must exist"
@@ -62,11 +66,15 @@ class TestGithubActionsCI:
 
     def test_ci_runs_deployment_scaffold_test(self) -> None:
         assert (
-            "test_deployment_scaffold.py" in self.content or "make test-deployment" in self.content
+            "test_deployment_scaffold.py" in self.content
+            or "make test-deployment" in self.content
         )
 
     def test_ci_runs_port_consistency_scaffold_test(self) -> None:
-        assert "test_port_consistency.py" in self.content or "make test-deployment" in self.content
+        assert (
+            "test_port_consistency.py" in self.content
+            or "make test-deployment" in self.content
+        )
 
 
 class TestMakefileCITarget:
@@ -85,7 +93,9 @@ class TestMakefileCITarget:
         assert "ports-check:" in self.content, "Makefile must have ports-check target"
 
     def test_makefile_declares_docker_utility_targets_phony(self) -> None:
-        phony_line = next(line for line in self.content.splitlines() if line.startswith(".PHONY:"))
+        phony_line = next(
+            line for line in self.content.splitlines() if line.startswith(".PHONY:")
+        )
 
         for target in (
             "docker-up-core",
@@ -138,12 +148,17 @@ class TestMakefileCITarget:
         assert health_lines, "smoke-verify must check /health"
         assert any("curl -sS" in line for line in health_lines)
         assert not any("curl -sf" in line or "curl -f" in line for line in health_lines)
-        assert any("HTTP" in line and ("200" in line and "503" in line) for line in health_lines)
+        assert any(
+            "HTTP" in line and ("200" in line and "503" in line)
+            for line in health_lines
+        )
 
     def test_smoke_verify_reports_dashboard_health_status_and_body(self) -> None:
         lines = self.content.splitlines()
         dashboard_health_lines = [
-            line for line in lines if "_stcore/health" in line and "docker-health" not in line
+            line
+            for line in lines
+            if "_stcore/health" in line and "docker-health" not in line
         ]
 
         assert dashboard_health_lines, "smoke-verify must check dashboard health"

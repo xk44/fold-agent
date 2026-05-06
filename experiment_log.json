@@ -1,0 +1,20 @@
+[
+  {
+    "experiment_id": "test-eval-001",
+    "metric": "pipeline_execution_time_s",
+    "before": 10.0,
+    "after": 7.5,
+    "changes": [],
+    "reverted": false,
+    "timestamp": 1777307025.7204573
+  },
+  {
+    "experiment_id": "list-test-exp",
+    "metric": "memory_usage_mb",
+    "before": 300.0,
+    "after": 280.0,
+    "changes": [],
+    "reverted": false,
+    "timestamp": 1777307025.7250822
+  }
+]

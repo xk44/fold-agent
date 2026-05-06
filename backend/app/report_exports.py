@@ -250,9 +250,16 @@ def build_report_html(case_id: str, db: Session) -> str:
 
     # --- citations ---
     if citations:
+
+        def _cite_url(url: str | None) -> str:
+            if url:
+                safe = _h(url)
+                return f'<a href="{safe}" target="_blank">{safe}</a>'
+            return "n/a"
+
         cit_rows = "".join(
             f"<tr><td>{_h(c.source)}</td><td>{_h(c.description)}</td>"
-            f"<td>{'<a href="' + _h(c.url) + '" target="_blank">' + _h(c.url) + '</a>' if c.url else 'n/a'}</td>"
+            f"<td>{_cite_url(c.url)}</td>"
             f"<td>{_h(c.accessed_date or '')}</td></tr>"
             for c in citations
         )
