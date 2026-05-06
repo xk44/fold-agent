@@ -38,7 +38,7 @@ class TestLintMaintainedTarget:
                     break
         joined = "\n".join(commands)
         assert "ruff check" in joined
-        assert "black --check" in joined
+        assert "ruff format --check" in joined
         assert "mypy" in joined
         assert "backend/tests/test_ci_precommit_scaffold.py" in joined
         assert "backend/tests/test_port_consistency.py" in joined

@@ -85,7 +85,7 @@ lint:
 # Run lint only on the actively maintained CI/scaffold files
 lint-maintained:
 	ruff check backend/tests/test_ci_precommit_scaffold.py backend/tests/test_deployment_scaffold.py backend/tests/test_lint_maintained_scaffold.py backend/tests/test_port_consistency.py
-	black --check backend/tests/test_ci_precommit_scaffold.py backend/tests/test_deployment_scaffold.py backend/tests/test_lint_maintained_scaffold.py backend/tests/test_port_consistency.py
+	ruff format --check backend/tests/test_ci_precommit_scaffold.py backend/tests/test_deployment_scaffold.py backend/tests/test_lint_maintained_scaffold.py backend/tests/test_port_consistency.py
 	@if [ -x ./.venv/bin/mypy ]; then \
 		PYTHONPATH=. ./.venv/bin/mypy backend/tests/test_ci_precommit_scaffold.py backend/tests/test_deployment_scaffold.py backend/tests/test_lint_maintained_scaffold.py backend/tests/test_port_consistency.py; \
 	else \
