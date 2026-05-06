@@ -23,8 +23,8 @@ class TestPreCommitConfig:
     def test_has_ruff_hooks(self) -> None:
         assert "ruff-check" in self.content or "ruff" in self.content
 
-    def test_has_black_hook(self) -> None:
-        assert "black" in self.content
+    def test_has_formatter_hook(self) -> None:
+        assert "ruff-format" in self.content or "black" in self.content
 
     def test_has_mypy_hook(self) -> None:
         assert "mypy" in self.content
