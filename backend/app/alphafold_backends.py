@@ -5,6 +5,13 @@ Provides:
 - Concrete stub backends (mock + 6 stubs)
 - StructureCache with SHA-256 input hashing
 - BackendSelector with fallback/cloud permission gates
+
+Issue #12 note: This module coexists with backend/app/alphafold/ (shells + base).
+  - THIS MODULE serves the /alphafold/v2/* API routes via main.py section 20+.
+    It contains concrete Python backend implementations with real subprocess execution.
+  - backend/app/alphafold/ serves the primary /alphafold/run/* routes (sections 1-19).
+    It wraps CLI tools via shell descriptors and schema-validated command builders.
+Neither system is dead code. Do not remove either without migrating its route group.
 """
 
 from __future__ import annotations
@@ -82,14 +89,15 @@ class AlphaFoldBackend(ABC):
 # ---------------------------------------------------------------------------
 
 
-def _synthetic_pdb(sequence: str) -> str:
+def _synthetic_pdb(sequence: str, rng: random.Random | None = None) -> str:
     """Generate minimal synthetic PDB text for testing/mock purposes."""
+    _rng = rng or random
     lines: list[str] = [
         "REMARK  FoldAgent mock structure — not a real prediction",
         "REMARK  sequence length: " + str(len(sequence)),
     ]
     for i, aa in enumerate(sequence[:50], start=1):
-        plddt = round(random.uniform(60.0, 95.0), 2)
+        plddt = round(_rng.uniform(60.0, 95.0), 2)
         lines.append(
             f"ATOM  {i:5d}  CA  {aa:3s} A{i:4d}    "
             f"   0.000   0.000   0.000  1.00 {plddt:5.2f}           C"
@@ -116,13 +124,15 @@ class MockBackend(AlphaFoldBackend):
         )
 
     def predict(self, sequence: str, options: dict) -> PredictionResult:
+        # Issue #13: seed RNG from input hash so output is deterministic per sequence.
+        rng = random.Random(hashlib.sha256(sequence.encode()).hexdigest())
         t0 = time.monotonic()
-        pdb = _synthetic_pdb(sequence)
+        pdb = _synthetic_pdb(sequence, rng=rng)
         confidence = {
-            "pLDDT_mean": round(random.uniform(70.0, 92.0), 2),
-            "pLDDT_min": round(random.uniform(55.0, 70.0), 2),
-            "pLDDT_max": round(random.uniform(90.0, 99.0), 2),
-            "pAE_mean": round(random.uniform(5.0, 18.0), 2),
+            "pLDDT_mean": round(rng.uniform(70.0, 92.0), 2),
+            "pLDDT_min": round(rng.uniform(55.0, 70.0), 2),
+            "pLDDT_max": round(rng.uniform(90.0, 99.0), 2),
+            "pAE_mean": round(rng.uniform(5.0, 18.0), 2),
             "model_version": "mock-v1.0",
             "warning": "Mock prediction — not real structure data.",
         }

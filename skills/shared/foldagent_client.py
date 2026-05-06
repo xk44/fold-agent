@@ -133,6 +133,8 @@ class FoldAgentClient:
     def run_pipeline(self, case_id: str) -> dict:
         """Start the bioinformatics pipeline for a case."""
         case = self.get_case(case_id)
+        # NOTE: The server is authoritative for safety — it will also enforce preflight.
+        # This client-side check surfaces the block early to avoid a wasted round-trip.
         preflight = self.safety_preflight("run_pipeline", species_mode=case["species"])
         if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")
@@ -315,6 +317,8 @@ class FoldAgentClient:
 
     def generate_candidate_review_report(self, case_id: str) -> dict:
         """Generate a candidate-antigen review report."""
+        # NOTE: The server is authoritative for safety — it will also enforce preflight.
+        # This client-side check surfaces the block early to avoid a wasted round-trip.
         preflight = self.safety_preflight("generate_report", report_type="candidate_review")
         if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")
@@ -326,6 +330,8 @@ class FoldAgentClient:
 
     def generate_ethics_package(self, case_id: str) -> dict:
         """Generate an ethics/veterinary review package."""
+        # NOTE: The server is authoritative for safety — it will also enforce preflight.
+        # This client-side check surfaces the block early to avoid a wasted round-trip.
         preflight = self.safety_preflight("generate_report", report_type="ethics_package")
         if preflight.get("status") != "pass":
             raise PermissionError(f"Safety preflight blocked: {preflight.get('reason')}")

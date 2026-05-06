@@ -29,7 +29,7 @@
 
 **Infrastructure**
 
-- Local-first by default — no data leaves the machine unless cloud backends are explicitly enabled
+- Local-first by default — no data leaves the machine unless cloud backends are explicitly enabled. Network classification: local-only backends (ColabFold CLI, AlphaFold2/3 local, Mock); remote metadata lookup (AlphaFold DB — UniProt/EBI REST); remote upload (AlphaFold Server — sends sequence to Google's servers, requires explicit ACK).
 - SQLite (dev) or PostgreSQL (production) via SQLAlchemy + Alembic migrations
 - Optional Celery + Redis worker stack for distributed background execution; falls back to thread pool automatically
 - Docker Compose with worker profile
@@ -59,22 +59,22 @@ Each mode enforces its own safety restrictions and report templates. The `specie
 
 ## Structure Prediction Backends
 
-| Backend            | Status                   | Notes                                                                |
-| ------------------ | ------------------------ | -------------------------------------------------------------------- |
-| `mock`             | Working                  | Synthetic outputs for testing; no external tools required            |
-| `boltz1`           | Working                  | Local Boltz-1 execution                                              |
-| `boltz2`           | Working                  | Local Boltz-2 execution                                              |
-| `esmfold`          | Working                  | Local ESMFold execution                                              |
-| `rfdiffusion`      | Working                  | RFdiffusion backbone design                                          |
-| `proteinmpnn`      | Working                  | ProteinMPNN sequence design                                          |
-| `colabfold`        | Available when installed | Remote ColabFold API                                                 |
-| `local_colabfold`  | Available when installed | Local ColabFold CLI                                                  |
-| `alphafold2_local` | Available when installed | Local AlphaFold 2                                                    |
-| `alphafold3_local` | Available when installed | Local AlphaFold 3 (JSON/input-dir style)                             |
-| `alphafold_server` | Available when installed | AlphaFold Server HTTP API (requires explicit upload acknowledgement) |
-| `alphafold_db`     | Available when installed | EBI AlphaFold DB REST lookup by accession                            |
-| `openfold`         | Available when installed | OpenFold local execution                                             |
-| `chai1`            | Available when installed | Chai-1 structure prediction                                          |
+| Backend            | Status                       | Notes                                                                              |
+| ------------------ | ---------------------------- | ---------------------------------------------------------------------------------- |
+| `mock`             | working (mock)               | Synthetic outputs for testing; no external tools required                          |
+| `boltz1`           | requires local binary        | Local Boltz-1 execution; binary must be installed separately                       |
+| `boltz2`           | requires local binary        | Local Boltz-2 execution; binary must be installed separately                       |
+| `esmfold`          | requires local binary        | Local ESMFold execution; binary must be installed separately                       |
+| `rfdiffusion`      | requires local binary        | RFdiffusion backbone design; binary must be installed separately                   |
+| `proteinmpnn`      | requires local binary        | ProteinMPNN sequence design; binary must be installed separately                   |
+| `colabfold`        | requires credentials/network | Remote ColabFold API; network call to ColabFold server                             |
+| `local_colabfold`  | requires local binary        | Local ColabFold CLI; binary must be installed separately                           |
+| `alphafold2_local` | requires local binary        | Local AlphaFold 2; binary must be installed separately                             |
+| `alphafold3_local` | requires local binary        | Local AlphaFold 3 (JSON/input-dir style); binary must be installed                 |
+| `alphafold_server` | requires credentials/network | AlphaFold Server HTTP API; sends sequence to Google — requires explicit upload ACK |
+| `alphafold_db`     | requires network             | EBI AlphaFold DB REST lookup by accession; remote metadata call                    |
+| `openfold`         | requires local binary        | OpenFold local execution; binary must be installed separately                      |
+| `chai1`            | requires local binary        | Chai-1 structure prediction; binary must be installed separately                   |
 
 Harvested artifact types: `alphafold_model_cif`, `alphafold_summary_confidences`. Confidence metrics (ranking score, pTM, ipTM, chain-pair ipTM) are stored per job when `FOLDAGENT_ALPHAFOLD_STORE_CONFIDENCE_METRICS=true`.
 
@@ -221,7 +221,7 @@ make test-cov
 pytest backend/tests/test_vaccine_design.py -v
 ```
 
-The test suite covers 1,455 test files spanning all research modes, pipeline adapters, AlphaFold backends, safety enforcement, audit logging, report generation, agent events, worker dispatch, and Streamlit smoke tests. Tests run against mock backends by default; no external tools or credentials are required.
+The test suite covers a comprehensive set of test files spanning all research modes, pipeline adapters, AlphaFold backends, safety enforcement, audit logging, report generation, agent events, worker dispatch, and Streamlit smoke tests. Tests run against mock backends by default; no external tools or credentials are required. For the current count, run `pytest --co -q | tail -1`.
 
 ---
 

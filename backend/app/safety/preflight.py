@@ -149,7 +149,22 @@ def preflight_action(
                 )
 
     # Check 5: Export actions require safety label
+    REQUIRED_EXPORT_LABEL = "Research candidate only — not administerable"
     if is_export:
+        label_present = content and REQUIRED_EXPORT_LABEL.lower() in content.lower()
+        if not label_present:
+            logger.warning(
+                "safety_preflight_export_label_missing",
+                action=action,
+                species_mode=species_mode,
+            )
+            return PreflightResult(
+                status=PreflightResult.BLOCK,
+                reason=(
+                    f"Export blocked: content must include the required safety label: "
+                    f'"{REQUIRED_EXPORT_LABEL}"'
+                ),
+            )
         logger.info("safety_preflight_export_check", action=action, species_mode=species_mode)
 
     # All checks passed

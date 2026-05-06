@@ -149,7 +149,9 @@ class Case(Base):
     reports: Mapped[list["Report"]] = relationship(
         back_populates="case", cascade="all, delete-orphan"
     )
-    agent_tasks: Mapped[list["AgentTask"]] = relationship(back_populates="case")
+    agent_tasks: Mapped[list["AgentTask"]] = relationship(
+        back_populates="case", cascade="all, delete-orphan"
+    )
     audit_logs: Mapped[list["AuditLog"]] = relationship(
         back_populates="case", cascade="all, delete-orphan"
     )
@@ -173,7 +175,7 @@ class Subject(Base):
 
     case: Mapped["Case"] = relationship(back_populates="subjects")
     samples: Mapped[list["Sample"]] = relationship(
-        back_populates="subject", cascade="all, delete-orphan"
+        back_populates="subject", cascade="save-update, merge"
     )
 
 

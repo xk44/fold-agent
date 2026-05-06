@@ -102,7 +102,7 @@ ci:
 	pre-commit run --all-files
 	make smoke
 	make lint-maintained
-	make lint || true
+	make lint || true  # intentional: full lint has known legacy failures; lint-maintained is the enforced gate
 	PYTHONPATH=. pytest -q
 	PYTHONPATH=. pytest -q backend/tests/test_deployment_scaffold.py backend/tests/test_ci_precommit_scaffold.py backend/tests/test_lint_maintained_scaffold.py backend/tests/test_port_consistency.py
 

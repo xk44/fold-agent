@@ -132,10 +132,17 @@ def validate_alphafold_payload_or_422(backend_name: str, payload: dict) -> None:
 
 
 def extract_alphafold_structure_payload(result: dict) -> dict | None:
-    try:
-        parsed = json.loads(result.get("stdout") or "{}")
-    except json.JSONDecodeError:
-        return None
+    # Issue #6: parse from output files first; only use stdout as fallback.
+    # Guards against non-JSON stdout, non-dict parsed values, and missing files.
+    parsed: dict = {}
+    stdout = result.get("stdout")
+    if stdout:
+        try:
+            maybe = json.loads(stdout)
+            if isinstance(maybe, dict):
+                parsed = maybe
+        except json.JSONDecodeError:
+            pass
 
     if parsed.get("structure"):
         return parsed["structure"]
@@ -515,9 +522,12 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
     validate_alphafold_payload_or_422(backend_name, payload)
     case_id = payload.get("case_id")
     case = db.get(Case, case_id) if case_id else None
+    # Issue #5: separate "involves external upload" from "user has acknowledged".
+    # alphafold_server always has validation_ok=False (remote descriptor), so the
+    # preflight and 409 checks must not block when the user has acknowledged the upload.
+    external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
     if case is not None:
         involves_external_upload = backend_name == "alphafold_server"
-        external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
         enforce_preflight_or_raise(
             action="alphafold_backend_run",
             species_mode=case.species.value,
@@ -525,9 +535,16 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
         )
     try:
         backend_status = get_shell_backend_status(backend_name)
+        # Skip the 409 validation block for alphafold_server when the user has acknowledged
+        # the external upload — alphafold_server is a remote descriptor so validation_ok is
+        # always False, and blocking it here would prevent legitimate acknowledged runs.
+        is_acknowledged_server = (
+            backend_name == "alphafold_server" and external_upload_acknowledged
+        )
         if (
             execute_alphafold_backend is alphafold_shells.execute_alphafold_backend
             and not backend_status.validation_ok
+            and not is_acknowledged_server
         ):
             return JSONResponse(
                 status_code=409,
@@ -562,12 +579,15 @@ def alphafold_backend_run(backend_name: str, payload: dict, db: Session = Depend
     if case_id and payload.get("candidate_id"):
         candidate = db.get(CandidateAntigen, payload["candidate_id"])
         if candidate is not None and candidate.case_id == case_id:
-            try:
-                structure_payload = (
-                    json.loads(result.stdout).get("structure", {}) if result.stdout else {}
-                )
-            except json.JSONDecodeError:
-                structure_payload = {}
+            # Issue #6: guard against non-dict stdout JSON and missing keys.
+            structure_payload: dict = {}
+            if result.stdout:
+                try:
+                    _parsed = json.loads(result.stdout)
+                    if isinstance(_parsed, dict):
+                        structure_payload = _parsed.get("structure") or {}
+                except json.JSONDecodeError:
+                    pass
             output_path = structure_payload.get("model_cif") or structure_payload.get("pdb_file")
             confidence_metrics = {
                 key: structure_payload[key]
@@ -5359,6 +5379,15 @@ def research_plddt_color_scheme() -> dict:
 # ---------------------------------------------------------------------------
 # 20. AlphaFold Backends v2
 # ---------------------------------------------------------------------------
+# Issue #12: Two AlphaFold systems coexist intentionally.
+#   - backend/app/alphafold/ (shells + base): serves the primary /alphafold/run/* routes
+#     imported at the top of this file (lines 23-30). These do subprocess execution and
+#     parse real CLI output from files.
+#   - backend/app/alphafold_backends.py: serves the /alphafold/v2/* routes below.
+#     Provides BackendSelector, StructureCache, predict_with_cache, and a richer
+#     backend registry with concrete Python implementations (not shell wrappers).
+# Do NOT merge or remove either system without updating both route groups.
+# ---------------------------------------------------------------------------
 
 from backend.app.alphafold_backends import (
     BackendSelector as AfBackendSelector,
@@ -7733,9 +7762,12 @@ def alphafold_backend_run_with_audit(
     validate_alphafold_payload_or_422(backend_name, payload)
     case_id = payload.get("case_id")
     case = db.get(Case, case_id) if case_id else None
+    # Issue #5: separate "involves external upload" from "user has acknowledged".
+    # alphafold_server always has validation_ok=False (remote descriptor), so the
+    # preflight and 409 checks must not block when the user has acknowledged the upload.
+    external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
     if case is not None:
         involves_external_upload = backend_name == "alphafold_server"
-        external_upload_acknowledged = payload.get("acknowledge_external_upload", False)
         enforce_preflight_or_raise(
             action="alphafold_backend_run",
             species_mode=case.species.value,
@@ -7743,9 +7775,16 @@ def alphafold_backend_run_with_audit(
         )
     try:
         backend_status = get_shell_backend_status(backend_name)
+        # Skip the 409 validation block for alphafold_server when the user has acknowledged
+        # the external upload — alphafold_server is a remote descriptor so validation_ok is
+        # always False, and blocking it here would prevent legitimate acknowledged runs.
+        is_acknowledged_server = (
+            backend_name == "alphafold_server" and external_upload_acknowledged
+        )
         if (
             execute_alphafold_backend is alphafold_shells.execute_alphafold_backend
             and not backend_status.validation_ok
+            and not is_acknowledged_server
         ):
             return JSONResponse(
                 status_code=409,
@@ -7787,12 +7826,15 @@ def alphafold_backend_run_with_audit(
     if case_id and payload.get("candidate_id"):
         candidate = db.get(CandidateAntigen, payload["candidate_id"])
         if candidate is not None and candidate.case_id == case_id:
-            try:
-                structure_payload = (
-                    json.loads(result.stdout).get("structure", {}) if result.stdout else {}
-                )
-            except json.JSONDecodeError:
-                structure_payload = {}
+            # Issue #6: guard against non-dict stdout JSON and missing keys.
+            structure_payload: dict = {}
+            if result.stdout:
+                try:
+                    _parsed = json.loads(result.stdout)
+                    if isinstance(_parsed, dict):
+                        structure_payload = _parsed.get("structure") or {}
+                except json.JSONDecodeError:
+                    pass
             output_path = structure_payload.get("model_cif") or structure_payload.get("pdb_file")
             confidence_metrics = {
                 key: structure_payload[key]

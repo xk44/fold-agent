@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.app.config import SpeciesMode
 from backend.app.models import AgentFrameworkEnum, ReviewStatusEnum, SampleTypeEnum
@@ -26,8 +26,10 @@ class CaseUpdate(BaseModel):
     @field_validator("consent_status", "review_status", mode="before")
     @classmethod
     def reject_null_required_fields(cls, value: str | None) -> str | None:
-        if value is None:
-            raise ValueError("Field may not be null")
+        # None means "don't update this field" in PATCH semantics; the route
+        # uses exclude_unset=True so explicit None is still a valid no-op.
+        if value is not None and not isinstance(value, str):
+            raise ValueError("Field must be a string or omitted")
         return value
 
 
@@ -280,7 +282,7 @@ class PipelineRunRead(BaseModel):
     completed_steps: int
     total_steps: int
     step_results: dict | None
-    steps: list[dict] = []
+    steps: list[dict] = Field(default_factory=list)
     started_at: datetime
     finished_at: datetime | None
 
@@ -338,7 +340,7 @@ class ExecutionRunRead(BaseModel):
     timed_out: bool
     return_code: int | None
     created_at: datetime
-    artifacts: list[SavedArtifact] = []
+    artifacts: list[SavedArtifact] = Field(default_factory=list)
 
 
 class UnifiedRunRead(BaseModel):
@@ -349,7 +351,7 @@ class UnifiedRunRead(BaseModel):
     status: str
     created_at: datetime
     details: dict | None = None
-    artifacts: list[SavedArtifact] = []
+    artifacts: list[SavedArtifact] = Field(default_factory=list)
 
 
 class SafetyPreflightRequest(BaseModel):
@@ -368,7 +370,7 @@ class SafetyPreflightResponse(BaseModel):
     blocked: bool
     needs_approval: bool
     reason: str | None = None
-    blocked_patterns: list[str] = []
+    blocked_patterns: list[str] = Field(default_factory=list)
 
 
 class ErrorResponse(BaseModel):

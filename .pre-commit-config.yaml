@@ -1,3 +1,5 @@
+# Pre-commit is scoped to actively-maintained scaffold/CI files.
+# Expand coverage as legacy code is cleaned up.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.10

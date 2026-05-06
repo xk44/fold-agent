@@ -1,18 +1,6 @@
 # FoldAgent Dockerfile
-# Multi-stage build: builder installs deps, runtime copies them.
-FROM python:3.11-slim AS builder
-
-WORKDIR /build
-
-# Install build dependencies
-COPY pyproject.toml ./
-COPY backend/ backend/
-
-# Install the package with all optional extras (dev, frontend, worker)
-RUN pip install --no-cache-dir --prefix=/install -e ".[dev,frontend,worker]"
-
-# --- Runtime stage ---
-FROM python:3.11-slim AS runtime
+# Single-stage dev build — no builder stage needed for a local-first project.
+FROM python:3.11-slim
 
 # Labels for introspection
 LABEL org.opencontainers.image.title="foldagent" \
@@ -22,9 +10,6 @@ LABEL org.opencontainers.image.title="foldagent" \
 # Create non-root user for security
 RUN groupadd --gid 1000 foldagent && \
     useradd --uid 1000 --gid foldagent --shell /bin/bash --create-home foldagent
-
-# Copy installed packages from builder
-COPY --from=builder /install /usr
 
 # Create application and data directories
 WORKDIR /app
@@ -37,7 +22,7 @@ COPY --chown=foldagent:foldagent frontend/ frontend/
 COPY --chown=foldagent:foldagent skills/ skills/
 COPY --chown=foldagent:foldagent pyproject.toml ./
 
-# Install the package in runtime stage so entry points are available
+# Install the package with all optional extras
 RUN pip install --no-cache-dir -e ".[dev,frontend,worker]"
 
 # Default environment (overridable at runtime)
