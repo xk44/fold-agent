@@ -148,10 +148,12 @@ def preflight_action(
                     reason=f"Demo mode cannot make claims about: {pattern}",
                 )
 
-    # Check 5: Export actions require safety label (non-demo species only)
+    # Check 5: Export content must include safety label (non-demo species only).
+    # Only enforced when content is provided — pre-generation preflight passes
+    # through; the post-export safety wrapper re-checks generated content.
     REQUIRED_EXPORT_LABEL = "Research candidate only — not administerable"
-    if is_export and species_mode != "demo":
-        label_present = content and REQUIRED_EXPORT_LABEL.lower() in content.lower()
+    if is_export and species_mode != "demo" and content is not None:
+        label_present = REQUIRED_EXPORT_LABEL.lower() in content.lower()
         if not label_present:
             logger.warning(
                 "safety_preflight_export_label_missing",
