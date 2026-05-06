@@ -71,35 +71,24 @@ def test_dockerfile_uses_canonical_api_and_dashboard_ports() -> None:
 
 
 def test_docker_compose_uses_canonical_ports() -> None:
-    compose = yaml.safe_load(
-        (PROJECT_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
-    )
+    compose = yaml.safe_load((PROJECT_ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
     services = compose["services"]
     app_service = services["app"]
     dashboard_service = services["dashboard"]
 
     assert f"--port {CANONICAL_API_PORT}" in app_service["command"]
-    assert app_service["ports"] == [
-        f"127.0.0.1:{CANONICAL_API_PORT}:{CANONICAL_API_PORT}"
-    ]
+    assert app_service["ports"] == [f"127.0.0.1:{CANONICAL_API_PORT}:{CANONICAL_API_PORT}"]
     assert f"FOLDAGENT_API_PORT={CANONICAL_API_PORT}" in app_service["environment"]
-    assert (
-        f"localhost:{CANONICAL_API_PORT}/health"
-        in app_service["healthcheck"]["test"][-1]
-    )
+    assert f"localhost:{CANONICAL_API_PORT}/health" in app_service["healthcheck"]["test"][-1]
 
     assert f"--server.port {CANONICAL_DASHBOARD_PORT}" in dashboard_service["command"]
     assert dashboard_service["ports"] == [
         f"127.0.0.1:{CANONICAL_DASHBOARD_PORT}:{CANONICAL_DASHBOARD_PORT}"
     ]
     assert (
-        f"FOLDAGENT_DASHBOARD_PORT={CANONICAL_DASHBOARD_PORT}"
-        in dashboard_service["environment"]
+        f"FOLDAGENT_DASHBOARD_PORT={CANONICAL_DASHBOARD_PORT}" in dashboard_service["environment"]
     )
-    assert (
-        f"FOLDAGENT_API_URL=http://app:{CANONICAL_API_PORT}"
-        in dashboard_service["environment"]
-    )
+    assert f"FOLDAGENT_API_URL=http://app:{CANONICAL_API_PORT}" in dashboard_service["environment"]
     assert (
         f"localhost:{CANONICAL_DASHBOARD_PORT}/_stcore/health"
         in dashboard_service["healthcheck"]["test"][-1]
@@ -108,9 +97,7 @@ def test_docker_compose_uses_canonical_ports() -> None:
 
 def test_docs_and_env_example_document_canonical_defaults() -> None:
     env_example = (PROJECT_ROOT / ".env.example").read_text(encoding="utf-8")
-    walkthrough = (PROJECT_ROOT / "docs/VERIFICATION_WALKTHROUGH.md").read_text(
-        encoding="utf-8"
-    )
+    walkthrough = (PROJECT_ROOT / "docs/VERIFICATION_WALKTHROUGH.md").read_text(encoding="utf-8")
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "FOLDAGENT_API_PORT=8010" in env_example

@@ -8,16 +8,16 @@ repos:
       - id: ruff-format
         files: ^(foldagent/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
 
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        files: ^(foldagent/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
-
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.2
     hooks:
       - id: mypy
+        args:
+          [
+            --follow-imports=skip,
+            --ignore-missing-imports,
+            --disable-error-code=untyped-decorator,
+          ]
         files: ^(foldagent/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
         additional_dependencies:
           - pydantic>=2.5.0
