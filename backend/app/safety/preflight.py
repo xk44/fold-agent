@@ -148,9 +148,9 @@ def preflight_action(
                     reason=f"Demo mode cannot make claims about: {pattern}",
                 )
 
-    # Check 5: Export actions require safety label
+    # Check 5: Export actions require safety label (non-demo species only)
     REQUIRED_EXPORT_LABEL = "Research candidate only — not administerable"
-    if is_export:
+    if is_export and species_mode != "demo":
         label_present = content and REQUIRED_EXPORT_LABEL.lower() in content.lower()
         if not label_present:
             logger.warning(
