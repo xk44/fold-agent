@@ -16,7 +16,7 @@ repos:
           [
             --follow-imports=skip,
             --ignore-missing-imports,
-            --disable-error-code=untyped-decorator,
+            --disable-error-code=misc,
           ]
         files: ^(foldagent/)?(backend/tests/test_ci_precommit_scaffold.py|backend/tests/test_deployment_scaffold.py|backend/tests/test_lint_maintained_scaffold.py|backend/tests/test_port_consistency.py)$
         additional_dependencies:
