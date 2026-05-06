@@ -26,10 +26,8 @@ class CaseUpdate(BaseModel):
     @field_validator("consent_status", "review_status", mode="before")
     @classmethod
     def reject_null_required_fields(cls, value: str | None) -> str | None:
-        # None means "don't update this field" in PATCH semantics; the route
-        # uses exclude_unset=True so explicit None is still a valid no-op.
-        if value is not None and not isinstance(value, str):
-            raise ValueError("Field must be a string or omitted")
+        if value is None:
+            raise ValueError("Field cannot be null — omit it to leave unchanged")
         return value
 
 
