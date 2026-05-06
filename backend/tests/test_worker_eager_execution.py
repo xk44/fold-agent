@@ -1013,7 +1013,7 @@ class TestDirectTaskImport:
         mock_db = MagicMock()
         mock_db.get.return_value = mock_case
 
-        with patch("backend.app.worker.tasks.SessionLocal", return_value=mock_db):
+        with patch("backend.app.db.SessionLocal", return_value=mock_db):
             with pytest.raises(ValueError, match="Pipeline worker blocked by safety preflight"):
                 self._pipeline_run_fn.run(
                     job_id="real-safety-block",
