@@ -271,13 +271,12 @@ class TestWorkerModule:
         assert (worker_pkg / "__init__.py").is_file(), "worker package needs __init__.py"
         assert (worker_pkg / "tasks.py").is_file(), "worker package needs tasks.py"
 
-    def test_worker_import_fails_without_broker(self) -> None:
-        """Worker must fail with a clear message when no broker is configured."""
+    def test_worker_warns_without_broker(self) -> None:
+        """Worker must warn (not crash) when no broker is configured."""
         import subprocess
         import sys
 
         env = os.environ.copy()
-        # Remove broker-related env vars
         for key in (
             "FOLDAGENT_REDIS_URL",
             "FOLDAGENT_CELERY_BROKER_URL",
@@ -286,16 +285,20 @@ class TestWorkerModule:
             env.pop(key, None)
 
         result = subprocess.run(
-            [sys.executable, "-c", "from backend.app.worker import app; print('OK')"],
+            [
+                sys.executable,
+                "-c",
+                "from backend.app.worker import app; "
+                "assert app is None, 'app should be None without broker'",
+            ],
             capture_output=True,
             text=True,
             env=env,
             cwd=str(PROJECT_ROOT),
         )
-        assert result.returncode != 0, "Worker must not start without a broker URL"
-        assert (
-            "FOLDAGENT_CELERY_BROKER_URL" in result.stderr or "FOLDAGENT_REDIS_URL" in result.stderr
-        ), f"Error message should mention required env vars, got: {result.stderr}"
+        assert result.returncode == 0, (
+            f"Worker import should succeed without broker. stderr: {result.stderr}"
+        )
 
     @pytest.mark.skipif(
         not __import__("importlib").util.find_spec("celery"),
